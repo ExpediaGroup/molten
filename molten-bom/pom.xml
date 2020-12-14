@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.expediagroup.molten</groupId>
+    <artifactId>molten-platform</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <relativePath>../molten-platform/pom.xml</relativePath>
+  </parent>
+
+  <artifactId>molten-bom</artifactId>
+  <name>Molten - BOM</name>
+  <description>Molten - a reactive toolbox for integration - bill of materials</description>
+  <packaging>pom</packaging>
+
+  <properties>
+    <!-- dependencies -->
+    <resilience4j.version>1.6.1</resilience4j.version>
+    <reactor-core.version>3.4.0</reactor-core.version>
+    <reactor-addons.version>3.4.0</reactor-addons.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-core</artifactId>
+        <version>${reactor-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-test</artifactId>
+        <version>${reactor-core.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor.addons</groupId>
+        <artifactId>reactor-extra</artifactId>
+        <version>${reactor-addons.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor.addons</groupId>
+        <artifactId>reactor-adapter</artifactId>
+        <version>${reactor-addons.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.resilience4j</groupId>
+        <artifactId>resilience4j-core</artifactId>
+        <version>${resilience4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.resilience4j</groupId>
+        <artifactId>resilience4j-bulkhead</artifactId>
+        <version>${resilience4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.resilience4j</groupId>
+        <artifactId>resilience4j-circuitbreaker</artifactId>
+        <version>${resilience4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.resilience4j</groupId>
+        <artifactId>resilience4j-reactor</artifactId>
+        <version>${resilience4j.version}</version>
+      </dependency>
+      <!-- modules -->
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-trace</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-health</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-metrics</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-cache</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-http-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-remote-cache</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-test</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-trace-test</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

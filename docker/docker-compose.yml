@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  zipkin:
+    image: openzipkin/zipkin-slim:latest
+    container_name: molten-zipkin
+    ports:
+      - 9411:9411
+      
+  graphite:
+    image: graphiteapp/graphite-statsd
+    container_name: molten-graphite
+    ports:
+      - "3001:80"
+      - "2003-2004:2003-2004"
+      - "2023-2024:2023-2024"
+      - "8125:8125/udp"
+      - "8126:8126"
+
+  grafana:
+    image: bitnami/grafana:latest
+    container_name: molten-grafana
+    depends_on:
+      - prometheus
+      - graphite
+    ports:
+      - 3000:3000
+    volumes:
+    - ./data/grafana:/opt/bitnami/grafana/data
+
+  prometheus:
+    image: bitnami/prometheus:latest
+    container_name: molten-prometheus
+    depends_on:
+      - prometheus-pushgateway
+    ports:
+      - 9090:9090
+    volumes:
+      - ./data/prometheus:/opt/bitnami/prometheus/data
+      - ./config/prometheus:/opt/bitnami/prometheus/conf
+
+  prometheus-pushgateway:
+    image: prom/pushgateway:latest
+    container_name: molten-prometheus-pushgateway
+    ports:
+      - 9091:9091
+

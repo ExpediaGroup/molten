@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.expediagroup.molten</groupId>
+    <artifactId>molten-platform</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <relativePath>../molten-platform/pom.xml</relativePath>
+  </parent>
+
+  <artifactId>molten-root</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <name>Molten - root</name>
+  <description>A reactive toolbox for integration</description>
+  <packaging>pom</packaging>
+
+  <properties>
+    <checkstyle.suppressions.location>build/suppressions.xml</checkstyle.suppressions.location>
+    <skip.integration.tests>false</skip.integration.tests>
+    <integration.test.concurrency>4</integration.test.concurrency>
+  </properties>
+
+  <modules>
+    <module>../molten-core</module>
+    <module>../molten-trace</module>
+    <module>../molten-trace-test</module>
+    <module>../molten-health</module>
+    <module>../molten-cache</module>
+    <module>../molten-http-client</module>
+    <module>../molten-metrics</module>
+    <module>../molten-remote-cache</module>
+    <module>../molten-test</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-bom</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-dependencies</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*IntegrationTest</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <forkedProcessTimeoutInSeconds>${surefire.fork.timeout.in.seconds}</forkedProcessTimeoutInSeconds>
+          <forkedProcessExitTimeoutInSeconds>30</forkedProcessExitTimeoutInSeconds>
+          <forkCount>1</forkCount>
+          <reuseForks>true</reuseForks>
+          <includes>
+            <include>**/*IntegrationTest</include>
+          </includes>
+          <parallel>classes</parallel>
+          <threadCount>${integration.test.concurrency}</threadCount>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,18 @@
+.DS_Store
+Thumbs.db
+
+# maven
+target
+dependency-reduced-pom.xml
+
+# vertx
+.vertx
+logs
+
+# IDEA files (Webstorm, IntelliJ)
+.idea
+atlassian-ide-plugin.xml
+**/*.iml
+
+.toDelete
+

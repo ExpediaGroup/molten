@@ -1,0 +1,18 @@
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{ISO8601} [%thread] %-5level %logger{36} %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="com.hotels.molten.http.client.ServiceEndpoint" level="INFO"/>
+  <logger name="HTTP" level="TRACE"/>
+  <logger name="TEST" level="TRACE"/>
+
+  <logger name="reactor.netty" level="INFO" />
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
