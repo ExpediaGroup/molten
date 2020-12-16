@@ -1,5 +1,9 @@
 ![](src/site/molten.png)
 
+[![Build Status](https://github.com/ExpediaGroup/molten/workflows/Build/badge.svg)](https://github.com/ExpediaGroup/molten/actions?query=workflow:"Build")
+[![Release](https://img.shields.io/github/release/expediagroup/molten.svg)](https://img.shields.io/github/release/expediagroup/molten.svg)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 Molten
 ======
 
@@ -48,13 +52,13 @@ To build Molten you should have the followings available:
 To compile the library and run all tests execute the following: 
 
 ```
-mvn clean verify
+./mvnw clean verify
 ``` 
 
-To package the library execute:
+To also package the library execute:
 
 ```
-mvn clean install
+./mvnw clean install
 ```
 
 # Usage
