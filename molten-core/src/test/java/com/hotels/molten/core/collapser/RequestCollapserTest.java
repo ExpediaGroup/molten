@@ -270,9 +270,7 @@ public class RequestCollapserTest {
             collapsedProvider.apply(1).doOnSuccess(i -> LOG.info("#1B {}", i)).doOnSuccess(storeThreadName)
         ).subscribe(subscriber);
         subscriber.await().assertValues(values -> assertThat(values).containsExactlyInAnyOrder("1", "2", "1")).assertComplete();
-        assertThat(threadNames)
-            .hasSize(3)
-            .allSatisfy((name, i) -> assertThat(name).startsWith("parallel"));
+        assertThat(threadNames).allSatisfy((name, i) -> assertThat(name).startsWith("parallel"));
     }
 
     @Test
