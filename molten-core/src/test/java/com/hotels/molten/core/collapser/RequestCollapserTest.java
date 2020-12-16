@@ -264,12 +264,12 @@ public class RequestCollapserTest {
         Map<String, Boolean> threadNames = new ConcurrentHashMap<>();
         AssertSubscriber<String> subscriber = AssertSubscriber.create();
         Consumer<String> storeThreadName = i -> threadNames.put(Thread.currentThread().getName(), true);
-        Flux.concat(
+        Flux.merge(
             collapsedProvider.apply(1).doOnSuccess(i -> LOG.info("#1A {}", i)).doOnSuccess(storeThreadName),
             collapsedProvider.apply(2).doOnSuccess(i -> LOG.info("#2A {}", i)).doOnSuccess(storeThreadName),
             collapsedProvider.apply(1).doOnSuccess(i -> LOG.info("#1B {}", i)).doOnSuccess(storeThreadName)
         ).subscribe(subscriber);
-        subscriber.await().assertResult("1", "2", "1");
+        subscriber.await().assertValues(values -> assertThat(values).containsExactlyInAnyOrder("1", "2", "1")).assertComplete();
         assertThat(threadNames)
             .hasSize(3)
             .allSatisfy((name, i) -> assertThat(name).startsWith("parallel"));
