@@ -6,10 +6,49 @@
 
   <groupId>com.expediagroup.molten</groupId>
   <artifactId>molten-base</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <name>Molten - base</name>
   <description>Molten - a reactive toolbox for integration</description>
   <packaging>pom</packaging>
+  <url>https://github.com/ExpediaGroup/molten</url>
+
+  <organization>
+    <name>Expedia Group</name>
+    <url>http://expediagroup.com</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <name>Expedia Group Committers</name>
+      <organization>Expedia Group</organization>
+      <organizationUrl>https://expediagroup.com</organizationUrl>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git@github.com:ExpediaGroup/molten.git</connection>
+    <developerConnection>scm:git:git@github.com:ExpediaGroup/molten.git</developerConnection>
+    <url>http://github.com/ExpediaGroup/molten</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>sonatype-nexus-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>sonatype-nexus-staging</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
   <modules>
     <module>molten-platform</module>
@@ -17,6 +56,10 @@
     <module>molten-dependencies</module>
     <module>molten-root</module>
   </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
   <build>
     <pluginManagement>
@@ -38,5 +81,69 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>3.0</version>
+        <configuration>
+          <header>src/LICENSE_HEADER</header>
+          <headerDefinitions>
+            <headerDefinition>src/javadoc_style.xml</headerDefinition>
+          </headerDefinitions>
+          <excludes>
+            <exclude>**/pom.xml</exclude>
+            <exclude>**/*.md</exclude>
+            <exclude>**/resources/**</exclude>
+            <exclude>.github/**</exclude>
+            <exclude>.mvn/**</exclude>
+            <exclude>.editorconfig</exclude>
+            <exclude>lombok.config</exclude>
+            <exclude>mvnw.cmd</exclude>
+            <exclude>mvnw</exclude>
+            <exclude>**/LICENSE_HEADER</exclude>
+            <exclude>**/*.yml</exclude>
+            <exclude>**/*.xml</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.0.0-M1</version>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <releaseProfiles>oss-release</releaseProfiles>
+          <goals>deploy</goals>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.8</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>sonatype-nexus-staging</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>oss-release</id>
+    </profile>
+    <profile>
+      <id>oss-snapshot</id>
+    </profile>
+  </profiles>
 </project>
