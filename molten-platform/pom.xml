@@ -27,6 +27,7 @@
     <skip.dependency.analyze>false</skip.dependency.analyze>
     <skip.unit.tests>false</skip.unit.tests>
     <skip.integration.tests>true</skip.integration.tests>
+    <skip.javadoc>false</skip.javadoc>
     <surefire.fork.timeout.in.seconds>300</surefire.fork.timeout.in.seconds>
     <fail.for.duplicates>true</fail.for.duplicates>
     <skip.platform.banned.dependency.check>true</skip.platform.banned.dependency.check>
@@ -463,6 +464,10 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.2.0</version>
+          <configuration>
+            <encoding>${project.reporting.outputEncoding}</encoding>
+            <source>${java.version}</source>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -623,6 +628,21 @@
             <phase>verify</phase>
             <goals>
               <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <skip>${skip.javadoc}</skip>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
             </goals>
           </execution>
         </executions>
@@ -898,9 +918,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <configuration>
-          <encoding>${project.reporting.outputEncoding}</encoding>
-        </configuration>
         <reportSets>
           <reportSet>
             <id>aggregate</id>

@@ -1,39 +1,11 @@
-name: Build
-
+name: Release
 on:
-  pull_request:
-    branches:
-      - master
-  push:
-    branches:
-      - master
-
+  release:
+    types: [ published ]
 jobs:
-  build:
-    name: Build and Test
+  publish:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout project
-        uses: actions/checkout@v2
-      - name: Setup Java SDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-          java-package: jdk
-          architecture: x64
-      - name: Cache local Maven repository
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-      - name: Build and test with Maven
-        run: ./mvnw clean verify -B -U
-  snapshot:
-    runs-on: ubuntu-latest
-    needs: [ build ]
-    if: github.ref == 'refs/heads/master'
-    name: Publish SNAPSHOT
+    name: Publish RELEASE
     steps:
       - name: Checkout project
         uses: actions/checkout@v2
@@ -47,15 +19,22 @@ jobs:
           server-id: oss-sonatype # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: SONATYPE_USERNAME # env variable for username in deploy
           server-password: SONATYPE_PASSWORD # env variable for token in deploy
+          # only signed artifacts will be released to maven central
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
       - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Publish SNAPSHOT artifacts
-        run: ./mvnw deploy -B -U -P oss-snapshot -Dskip.unit.tests=true -Dskip.integration.tests=true
+      - name: Publish RELEASE artifacts
+        run: |
+          RELEASE_VERSION=$(echo "${GITHUB_REF#refs/*/v}")
+          echo "Release version: ${RELEASE_VERSION}"
+          ./mvnw org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=${RELEASE_VERSION}
+          ./mvnw deploy -B -U -P oss-release -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-
+          GPG_PASSPHRASE: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
