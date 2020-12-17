@@ -19,7 +19,7 @@ jobs:
           server-id: oss-sonatype # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: SONATYPE_USERNAME # env variable for username in deploy
           server-password: SONATYPE_PASSWORD # env variable for token in deploy
-          # only signed artifacts will be released to maven central
+          # only signed artifacts will be released to maven central. this sets up things for the maven-gpg-plugin
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Value of the GPG private key to import
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
       - name: Cache local Maven repository
@@ -28,12 +28,12 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Publish RELEASE artifacts
+      - name: Release artifacts
         run: |
           RELEASE_VERSION=$(echo "${GITHUB_REF#refs/*/v}")
           echo "Release version: ${RELEASE_VERSION}"
-          ./mvnw org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=${RELEASE_VERSION}
-          ./mvnw deploy -B -U -P oss-release -Dskip.unit.tests=true -Dskip.integration.tests=true
+          ./mvnw release:clean release:prepare -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true -DreleaseVersion=${RELEASE_VERSION} -Dtag=v${RELEASE_VERSION}
+          ./mvnw release:perform -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
