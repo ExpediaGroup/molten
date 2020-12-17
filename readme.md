@@ -44,7 +44,7 @@ Some libraries building on:
 
 To build Molten you should have the followings available:
 - JDK 11+
-- Maven 3.6.1+
+- Maven 3.6.1+ (or use provided `mvnw`)
 - Docker 1.6.0+ (see [TestContainers system requirements](https://www.testcontainers.org/supported_docker_environment/))
 
 ## Build
