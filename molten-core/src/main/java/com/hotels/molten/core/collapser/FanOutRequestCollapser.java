@@ -50,8 +50,8 @@ import com.hotels.molten.core.metrics.MetricId;
 /**
  * A request collapser acting as a middle man waiting for multiple calls and delegating them in chunks to a provider with bulk API and also responding to each caller with their
  * respective result.
- * <br />
- * <img src="doc-files/fan_out_request_collapser.png">
+ * <br>
+ * <img src="doc-files/fan_out_request_collapser.png" alt="Fan out request collapser sequence diagram">
  * <p>
  * What this does:
  * <ul>
@@ -68,10 +68,10 @@ import com.hotels.molten.core.metrics.MetricId;
  * <ul>
  * <li>Doesn't deduplicate contexts. If you need such add a {@link RequestCollapser} on top of this.</li>
  * <li>Doesn't retry failed bulk calls. You can add a {@link Mono#retry()} on top of this to requeue failed ones and/or add retry under this to retry whole bulk call.</li>
- * <li>Doesn't respect back-pressure.</li> TODO: does it?
+ * <li>Doesn't respect back-pressure.</li>
  * </ul>
  * <p>
- * When {@link MeterRegistry} is set with {@link Builder#withMetrics(MeterRegistry, String)} then registers the following metrics:
+ * When {@link MeterRegistry} is set with {@link Builder#withMetrics(MeterRegistry, MetricId)} then registers the following metrics:
  * <ul>
  * <li>{@code [qualifier].item.pending} - number of pending items where the batch operation hasn't been started yet</li>
  * <li>{@code [qualifier].item.delay} - the delay items are waiting in queue before delegated to bulk provider</li>
@@ -192,6 +192,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
      *
      * @param <C> the context type
      * @param <V> the VALUE type
+     * @param bulkProvider the bulk provider to delegate calls to
      * @return the builder
      */
     public static <C, V> Builder<C, V> collapseCallsOver(Function<List<C>, Mono<List<V>>> bulkProvider) {

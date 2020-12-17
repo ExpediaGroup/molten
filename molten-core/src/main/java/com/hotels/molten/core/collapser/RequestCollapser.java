@@ -40,9 +40,9 @@ import com.hotels.molten.core.metrics.MetricId;
 
 /**
  * A request collapser implementation over functions returning reactive types.
- * <br />
- * <img src="doc-files/request_collapser_ttl.png">
- * <br />
+ * <br>
+ * <img src="doc-files/request_collapser_ttl.png" alt="Request collapser sequence diagram">
+ * <br>
  * The wrapped function has the following characteristics:
  * <ul>
  * <li>The first call to a specific context will be delegated and cached.</li>
@@ -58,7 +58,6 @@ import com.hotels.molten.core.metrics.MetricId;
  * <li>{@code [qualifier].pending} - histogram for number of on-going collapsed request</li>
  * <li>{@code [qualifier].pending.current} - gauge for number on-going collapsed request</li>
  * </ul>
- * <p>
  * <h3>Retrying collapsed calls</h3>
  * Be sure not to {@link Mono#retry()} collapsed invocation as it will always be the same (up to TTL).
  * If you set {@link Builder#releaseWhenFinished()} then you can retry if you wrap collapsed invocation in a {@link Mono#defer(java.util.function.Supplier)}.
@@ -252,8 +251,8 @@ public final class RequestCollapser<CONTEXT, VALUE> implements Function<CONTEXT,
 
         /**
          * Sets whether to release collapsed calls as soon as they are complete.
-         * <br />
-         * <img src="doc-files/request_collapser_release.png">
+         * <br>
+         * <img src="doc-files/request_collapser_release.png" alt="Request collapser release when finished sequence diagram">
          *
          * @return this builder instance
          */

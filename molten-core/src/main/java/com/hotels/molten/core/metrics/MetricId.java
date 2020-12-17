@@ -136,6 +136,9 @@ public class MetricId {
     /**
      * Creates a {@link Gauge} builder based on this metric ID.
      *
+     * @param target the object to derive gauge from
+     * @param toValue the gauge value extraction function
+     * @param <T>the type of object to create gauge from
      * @return the builder
      */
     public <T> Gauge.Builder<T> toGauge(T target, ToDoubleFunction<T> toValue) {

@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  * <p>
  * To simplify reporting to both hierarchical and dimensional metrics (e.g. while migrating from hierarchical to dimensional),
  * one can enable reporting hierarchical name as well in {@code graphite-id} label with {@link #setGraphiteIdMetricsLabelEnabled(boolean)}.
- * <br/>
+ * <br>
  * To keep hierarchical names in e.g. {@code io.micrometer.graphite.GraphiteMeterRegistry},
  * a custom {@link io.micrometer.core.instrument.util.HierarchicalNameMapper} can be defined
  * which prefers this label as the full metric name when available.

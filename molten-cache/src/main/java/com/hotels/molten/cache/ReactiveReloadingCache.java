@@ -38,9 +38,9 @@ import com.hotels.molten.core.metrics.MetricId;
 
 /**
  * A delegating reactive cache with async reloading of values.
- * <br />
- * <img src="doc-files/reactive_reloading_cache.png">
- * <br />
+ * <br>
+ * <img src="doc-files/reactive_reloading_cache.png" alt="Reactive cache sequence diagram">
+ * <br>
  * For configuration options see {@link Builder} methods.
  *
  * @param <CONTEXT>      the type of context

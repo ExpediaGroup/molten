@@ -156,6 +156,7 @@ public class RedisConnectionBuilder {
      * Defaults to the number of available processors with a minimum of 3 threads.
      *
      * @param ioThreadPoolSize I/O thread pool size
+     * @return this builder instance
      */
     public RedisConnectionBuilder withIoThreadPoolSize(int ioThreadPoolSize) {
         checkArgument(ioThreadPoolSize > 0);
@@ -168,6 +169,7 @@ public class RedisConnectionBuilder {
      * Defaults to the number of available processors with a minimum of 3 threads.
      *
      * @param computationThreadPoolSize computation thread pool size
+     * @return this builder instance
      */
     public RedisConnectionBuilder withComputationThreadPoolSize(int computationThreadPoolSize) {
         checkArgument(computationThreadPoolSize > 0);

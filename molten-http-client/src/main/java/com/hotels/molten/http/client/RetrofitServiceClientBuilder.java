@@ -322,13 +322,13 @@ public final class RetrofitServiceClientBuilder<API> {
      * Enables logging of HTTP call's events. The type of events logged depend on the client type being used. Defaults to disabled.
      * <p>
      * For OkHTTP client a single aggregated entry, similar to the following is logged:
-     * <br/>
+     * <br>
      * {@code INFO  c.h.m.http.client.ServiceEndpoint http://localhost:53108/delay/400 httpEvents callFailed=299 callStart=0 canceled=297 connectEnd=28 connectStart=23 connectionAcquired=30 connectionReleased=299 dnsEnd=19 dnsStart=18 proxySelectEnd=18 proxySelectStart=18 requestHeadersEnd=33 requestHeadersStart=32 responseFailed=297}
      * <p>
      * For Netty client the individual events are logged.
-     * <br/>
+     * <br>
      * {@code INFO  c.h.m.http.client.ServiceEndpoint channel - dataSent remoteAddress=localhost:53108 bytes=146}
-     * <br/>
+     * <br>
      * {@code c.h.m.http.client.ServiceEndpoint channel - connectTime remoteAddress=localhost/127.0.0.1:53108 status=SUCCESS durationMs=2}
      *
      * @return this builder
@@ -340,7 +340,7 @@ public final class RetrofitServiceClientBuilder<API> {
 
     /**
      * Enables reporting of HTTP call's events as metrics. Defaults to disabled.
-     * <br/>
+     * <br>
      * The actual metrics being reported differs by HTTP client type.
      * <p>
      * For OkHTTP client both the timings (under {@code http_client_request_trace_timing}) and durations (under {@code http_client_request_trace_duration}) are reported.
@@ -369,7 +369,7 @@ public final class RetrofitServiceClientBuilder<API> {
 
     /**
      * Sets the {@code healthIndicatorWatcher} to watch health indicators of the client with.
-     * <br/>
+     * <br>
      * The watcher will get notifications of the embedded circuitbreaker's health using a {@link com.hotels.molten.healthcheck.resilience4j.HealthIndicatorOverCircuitBreaker}.
      *
      * @param healthIndicatorWatcher the {@code healthIndicatorWatcher} to set
