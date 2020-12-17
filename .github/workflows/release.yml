@@ -32,8 +32,8 @@ jobs:
         run: |
           RELEASE_VERSION=$(echo "${GITHUB_REF#refs/*/v}")
           echo "Release version: ${RELEASE_VERSION}"
-          ./mvnw release:clean release:prepare -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true -DreleaseVersion=${RELEASE_VERSION} -Dtag=v${RELEASE_VERSION}
-          ./mvnw release:perform -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
+          mvn release:clean release:prepare -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true -DreleaseVersion=${RELEASE_VERSION} -Dtag=v${RELEASE_VERSION}
+          mvn release:perform -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
