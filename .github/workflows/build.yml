@@ -54,7 +54,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Deploy SNAPSHOT artifacts
-        run: mvn deploy -B -P oss-snapshot --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
+        run: mvn deploy --settings /home/runner/.m2/settings.xml -B -P oss-snapshot --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
