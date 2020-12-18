@@ -32,8 +32,8 @@ jobs:
         run: |
           RELEASE_VERSION=$(echo "${GITHUB_REF#refs/*/v}")
           echo "Release version: ${RELEASE_VERSION}"
-          mvn release:clean release:prepare -B -P oss-release --no-transfer-progress -DreleaseVersion=${RELEASE_VERSION} -Dtag=v${RELEASE_VERSION}
-          mvn release:perform -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
+          mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=${RELEASE_VERSION}
+          mvn deploy -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
