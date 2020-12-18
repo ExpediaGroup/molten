@@ -63,6 +63,7 @@ public final class Tracer extends AbstractTracer {
 
     /**
      * Starts the span and puts it in scope.
+     * @return the started trace span
      */
     public TraceSpan start() {
         createSpan();
@@ -71,7 +72,7 @@ public final class Tracer extends AbstractTracer {
 
     /**
      * Wraps a supplier execution in a span and returns the result.
-     * <br />
+     * <br>
      * Propagates all exceptions during supplier execution. Also marks span with the exception thrown.
      *
      * @param supplier the supplier to get result from
@@ -92,7 +93,7 @@ public final class Tracer extends AbstractTracer {
 
     /**
      * Wraps a checked supplier execution in a span and returns the result.
-     * <br />
+     * <br>
      * Propagates all exceptions during supplier execution. Also marks span with the exception thrown.
      *
      * @param supplier the supplier to get result from
@@ -115,7 +116,7 @@ public final class Tracer extends AbstractTracer {
 
     /**
      * Wraps a checked supplier execution in a span and returns the result.
-     * <br />
+     * <br>
      * Propagates all exceptions during supplier execution. Also marks span with the exception thrown.
      *
      * @param supplier   the supplier to get result from
@@ -140,7 +141,7 @@ public final class Tracer extends AbstractTracer {
 
     /**
      * Wraps a runnable execution in a span.
-     * <br />
+     * <br>
      * Propagates all exceptions during runnable execution. Also marks span with the exception thrown.
      *
      * @param runnable the runnable to run
@@ -159,7 +160,7 @@ public final class Tracer extends AbstractTracer {
 
     /**
      * Wraps a checked runnable execution in a span.
-     * <br />
+     * <br>
      * Propagates all exceptions during runnable execution. Also marks span with the exception thrown.
      *
      * @param runnable the runnable to run
@@ -180,7 +181,7 @@ public final class Tracer extends AbstractTracer {
 
     /**
      * Wraps a checked runnable execution in a span.
-     * <br />
+     * <br>
      * Propagates all exceptions during runnable execution. Also marks span with the exception thrown.
      *
      * @param runnable   the runnable to run

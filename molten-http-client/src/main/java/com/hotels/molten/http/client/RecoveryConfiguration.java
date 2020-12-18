@@ -119,6 +119,7 @@ public final class RecoveryConfiguration {
         /**
          * Sets recovery mode. Default is time based.
          *
+         * @param mode the recovery mode to use
          * @return this builder instance
          */
         public Builder recoveryMode(RecoveryMode mode) {

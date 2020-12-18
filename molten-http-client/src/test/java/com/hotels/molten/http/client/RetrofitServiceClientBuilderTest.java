@@ -423,7 +423,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
             .buildClient();
         testSubscriber.assertValues(healths -> assertThat(healths).extracting(Health::status).containsSequence(Status.UP));
         // the above settings will yield a ring size of 25 for closed state and ring size of 10 for halfopen state. let's fill it
-        StepVerifier.create(Flux.range(0, 25).flatMap(i -> client.getStatus(503).onErrorReturn("doh"))).thenAwait().expectNextCount(25).verifyComplete();
+        StepVerifier.create(Flux.range(0, 25).concatMap(i -> client.getStatus(503).onErrorReturn("doh"))).thenAwait().expectNextCount(25).verifyComplete();
         // now the CB is open
         testSubscriber.assertValues(healths -> assertThat(healths).extracting(Health::status).containsSequence(Status.UP, Status.DOWN));
         StepVerifier.create(client.getStatus(200))
@@ -464,7 +464,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
             .buildClient();
         // the above settings will yield a ring size of 25 for closed state and ring size of 10 for half-open state. let's fill it
         StepVerifier.create(Flux.range(0, 25)
-            .flatMap(i -> client.getStatus(503)
+            .concatMap(i -> client.getStatus(503)
                 .retryWhen(Retry.indefinitely()
                     .filter(throwable -> throwable instanceof TemporaryServiceInvocationException && throwable.getCause() instanceof BulkheadFullException))
                 .onErrorReturn("doh")))

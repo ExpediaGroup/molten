@@ -36,7 +36,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * Redis codec to serialize keys as flat strings.
  * e.g. {@code some:cache:key}
- * <p/>
+ * <p>
  * <strong>Only supports encoding keys.</strong>
  *
  * @param <K> the type of key to persist

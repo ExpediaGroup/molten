@@ -13,38 +13,49 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: AdoptOpenJDK/install-jdk@v1
+      - name: Checkout project
+        uses: actions/checkout@v2
+      - name: Setup Java SDK
+        uses: actions/setup-java@v1
         with:
-          version: '11'
+          java-version: 11
+          java-package: jdk
           architecture: x64
-      - name: Maven Package Caching
+      - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build with Maven
-        run: mvn clean verify -B -U
+      - name: Build and test with Maven
+        run: mvn clean verify -B --no-transfer-progress
   snapshot:
     runs-on: ubuntu-latest
     needs: [ build ]
     if: github.ref == 'refs/heads/master'
     name: Publish SNAPSHOT
     steps:
-      - uses: actions/checkout@v2
-      - uses: AdoptOpenJDK/install-jdk@v1
+      - name: Checkout project
+        uses: actions/checkout@v2
+      - name: Setup Java SDK
+        uses: actions/setup-java@v1
         with:
-          version: '11'
+          java-version: 11
+          java-package: jdk
           architecture: x64
-      - name: Maven Package Caching
+          # this also creates settings.xml with the following server
+          server-id: oss-sonatype # Value of the distributionManagement/repository/id field of the pom.xml
+          server-username: SONATYPE_USERNAME # env variable for username in deploy
+          server-password: SONATYPE_PASSWORD # env variable for token in deploy
+      - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Publish SNAPSHOT Artifacts
-        run: mvn deploy --settings ./.mvn/settings/mvn-settings.xml -B -U -P oss-snapshot
+      - name: Deploy SNAPSHOT artifacts
+        run: mvn deploy -B -P oss-snapshot --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
-          SONATYPE_JIRA_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          SONATYPE_JIRA_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+
