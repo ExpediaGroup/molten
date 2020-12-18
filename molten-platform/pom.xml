@@ -31,7 +31,7 @@
     <surefire.fork.timeout.in.seconds>300</surefire.fork.timeout.in.seconds>
     <fail.for.duplicates>true</fail.for.duplicates>
     <skip.platform.banned.dependency.check>true</skip.platform.banned.dependency.check>
-    <checkstyle.version>8.37</checkstyle.version>
+    <checkstyle.version>8.38</checkstyle.version>
     <checkstyle.skip>false</checkstyle.skip>
     <checkstyle.rules.directory>build</checkstyle.rules.directory>
     <checkstyle.config.location>${checkstyle.rules.directory}/checkstyle_rules.xml</checkstyle.config.location>
