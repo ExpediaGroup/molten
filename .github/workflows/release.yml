@@ -22,6 +22,7 @@ jobs:
           # only signed artifacts will be released to maven central. this sets up things for the maven-gpg-plugin
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Value of the GPG private key to import
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+          settings-path: ${{ github.workspace }}
       - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
@@ -33,7 +34,7 @@ jobs:
           RELEASE_VERSION=$(echo "${GITHUB_REF#refs/*/v}")
           echo "Release version: ${RELEASE_VERSION}"
           mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=${RELEASE_VERSION}
-          mvn deploy --settings /home/runner/.m2/settings.xml -B -P oss-release --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
+          mvn deploy -s $GITHUB_WORKSPACE/settings.xml --settings /home/runner/.m2/settings.xml -B -P oss-release -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
