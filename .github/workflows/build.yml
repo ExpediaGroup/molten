@@ -43,7 +43,6 @@ jobs:
           java-version: 11
           java-package: jdk
           architecture: x64
-          # this also creates settings.xml with the following server
           server-id: oss-sonatype # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: SONATYPE_USERNAME # env variable for username in deploy
           server-password: SONATYPE_PASSWORD # env variable for token in deploy
@@ -54,7 +53,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Deploy SNAPSHOT artifacts
-        run: mvn deploy --settings ./.mvn/settings/mvn-settings.xml -B -P oss-snapshot --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
+        run: mvn deploy -B -P oss-snapshot --no-transfer-progress -Dskip.unit.tests=true -Dskip.integration.tests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
