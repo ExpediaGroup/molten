@@ -126,7 +126,7 @@
           <autoVersionSubmodules>true</autoVersionSubmodules>
           <useReleaseProfile>false</useReleaseProfile>
           <releaseProfiles>oss-release</releaseProfiles>
-          <preparationGoals>clean test</preparationGoals>
+          <preparationGoals>clean compile</preparationGoals>
           <goals>deploy</goals>
         </configuration>
       </plugin>
