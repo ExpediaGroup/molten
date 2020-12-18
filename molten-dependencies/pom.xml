@@ -26,7 +26,7 @@
     <zipkin-brave.version>5.12.6</zipkin-brave.version>
     <zipkin-reporter.version>2.15.2</zipkin-reporter.version>
     <kryo.version>4.0.2</kryo.version>
-    <kryo-serializers.version>0.42</kryo-serializers.version>
+    <kryo-serializers.version>0.45</kryo-serializers.version>
     <jsr305.version>3.0.2</jsr305.version>
     <vertx.version>3.9.4</vertx.version>
     <netty.version>4.1.54.Final</netty.version>
