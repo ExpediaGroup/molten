@@ -1,0 +1,31 @@
+spring:
+  sleuth:
+    enabled: true
+    sampler:
+      probability: 1.0
+    trace-id128: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health
+
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+
+  metrics:
+    distribution:
+      percentiles:
+        all: 0.5, 0.95, 0.99, 0.999
+      slo:
+        "http.server.requests": ${HTTP_SERVER_REQUESTS_SLOS:100ms, 200ms, 400ms}
+    export:
+      prometheus:
+        enabled: true
+        descriptions: false
+        step: 1m
+

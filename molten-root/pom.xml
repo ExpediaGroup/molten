@@ -31,6 +31,7 @@
     <module>../molten-http-client</module>
     <module>../molten-metrics</module>
     <module>../molten-remote-cache</module>
+    <module>../molten-spring-boot</module>
     <module>../molten-test</module>
   </modules>
 

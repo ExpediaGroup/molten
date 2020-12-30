@@ -16,19 +16,20 @@
 
 package com.hotels.molten.http.client;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.LoggerFactory;
-import reactor.netty.channel.BootstrapHandlers;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientMetricsRecorder;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
+import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
 import com.hotels.molten.http.client.metrics.DelegatingHttpClientMetricsReporter;
 import com.hotels.molten.http.client.metrics.LoggingHttpClientMetricsRecorder;
@@ -45,21 +46,21 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
     public okhttp3.Call.Factory createCallFactory(RetrofitServiceClientConfiguration<?> configuration, String clientId) {
         var connectionProvider = createConnectionProvider(configuration, clientId);
         var httpClient = HttpClient.create(connectionProvider)
-            .tcpConfiguration(tcpClient ->
-                tcpClient
-                    .runOn(LOOP_RESOURCES) // should be singleton shared among clients
-                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) configuration.getConnectionSettings().getTimeout().toMillis()) // connection timeout in ms
-                    .option(ChannelOption.TCP_NODELAY, true) // TODO: should this be configurable?
-                    .metrics(false) // disabled as too verbose for hierarchical reporter
-            )
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) configuration.getConnectionSettings().getTimeout().toMillis()) // connection timeout in ms
+            .option(ChannelOption.TCP_NODELAY, true) // TODO: should this be configurable?
+            .runOn(LOOP_RESOURCES)
+            .metrics(false, s -> s) //TODO: consider making this configurable
             .followRedirect(false)
             .compress(true)
             .disableRetry(!configuration.getConnectionSettings().isRetryOnConnectionFailure())
-            .headers(headers -> {
-                configuration.getRequestTracking().getClientIdSupplier().get().ifPresent(header -> headers.add(header.getName(), header.getValue()));
-                configuration.getRequestTracking().getRequestIdSupplier().get().ifPresent(header -> headers.add(header.getName(), header.getValue()));
-                configuration.getRequestTracking().getSessionIdSupplier().get().ifPresent(header -> headers.add(header.getName(), header.getValue()));
-            });
+            .headersWhen(headers -> Mono.just(headers)
+                .map(h -> {
+                    configuration.getRequestTracking().getClientIdSupplier().get().ifPresent(header -> h.add(header.getName(), header.getValue()));
+                    configuration.getRequestTracking().getRequestIdSupplier().get().ifPresent(header -> h.add(header.getName(), header.getValue()));
+                    configuration.getRequestTracking().getSessionIdSupplier().get().ifPresent(header -> h.add(header.getName(), header.getValue()));
+                    return h;
+                })
+            );
 
         var sslContextConfiguration = configuration.getSslContextConfiguration();
         if (sslContextConfiguration != null) {
@@ -89,7 +90,7 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
             // It would register metrics per address pool under reactor.netty.connection.provider.[poolname] with lots of tags.
             // Could be filtered by Metrics.globalRegistry.config().meterFilter(MeterFilter.maximumAllowableTags(CONNECTION_PROVIDER_PREFIX, 100, filter));
             // We could consider enabling this when dimensional metrics are enabled but graphite based ones are not.
-            //.metrics(MetricsSupport.isDimensionalMetricsEnabled() && !MetricsSupport.isGraphiteIdMetricsLabelEnabled())
+            //.metrics(MoltenMetrics.isDimensionalMetricsEnabled() && !MoltenMetrics.isGraphiteIdMetricsLabelEnabled())
             // But we keep it disabled for now.
             .metrics(false)
             //TODO: handle additional problematic netty metrics i.e. reactor.netty.bytebuf and reactor.netty.pooled
@@ -106,8 +107,7 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
             recorders.add(new LoggingHttpClientMetricsRecorder(LoggerFactory.getLogger(configuration.getApi())));
         }
         if (configuration.isLogDetailedHttpEventsEnabled()) {
-            client = client
-                .tcpConfiguration(tcpClient -> tcpClient.bootstrap(b -> BootstrapHandlers.updateLogSupport(b, new LoggingHandler(configuration.getApi(), LogLevel.INFO))));
+            client = client.wiretap(configuration.getApi().getCanonicalName(), LogLevel.INFO, AdvancedByteBufFormat.TEXTUAL, StandardCharsets.UTF_8);
         }
         if (!recorders.isEmpty()) {
             client = client.metrics(true, () -> new DelegatingHttpClientMetricsReporter(recorders));
