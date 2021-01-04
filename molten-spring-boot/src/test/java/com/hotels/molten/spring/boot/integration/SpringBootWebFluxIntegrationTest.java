@@ -84,7 +84,7 @@ public class SpringBootWebFluxIntegrationTest {
     public void should_integrate_with_tracing() {
         SpanCaptor.resetCapturedSpans();
         webClient.get().uri("/say-hello").exchange()
-            .expectStatus().isOk();
+            .expectStatus().isOk().expectBody();
         assertThat(SpanCaptor.capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isNull();

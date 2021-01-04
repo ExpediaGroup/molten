@@ -1,6 +1,9 @@
 spring:
   sleuth:
     enabled: true
+    reactor:
+      instrumentation-type: decorate_on_each
+      enabled: true
     sampler:
       probability: 1.0
     trace-id128: true
