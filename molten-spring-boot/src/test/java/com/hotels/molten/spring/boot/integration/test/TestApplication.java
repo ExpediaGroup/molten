@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TestApplication {
 
     public static void main(final String[] args) {
+        System.setProperty("MOLTEN_HTTP_CLIENT_DEFAULT_TYPE", "NETTY");
         System.setProperty("MOCK_SERVER_URL", "http://localhost:1234");
         SpringApplication.run(TestApplication.class, args);
     }

@@ -15,6 +15,8 @@
  */
 package com.hotels.molten.spring.boot.integration.test;
 
+import static com.hotels.molten.trace.TracingTransformer.span;
+
 import javax.inject.Inject;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +30,7 @@ public class SayHelloController {
 
     @GetMapping("/say-hello")
     public Mono<String> sayHello() {
-        return apiClient.greet("Bob");
+        return apiClient.greet("Bob")
+            .transform(span("around-client-call").forMono());
     }
 }

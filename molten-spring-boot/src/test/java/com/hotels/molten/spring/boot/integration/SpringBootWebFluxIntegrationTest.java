@@ -47,6 +47,7 @@ public class SpringBootWebFluxIntegrationTest {
 
     @BeforeAll
     static void initMockServer() {
+        System.setProperty("MOLTEN_HTTP_CLIENT_DEFAULT_TYPE", "OKHTTP");
         new MockServerClient(MOCK_SERVER.getHost(), MOCK_SERVER.getServerPort())
             .when(request()
                 .withPath("/hello")
@@ -89,9 +90,16 @@ public class SpringBootWebFluxIntegrationTest {
                 assertThat(span).extracting(Span::parentId).isNull();
                 assertThat(span).extracting(Span::name).isEqualTo("get /say-hello");
             });
+        var rootSpan = SpanCaptor.capturedSpans().stream().filter(span -> "get /say-hello".equals(span.name())).findFirst().orElseThrow();
         assertThat(SpanCaptor.capturedSpans())
             .anySatisfy(span -> {
-                assertThat(span).extracting(Span::parentId).isNotNull();
+                assertThat(span).extracting(Span::parentId).isEqualTo(rootSpan.id());
+                assertThat(span).extracting(Span::name).isEqualTo("around-client-call");
+            });
+        var aroundSpan = SpanCaptor.capturedSpans().stream().filter(span -> "around-client-call".equals(span.name())).findFirst().orElseThrow();
+        assertThat(SpanCaptor.capturedSpans())
+            .anySatisfy(span -> {
+                assertThat(span).extracting(Span::parentId).isEqualTo(aroundSpan.id());
                 assertThat(span).extracting(Span::name).isEqualTo("get");
                 assertThat(span).extracting(Span::tags).satisfies(tags -> assertThat(tags).containsEntry("http.path", "/hello").containsEntry("http.method", "GET"));
             });

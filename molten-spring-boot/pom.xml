@@ -23,6 +23,14 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- spring-boot-dependencies downgrade some versions if included first -->
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-dependencies</artifactId>
+        <version>${project.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
