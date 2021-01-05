@@ -288,7 +288,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (application,client) (rate(http_client_request_timeouts[$window]))",
+          "expr": "sum by (application,client) (rate(http_client_request_timeouts_total[$window]))",
           "legendFormat": "{{application}} - {{client}}",
           "refId": "A"
         }
@@ -380,7 +380,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (application,client) (rate(http_client_requests_seconds{type=\"total\", status=~\"error|failure\"}[$window]))",
+          "expr": "sum by (application,client) (rate(http_client_requests_seconds_count{type=\"total\", status=~\"error|failure\"}[$window]))",
           "legendFormat": "{{application}} - {{client}}",
           "refId": "A"
         }
@@ -1549,7 +1549,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (endpoint,retry) (rate(http_client_request_retries{application=\"$application\", pod=~\"$pod\", client=\"$client\"}[$window]))",
+              "expr": "sum by (endpoint,retry) (rate(http_client_request_retries_total{application=\"$application\", pod=~\"$pod\", client=\"$client\"}[$window]))",
               "legendFormat": "{{endpoint}} - {{retry}}",
               "refId": "A"
             }
@@ -1640,27 +1640,27 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max (http_client_http_dispatcher_max{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
+              "expr": "max (http_client_dispatcher_max_calls{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "dispatcher - max",
               "refId": "B"
             },
             {
-              "expr": "max (http_client_http_dispatcher_running{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
+              "expr": "max (http_client_dispatcher_running_calls{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "dispatcher - running ",
               "refId": "A"
             },
             {
-              "expr": "max (http_client_http_dispatcher_queued{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
+              "expr": "max (http_client_dispatcher_queued_calls{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "dispatcher - queued",
               "refId": "E"
             },
             {
-              "expr": "max (http_client_http_connection_pool_total{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
+              "expr": "max (http_client_connection_pool_total_connections{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "connection pool - total",
               "refId": "C"
             },
             {
-              "expr": "max (http_client_http_connection_pool_idle{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
+              "expr": "max (http_client_connection_pool_idle_connections{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "connection pool - idle",
               "refId": "D"
             }
