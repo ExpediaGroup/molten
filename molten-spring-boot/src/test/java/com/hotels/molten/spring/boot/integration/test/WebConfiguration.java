@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import brave.http.HttpTracing;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import zipkin2.Span;
@@ -40,7 +41,7 @@ public class WebConfiguration {
     @Inject
     private HttpTracing httpTracing;
 
-    @Bean
+    @Bean(name = ZipkinAutoConfiguration.REPORTER_BEAN_NAME)
     public Reporter<Span> capturingReporter() {
         return new SpanCaptor();
     }
