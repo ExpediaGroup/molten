@@ -29,7 +29,7 @@
     <kryo-serializers.version>0.42</kryo-serializers.version>
     <jsr305.version>3.0.2</jsr305.version>
     <vertx.version>3.9.4</vertx.version>
-    <netty.version>4.1.54.Final</netty.version>
+    <netty.version>4.1.56.Final</netty.version>
     <reactor-netty.version>0.9.11.RELEASE</reactor-netty.version><!-- TODO: upgrade to 1.0+ once https://github.com/reactor/reactor-netty/issues/1397 is resolved -->
     <protobuf.version>3.0.0</protobuf.version>
     <retrofit.version>2.9.0</retrofit.version>
