@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
@@ -80,11 +81,13 @@ public class SpringBootWebFluxIntegrationTest {
                     + "status=\"success\",type=\"total\",quantile=\"0.5\",}"));
     }
 
+    @SneakyThrows
     @Test
     public void should_integrate_with_tracing() {
         SpanCaptor.resetCapturedSpans();
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
+        Thread.sleep(400L);
         assertThat(SpanCaptor.capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isNull();
