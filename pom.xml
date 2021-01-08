@@ -108,6 +108,7 @@
             <exclude>**/*.yml</exclude>
             <exclude>**/*.xml</exclude>
             <exclude>docker/data/**</exclude>
+            <exclude>LICENSE</exclude>
           </excludes>
         </configuration>
         <executions>

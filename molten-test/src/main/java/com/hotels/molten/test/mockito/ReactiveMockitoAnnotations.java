@@ -27,6 +27,8 @@ public class ReactiveMockitoAnnotations {
      * &#064;{@link org.mockito.Mock}, &#064;{@link org.mockito.Spy}, &#064;{@link org.mockito.Captor}, &#064;{@link org.mockito.InjectMocks}
      * <p>
      * See examples in javadoc for {@link org.mockito.MockitoAnnotations} class.
+     *
+     * @param testClass the test class to initialize
      */
     public static void initMocks(Object testClass) {
         if (testClass == null) {

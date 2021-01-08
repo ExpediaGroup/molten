@@ -36,7 +36,6 @@ import org.mockito.plugins.AnnotationEngine;
 /**
  * Initializes fields annotated with &#64;{@link org.mockito.Mock} or &#64;{@link org.mockito.Captor}.
  * <p>
- * <p>
  * The {@link #process(Class, Object)} method implementation <strong>does not</strong> process super classes!
  *
  * @see org.mockito.MockitoAnnotations
