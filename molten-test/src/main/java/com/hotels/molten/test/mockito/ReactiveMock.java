@@ -28,6 +28,7 @@ import java.lang.annotation.Target;
  * <p>
  * <strong><code>ReactiveMockitoAnnotations.initMocks(this)</code></strong> method has to be called to initialize annotated objects.
  *
+ * @see org.mockito.Mock
  * @see org.mockito.Spy
  * @see org.mockito.InjectMocks
  * @see ReactiveMockitoAnnotations#initMocks(Object)
@@ -37,6 +38,9 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Documented
 public @interface ReactiveMock {
+    // TODO support answers
+    // TODO support lenient
+    // TODO mock interface default methods
     String name() default "";
 
     Class<?>[] extraInterfaces() default {};

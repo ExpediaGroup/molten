@@ -17,6 +17,7 @@
   </properties>
 
   <dependencies>
+    <!-- TODO jupiter optional! dependency -->
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>

@@ -24,19 +24,21 @@ import static org.mockito.Mockito.when;
 
 import java.util.function.Function;
 
+import org.mockito.MockitoAnnotations;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
- * Unit test for {@link ReactiveMock}.
+ * Unit test for {@link ReactiveMock} initiated by {@link MockitoAnnotations#openMocks}.
  */
-public class ReactiveMockTest {
+public class ReactiveMockByOpenMocksTest {
     private static final int ID = 1;
     private static final String VALUE_A = "a";
     private static final String VALUE_B = "b";
+    private AutoCloseable mocks;
     @ReactiveMock
     private ReactiveApi reactiveApi;
     @ReactiveMock(serializable = true, stubOnly = true, extraInterfaces = Function.class, name = "custom name")
@@ -44,7 +46,7 @@ public class ReactiveMockTest {
 
     @BeforeMethod
     public void initContext() {
-        ReactiveMockitoAnnotations.initMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
     }
 
     @Test
@@ -71,11 +73,9 @@ public class ReactiveMockTest {
         assertThat(serializableStubOnlyReactiveApi, is(not(nullValue())));
     }
 
-    private interface ReactiveApi {
-        Flux<String> getAll(int id);
-
-        default Mono<String> getFirst(int id) {
-            return getAll(id).take(1).single();
-        }
+    @AfterMethod
+    public void closeMocks() throws Exception {
+        mocks.close();
     }
+
 }

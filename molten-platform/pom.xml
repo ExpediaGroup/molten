@@ -56,7 +56,7 @@
     <testng.version>7.3.0</testng.version>
     <assertj.version>3.18.1</assertj.version>
     <hamcrest.version>2.0.0.0</hamcrest.version>
-    <mockito.version>3.3.3</mockito.version><!-- 3.4.0 has a breaking change -->
+    <mockito.version>3.4.0</mockito.version>
     <byte-buddy.version>1.10.19</byte-buddy.version>
     <janino.version>3.1.2</janino.version>
     <junit.jupiter.version>5.7.0</junit.jupiter.version>

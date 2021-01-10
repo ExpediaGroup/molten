@@ -16,11 +16,14 @@
 
 package com.hotels.molten.test.mockito;
 
-import org.mockito.exceptions.base.MockitoException;
+import org.mockito.MockitoAnnotations;
 
 /**
  * Initializes regular Mockito mocks and reactive mocks.
+ *
+ * @deprecated Use {@link org.mockito.MockitoAnnotations#openMocks(Object)} instead, or the {@code MockitoExtension} if having JUnit Jupiter tests.
  */
+@Deprecated
 public class ReactiveMockitoAnnotations {
     /**
      * Initializes objects annotated with Mockito annotations for given testClass:
@@ -29,11 +32,10 @@ public class ReactiveMockitoAnnotations {
      * See examples in javadoc for {@link org.mockito.MockitoAnnotations} class.
      *
      * @param testClass the test class to initialize
+     * @deprecated Use {@link org.mockito.MockitoAnnotations#openMocks(Object)} instead, or the {@code MockitoExtension} if having JUnit Jupiter tests.
      */
+    @Deprecated
     public static void initMocks(Object testClass) {
-        if (testClass == null) {
-            throw new MockitoException("testClass cannot be null. For info how to use @Mock annotations see examples in javadoc for MockitoAnnotations class");
-        }
-        new ReactiveAnnotationEngine().process(testClass.getClass(), testClass);
+        MockitoAnnotations.initMocks(testClass);
     }
 }

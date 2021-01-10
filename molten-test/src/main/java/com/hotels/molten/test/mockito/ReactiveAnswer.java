@@ -19,19 +19,29 @@ package com.hotels.molten.test.mockito;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 
-import org.mockito.internal.stubbing.defaultanswers.ReturnsEmptyValues;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
  * Mockito default return values for Reactor reactive types.
  */
-public class ReactiveAnswer extends ReturnsEmptyValues {
+@RequiredArgsConstructor
+public class ReactiveAnswer implements Answer<Object> {
+    @NonNull
+    private final Answer<Object> delegateAnswer;
+
+    public ReactiveAnswer() {
+        delegateAnswer = Mockito.RETURNS_DEFAULTS;
+    }
 
     @Override
-    public Object answer(InvocationOnMock invocation) {
-        Object answer = super.answer(invocation);
+    public Object answer(InvocationOnMock invocation) throws Throwable {
+        Object answer = delegateAnswer.answer(invocation);
         if (answer == null) {
             Class<?> returnType = invocation.getMethod().getReturnType();
             if (returnType == Mono.class) {
@@ -51,7 +61,7 @@ public class ReactiveAnswer extends ReturnsEmptyValues {
      * @param <T>         the actual type of the mock
      * @return the mock
      */
-    public static <T> T reactiveMock(Class<T> classToMock) {
+    public static <T> T reactiveMock(Class<T> classToMock) { //TODO what to do with me?
         return mock(classToMock,
             withSettings().defaultAnswer(invocation -> invocation.getMethod().isDefault() ? invocation.callRealMethod() : new ReactiveAnswer().answer(invocation)));
     }
