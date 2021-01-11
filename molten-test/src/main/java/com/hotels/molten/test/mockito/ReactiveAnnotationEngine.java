@@ -18,7 +18,6 @@ package com.hotels.molten.test.mockito;
 
 import static java.util.stream.Collectors.toSet;
 import static org.mockito.internal.exceptions.Reporter.unsupportedCombinationOfAnnotations;
-import static org.mockito.internal.util.reflection.FieldSetter.setField;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -32,6 +31,8 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.exceptions.base.MockitoException;
 import org.mockito.internal.configuration.FieldAnnotationProcessor;
+import org.mockito.internal.configuration.plugins.Plugins;
+import org.mockito.plugins.MemberAccessor;
 
 /**
  * Initializes fields annotated with &#64;{@link ReactiveMock}.
@@ -51,8 +52,9 @@ public class ReactiveAnnotationEngine {
             .peek(field -> assertNoIncompatibleAnnotations(ReactiveMock.class, field, Mock.class, Spy.class, Captor.class, InjectMocks.class))
             .map(field -> {
                 Object reactiveMock = reactiveMockProcessor.process(field.getAnnotation(ReactiveMock.class), field);
+                MemberAccessor accessor = Plugins.getMemberAccessor();
                 try {
-                    setField(Modifier.isStatic(field.getModifiers()) ? null : testInstance, field, reactiveMock);
+                    accessor.set(field, Modifier.isStatic(field.getModifiers()) ? null : testInstance, reactiveMock);
                 } catch (Exception e) {
                     throw new MockitoException("Problems setting field " + field.getName() + " annotated with " + ReactiveMock.class, e);
                 }

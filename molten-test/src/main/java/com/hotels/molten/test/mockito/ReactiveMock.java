@@ -23,6 +23,8 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.mockito.Answers;
+
 /**
  * Marks a field as a reactive mock.
  * <p>
@@ -31,21 +33,53 @@ import java.lang.annotation.Target;
  * @see org.mockito.Mock
  * @see org.mockito.Spy
  * @see org.mockito.InjectMocks
- * @see ReactiveMockitoAnnotations#initMocks(Object)
+ * @see org.mockito.MockitoAnnotations#openMocks(Object)
  * @see org.mockito.junit.MockitoJUnitRunner
  */
 @Target(FIELD)
 @Retention(RUNTIME)
 @Documented
 public @interface ReactiveMock {
-    // TODO support answers
-    // TODO support lenient
-    // TODO mock interface default methods
+
+    /**
+     * Sets the default answer for methods with <b>non-reactive</b> return types, except the interface default methods.
+     * <p>
+     * For reactive return types, default reactive answers are applied regardless of this.
+     *
+     * @see ReactiveAnswer
+     * @see org.mockito.MockSettings#defaultAnswer
+     */
+    Answers answer() default Answers.RETURNS_DEFAULTS;
+
+    /**
+     * Enables mocking of default methods of interfaces.
+     *
+     * @see org.mockito.MockSettings#defaultAnswer
+     */
+    boolean mockDefaultMethods() default false;
+
+    /**
+     * Mock will have custom name (shown in verification errors), see {@link org.mockito.MockSettings#name(String)}.
+     */
     String name() default "";
 
+    /**
+     * Mock will have extra interfaces, see {@link org.mockito.MockSettings#extraInterfaces(Class[])}.
+     */
     Class<?>[] extraInterfaces() default {};
 
+    /**
+     * Mock will be 'stubOnly', see {@link org.mockito.MockSettings#stubOnly()}.
+     */
     boolean stubOnly() default false;
 
+    /**
+     * Mock will be serializable, see {@link org.mockito.MockSettings#serializable()}.
+     */
     boolean serializable() default false;
+
+    /**
+     * Mock will be lenient, see {@link org.mockito.MockSettings#lenient()}.
+     */
+    boolean lenient() default false;
 }

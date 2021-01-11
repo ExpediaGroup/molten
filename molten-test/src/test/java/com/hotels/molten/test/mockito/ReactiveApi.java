@@ -28,4 +28,6 @@ interface ReactiveApi {
     default Mono<String> getFirst(int id) {
         return getAll(id).take(1).single();
     }
+
+    ReactiveApi self();
 }
