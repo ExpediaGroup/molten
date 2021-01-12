@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.cloud.sleuth.brave.bridge.MoltenSleuthAdapter;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -43,6 +45,15 @@ public class MyController {
     public Mono<String> requestId() {
         LOG.info("from controller");
         return Mono.fromCallable(() -> MDC.get("request-id"))
+            .doFinally(s -> LOG.info("from controller mono"));
+    }
+
+    @PostMapping("/post-me")
+    public Mono<String> postMe(@RequestBody Mono<String> body) {
+        LOG.info("from controller");
+        return body
+            .map(b -> "got: " + b)
+            .transform(span("around-body").forMono())
             .doFinally(s -> LOG.info("from controller mono"));
     }
 }
