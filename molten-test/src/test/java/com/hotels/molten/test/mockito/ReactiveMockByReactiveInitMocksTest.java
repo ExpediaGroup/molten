@@ -16,58 +16,77 @@
 
 package com.hotels.molten.test.mockito;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.when;
-
 import java.util.function.Function;
+import java.util.stream.Stream;
 
+import org.mockito.Answers;
+import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link ReactiveMock} initiated by {@link ReactiveMockitoAnnotations#initMocks}.
  */
 public class ReactiveMockByReactiveInitMocksTest {
-    private static final int ID = 1;
-    private static final String VALUE_A = "a";
-    private static final String VALUE_B = "b";
     @ReactiveMock
-    private ReactiveApi reactiveApi;
-    @ReactiveMock(serializable = true, stubOnly = true, extraInterfaces = Function.class, name = "custom name")
-    private ReactiveApi serializableStubOnlyReactiveApi;
+    private ReactiveApi legacyReactiveMock;
+    @ReactiveMock(serializable = true, stubOnly = true, extraInterfaces = Function.class, name = "custom legacy mock")
+    private ReactiveApi customLegacyReactiveMock;
+    @Mock
+    private ReactiveApi reactiveMock;
+    @Mock(answer = Answers.CALLS_REAL_METHODS, name = "custom mock")
+    private ReactiveApi callsRealReactiveMock;
 
     @BeforeMethod
     public void initContext() {
         ReactiveMockitoAnnotations.initMocks(this);
     }
 
-    @Test
-    public void shouldEmitStubValue() {
-        when(reactiveApi.getAll(ID)).thenReturn(Flux.just(VALUE_A, VALUE_B));
-
-        StepVerifier.create(reactiveApi.getAll(ID)).expectSubscription().expectNext(VALUE_A, VALUE_B).expectComplete().verify();
+    @DataProvider
+    public static Object[][] mocks() {
+        return Stream.<MockHolder>of(
+            test -> test.legacyReactiveMock,
+            test -> test.customLegacyReactiveMock,
+            test -> test.reactiveMock,
+            test -> test.callsRealReactiveMock
+        )
+            .map(mock -> new Object[]{mock})
+            .toArray(Object[][]::new);
     }
 
-    @Test
-    public void shouldEmitEmptyByDefault() {
-        StepVerifier.create(reactiveApi.getAll(ID)).expectSubscription().expectComplete().verify();
+    @DataProvider
+    public static Object[][] callRealMocks() {
+        return Stream.<MockHolder>of(
+            test -> test.legacyReactiveMock,
+            test -> test.customLegacyReactiveMock,
+            test -> test.callsRealReactiveMock
+        )
+            .map(mock -> new Object[]{mock})
+            .toArray(Object[][]::new);
     }
 
-    @Test
-    public void shouldSupportDefaultMethod() {
-        when(reactiveApi.getAll(ID)).thenReturn(Flux.just(VALUE_A, VALUE_B));
-
-        StepVerifier.create(reactiveApi.getFirst(ID)).expectSubscription().expectNext(VALUE_A).expectComplete().verify();
+    @Test(dataProvider = "mocks")
+    public void shouldEmitStubValue(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldEmitStubValue(mockHolder.extract(this));
     }
 
-    @Test
-    public void shouldSupportMockitoAnnotationProperties() {
-        assertThat(serializableStubOnlyReactiveApi, is(not(nullValue())));
+    @Test(dataProvider = "mocks")
+    public void shouldEmitEmptyByDefault(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldEmitEmptyByDefault(mockHolder.extract(this));
     }
 
+    @Test(dataProvider = "callRealMocks")
+    public void shouldSupportDefaultMethod(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldSupportDefaultMethod(mockHolder.extract(this));
+    }
+
+    @Test(dataProvider = "mocks")
+    public void shouldSupportMockitoAnnotationProperties(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldSupportMockitoAnnotationProperties(mockHolder.extract(this));
+    }
+
+    private interface MockHolder {
+        ReactiveApi extract(ReactiveMockByReactiveInitMocksTest test);
+    }
 }

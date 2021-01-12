@@ -16,59 +16,72 @@
 
 package com.hotels.molten.test.mockito;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.when;
-
 import java.util.function.Function;
+import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Answers;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Flux;
-import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link ReactiveMock} initiated by {@link MockitoExtension}.
  */
 @ExtendWith(MockitoExtension.class)
 public class ReactiveMockByJUnitExtensionTest {
-    // TODO reactive mock parameter
-    // TODO inject reactive mock should work
-    // TODO already a mock?
-    // TODO support answers
-    // TODO support lenient
-    private static final int ID = 1;
-    private static final String VALUE_A = "a";
-    private static final String VALUE_B = "b";
     @ReactiveMock
-    private ReactiveApi reactiveApi;
-    @ReactiveMock(serializable = true, stubOnly = true, extraInterfaces = Function.class, name = "custom name")
-    private ReactiveApi serializableStubOnlyReactiveApi;
+    private ReactiveApi legacyReactiveMock;
+    @ReactiveMock(serializable = true, stubOnly = true, extraInterfaces = Function.class, name = "custom legacy mock")
+    private ReactiveApi customLegacyReactiveMock;
+    @Mock
+    private ReactiveApi reactiveMock;
+    @Mock(answer = Answers.CALLS_REAL_METHODS, name = "custom mock")
+    private ReactiveApi callsRealReactiveMock;
 
-    @Test
-    public void shouldEmitStubValue() {
-        when(reactiveApi.getAll(ID)).thenReturn(Flux.just(VALUE_A, VALUE_B));
-
-        StepVerifier.create(reactiveApi.getAll(ID)).expectSubscription().expectNext(VALUE_A, VALUE_B).expectComplete().verify();
+    static Stream<MockHolder> mocks() {
+        return Stream.of(
+            test -> test.legacyReactiveMock,
+            test -> test.customLegacyReactiveMock,
+            test -> test.reactiveMock,
+            test -> test.callsRealReactiveMock
+        );
     }
 
-    @Test
-    public void shouldEmitEmptyByDefault() {
-        StepVerifier.create(reactiveApi.getAll(ID)).expectSubscription().expectComplete().verify();
+    static Stream<MockHolder> callRealMocks() {
+        return Stream.of(
+            test -> test.legacyReactiveMock,
+            test -> test.customLegacyReactiveMock,
+            test -> test.callsRealReactiveMock
+        );
     }
 
-    @Test
-    public void shouldSupportDefaultMethod() {
-        when(reactiveApi.getAll(ID)).thenReturn(Flux.just(VALUE_A, VALUE_B));
-
-        StepVerifier.create(reactiveApi.getFirst(ID)).expectSubscription().expectNext(VALUE_A).expectComplete().verify();
+    @ParameterizedTest
+    @MethodSource("mocks")
+    void shouldEmitStubValue(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldEmitStubValue(mockHolder.extract(this));
     }
 
-    @Test
-    public void shouldSupportMockitoAnnotationProperties() {
-        assertThat(serializableStubOnlyReactiveApi, is(not(nullValue())));
+    @ParameterizedTest
+    @MethodSource("mocks")
+    void shouldEmitEmptyByDefault(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldEmitEmptyByDefault(mockHolder.extract(this));
+    }
+
+    @ParameterizedTest
+    @MethodSource("callRealMocks")
+    void shouldSupportDefaultMethod(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldSupportDefaultMethod(mockHolder.extract(this));
+    }
+
+    @ParameterizedTest
+    @MethodSource("mocks")
+    void shouldSupportMockitoAnnotationProperties(MockHolder mockHolder) {
+        ReactiveMockTestCases.shouldSupportMockitoAnnotationProperties(mockHolder.extract(this));
+    }
+
+    private interface MockHolder {
+        ReactiveApi extract(ReactiveMockByJUnitExtensionTest test);
     }
 }
