@@ -27,7 +27,11 @@ import org.mockito.stubbing.Answer;
  * Other invocations are delegated to the given {@link Answer}.
  *
  * @see Answers
+ * @deprecated To keep non-abstract methods on a mock, please configure it's default answer with {@link Answers#CALLS_REAL_METHODS} instead.
+ * <p>
+ * To keep implementation on specific method, use the usual mocking mechanism. Example: {@code when(mock.someMethod()).thenAnswer(CALLS_REAL_METHODS)}.
  */
+@Deprecated
 @RequiredArgsConstructor
 public class SkippedDefaultMethodAnswer implements Answer<Object> {
     @NonNull

@@ -21,6 +21,7 @@ import org.mockito.MockitoAnnotations;
 /**
  * Initializes regular Mockito mocks and reactive mocks.
  *
+ * @see org.mockito.MockitoAnnotations
  * @deprecated Use {@link org.mockito.MockitoAnnotations#openMocks(Object)} instead, or the {@code MockitoExtension} if having JUnit Jupiter tests.
  */
 @Deprecated

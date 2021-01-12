@@ -20,17 +20,20 @@ import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Field;
 
+import org.mockito.Answers;
 import org.mockito.MockSettings;
 import org.mockito.Mockito;
 import org.mockito.internal.configuration.FieldAnnotationProcessor;
-import org.mockito.stubbing.Answer;
 
 /**
  * Instantiates a mock on a field annotated by {@link ReactiveMock}.
+ *
+ * @deprecated will be removed along with {@link ReactiveMock}, see details there
  */
+@Deprecated
 public class ReactiveMockAnnotationProcessor implements FieldAnnotationProcessor<ReactiveMock> {
     public Object process(ReactiveMock annotation, Field field) {
-        return mock(field.getType(), createSettings(annotation, field.getName())); // TODO add scoped mock support
+        return mock(field.getType(), createSettings(annotation, field.getName()));
     }
 
     private MockSettings createSettings(ReactiveMock annotation, String defaultName) {
@@ -52,13 +55,7 @@ public class ReactiveMockAnnotationProcessor implements FieldAnnotationProcessor
         if (annotation.lenient()) {
             mockSettings.lenient();
         }
-        return mockSettings.defaultAnswer(createAnswer(annotation));
-    }
-
-    private Answer<Object> createAnswer(ReactiveMock annotation) {
-        return annotation.mockDefaultMethods()
-            ? new ReactiveAnswer(annotation.answer())
-            : new SkippedDefaultMethodAnswer(new ReactiveAnswer(annotation.answer()));
+        return mockSettings.defaultAnswer(new SkippedDefaultMethodAnswer(Answers.RETURNS_DEFAULTS));
     }
 }
 

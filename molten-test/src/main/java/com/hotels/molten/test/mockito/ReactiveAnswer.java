@@ -22,7 +22,6 @@ import java.util.Map;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import reactor.core.publisher.Flux;
@@ -39,10 +38,6 @@ public class ReactiveAnswer implements Answer<Object> {
     );
     @NonNull
     private final Answer<Object> delegateAnswer;
-
-    public ReactiveAnswer() {
-        delegateAnswer = Mockito.RETURNS_DEFAULTS;
-    }
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -61,7 +56,7 @@ public class ReactiveAnswer implements Answer<Object> {
      * @param classToMock the type to create mock for
      * @param <T>         the actual type of the mock
      * @return the mock
-     * @deprecated will be removed, use {@link Mockito#mock(Class)} instead
+     * @deprecated will be removed, use {@link org.mockito.Mockito#mock(Class)} instead
      */
     @Deprecated
     public static <T> T reactiveMock(Class<T> classToMock) {

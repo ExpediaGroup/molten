@@ -20,15 +20,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -50,8 +47,6 @@ public class ReactiveMockByJUnitExtensionTest {
     private ReactiveApi reactiveApi;
     @ReactiveMock(serializable = true, stubOnly = true, extraInterfaces = Function.class, name = "custom name")
     private ReactiveApi serializableStubOnlyReactiveApi;
-    @ReactiveMock(answer = Answers.RETURNS_DEEP_STUBS)
-    private ReactiveApi deepReactiveApi;
 
     @Test
     public void shouldEmitStubValue() {
@@ -75,16 +70,5 @@ public class ReactiveMockByJUnitExtensionTest {
     @Test
     public void shouldSupportMockitoAnnotationProperties() {
         assertThat(serializableStubOnlyReactiveApi, is(not(nullValue())));
-    }
-
-    @Test
-    public void shouldSupportCustomAnswer() throws Exception {
-        when(deepReactiveApi.self().self()).thenReturn(deepReactiveApi);
-
-        assertThat(deepReactiveApi.self().self(), sameInstance(deepReactiveApi));
-        assertThat(deepReactiveApi.self().self().getAll(ID), is(not(nullValue())));
-
-        StepVerifier.create(deepReactiveApi.getAll(ID)).expectSubscription().expectComplete().verify(Duration.ofSeconds(2L));
-        StepVerifier.create(deepReactiveApi.getAll(ID)).expectSubscription().expectComplete().verify(Duration.ofSeconds(2L));
     }
 }

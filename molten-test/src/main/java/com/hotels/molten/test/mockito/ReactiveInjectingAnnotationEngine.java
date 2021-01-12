@@ -25,7 +25,10 @@ import org.mockito.internal.configuration.InjectingAnnotationEngine;
  * Entry point {@link org.mockito.plugins.AnnotationEngine} of reactive mocking.
  * <p>
  * Extends {@link InjectingAnnotationEngine} behaviour with {@link ReactiveAnnotationEngine}.
+ *
+ * @deprecated will be removed along with {@link ReactiveMock}, see details there
  */
+@Deprecated
 public class ReactiveInjectingAnnotationEngine extends InjectingAnnotationEngine {
     private final ReactiveAnnotationEngine reactiveAnnotationEngine = new ReactiveAnnotationEngine();
 

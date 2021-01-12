@@ -41,7 +41,9 @@ import org.mockito.plugins.MemberAccessor;
  *
  * @see ReactiveInjectingAnnotationEngine
  * @see org.mockito.internal.configuration.InjectingAnnotationEngine
+ * @deprecated will be removed along with {@link ReactiveMock}, see details there
  */
+@Deprecated
 public class ReactiveAnnotationEngine {
     private final FieldAnnotationProcessor<ReactiveMock> reactiveMockProcessor = new ReactiveMockAnnotationProcessor();
 

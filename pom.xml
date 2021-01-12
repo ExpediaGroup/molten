@@ -57,6 +57,7 @@
     <module>molten-bom</module>
     <module>molten-dependencies</module>
     <module>molten-root</module>
+    <module>molten-test-mockito-autoconfigure</module>
   </modules>
 
   <properties>

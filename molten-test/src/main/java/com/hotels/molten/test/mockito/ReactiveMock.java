@@ -23,40 +23,27 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import org.mockito.Answers;
-
 /**
  * Marks a field as a reactive mock.
  * <p>
- * <strong><code>ReactiveMockitoAnnotations.initMocks(this)</code></strong> method has to be called to initialize annotated objects.
+ * <strong>{@link ReactiveMockitoAnnotations#initMocks(Object)}</strong> method has to be called to initialize annotated objects.
  *
  * @see org.mockito.Mock
  * @see org.mockito.Spy
  * @see org.mockito.InjectMocks
  * @see org.mockito.MockitoAnnotations#openMocks(Object)
  * @see org.mockito.junit.MockitoJUnitRunner
+ * @deprecated Please use the usual way to create your reactive mocks, like annotation with {@link org.mockito.Mock} or creating with {@link org.mockito.Mockito#mock(Class)}.
+ * <p>
+ * To skip stubbing non-abstract methods on a mock, please configure it's default answer with {@link org.mockito.Answers#CALLS_REAL_METHODS}.
+ * <p>
+ * To skip stubbing a specific non-abstract method, use the usual mocking mechanisms, like {@code when(mock.someMethod()).thenCallRealMethod()}.
  */
 @Target(FIELD)
 @Retention(RUNTIME)
 @Documented
+@Deprecated
 public @interface ReactiveMock {
-
-    /**
-     * Sets the default answer for methods with <b>non-reactive</b> return types, except the interface default methods.
-     * <p>
-     * For reactive return types, default reactive answers are applied regardless of this.
-     *
-     * @see ReactiveAnswer
-     * @see org.mockito.MockSettings#defaultAnswer
-     */
-    Answers answer() default Answers.RETURNS_DEFAULTS;
-
-    /**
-     * Enables mocking of default methods of interfaces.
-     *
-     * @see org.mockito.MockSettings#defaultAnswer
-     */
-    boolean mockDefaultMethods() default false;
 
     /**
      * Mock will have custom name (shown in verification errors), see {@link org.mockito.MockSettings#name(String)}.

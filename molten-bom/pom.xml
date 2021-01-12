@@ -109,6 +109,12 @@
       </dependency>
       <dependency>
         <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-test-mockito-autoconfigure</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
         <artifactId>molten-trace-test</artifactId>
         <version>${project.version}</version>
         <scope>test</scope>
