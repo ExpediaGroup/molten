@@ -26,9 +26,12 @@ import java.time.Duration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.scheduler.VirtualTimeScheduler;
@@ -38,35 +41,33 @@ import com.hotels.molten.cache.ReactiveCache;
 import com.hotels.molten.core.metrics.MoltenMetrics;
 import com.hotels.molten.test.AssertSubscriber;
 import com.hotels.molten.test.UnstableMono;
-import com.hotels.molten.test.mockito.ReactiveMock;
-import com.hotels.molten.test.mockito.ReactiveMockitoAnnotations;
 
 /**
  * Unit test for {@link RetryingReactiveCache}.
  */
+@ExtendWith(MockitoExtension.class)
 public class RetryingReactiveCacheTest {
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String CACHE_NAME = "cacheName";
     private static final Duration RETRY_DELAY = Duration.ofMillis(50);
     private RetryingReactiveCache<String, String> retryingReactiveCache;
-    @ReactiveMock
+    @Mock
     private ReactiveCache<String, String> cache;
     private MeterRegistry meterRegistry;
     private VirtualTimeScheduler scheduler;
 
     @SuppressWarnings("unchecked")
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        ReactiveMockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         scheduler = VirtualTimeScheduler.create();
         VirtualTimeScheduler.set(scheduler);
         retryingReactiveCache = new RetryingReactiveCache<>(cache, Retry.fixedDelay(2, RETRY_DELAY), meterRegistry, CACHE_NAME);
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         VirtualTimeScheduler.reset();
