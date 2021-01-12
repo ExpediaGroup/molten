@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
@@ -32,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import zipkin2.Span;
 
+import com.hotels.molten.spring.boot.integration.test.LogCaptor;
 import com.hotels.molten.spring.boot.integration.test.SpanCaptor;
 import com.hotels.molten.spring.boot.integration.test.TestApplication;
 
@@ -81,13 +81,29 @@ public class SpringBootWebFluxIntegrationTest {
                     + "status=\"success\",type=\"total\",quantile=\"0.5\",}"));
     }
 
-    @SneakyThrows
+    @Test
+    public void should_integrate_with_mdc() {
+        // This call is just to ensure that former calls don't affect later ones.
+        // The order of MdcWebFilter must be lower (higher precedence) than the other filters doing any logging (e.g. TraceWebFilter in this case).
+        webClient.get().uri("/say-hello").exchange()
+            .expectStatus().isOk().expectBody();
+        LogCaptor.clearCapturedLogs();
+        var requestId = webClient.get().uri("/request-id").exchange()
+            .expectStatus().isOk()
+            .returnResult(String.class)
+            .getResponseBody()
+            .blockFirst();
+        assertThat(LogCaptor.getCapturedLogs()).allSatisfy(log -> assertThat(log.getMdc()).hasEntrySatisfying("request-id", id -> assertThat(id).isEqualTo(requestId)));
+    }
+
     @Test
     public void should_integrate_with_tracing() {
+        // This call is to rule out former calls potential effect on the tested ones.
+        webClient.get().uri("/say-hello").exchange()
+            .expectStatus().isOk().expectBody();
         SpanCaptor.resetCapturedSpans();
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
-        Thread.sleep(400L);
         assertThat(SpanCaptor.capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isNull();

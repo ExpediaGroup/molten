@@ -15,22 +15,21 @@
  */
 package com.hotels.molten.spring.boot.integration.test;
 
-import static com.hotels.molten.trace.TracingTransformer.span;
+import java.util.UUID;
 
-import javax.inject.Inject;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.slf4j.MDC;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
-@RestController
-public class SayHelloController {
-    @Inject
-    private HelloApi apiClient;
-
-    @GetMapping("/say-hello")
-    public Mono<String> sayHello() {
-        return apiClient.greet("Bob")
-            .transform(span("around-client-call").forMono());
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class MdcWebFilter implements WebFilter {
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        return Mono.fromRunnable(() -> MDC.put("request-id", UUID.randomUUID().toString()))
+            .then(chain.filter(exchange));
     }
 }

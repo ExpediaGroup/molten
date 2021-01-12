@@ -25,12 +25,14 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
 /**
  * Initializes Molten for spring-boot.
  * Besides core and MDC initialization it also enables dimensional metrics.
+ * Registers MDC propagation for each operator.
  */
 public class MoltenCoreSpringBootInitializer implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
         MoltenCore.initialize();
-        MoltenMDC.initialize();
+        MoltenMDC.initialize(true);
         MoltenMetrics.setDimensionalMetricsEnabled(true);
     }
 }
+

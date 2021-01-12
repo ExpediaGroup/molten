@@ -2,7 +2,7 @@ spring:
   sleuth:
     enabled: true
     reactor:
-      instrumentation-type: decorate_on_each
+      instrumentation-type: manual
       enabled: true
     sampler:
       probability: 1.0

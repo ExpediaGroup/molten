@@ -18,13 +18,16 @@ package com.hotels.molten.spring.boot.integration.test;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+import lombok.extern.slf4j.Slf4j;
 import zipkin2.Span;
 import zipkin2.reporter.Reporter;
 
+@Slf4j
 public class SpanCaptor implements Reporter<Span> {
     private static final ConcurrentLinkedDeque<Span> CAPTURED_SPANS = new ConcurrentLinkedDeque<>();
 
     public static void resetCapturedSpans() {
+        LOG.info("Clearing captured spans.");
         CAPTURED_SPANS.clear();
     }
 
@@ -34,6 +37,7 @@ public class SpanCaptor implements Reporter<Span> {
 
     @Override
     public void report(Span span) {
+        LOG.info("Captured span {}", span);
         CAPTURED_SPANS.add(span);
     }
 }

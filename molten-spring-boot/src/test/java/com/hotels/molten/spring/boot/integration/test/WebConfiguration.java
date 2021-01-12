@@ -55,6 +55,11 @@ public class WebConfiguration {
             .buildClient();
     }
 
+    @Bean
+    public MdcWebFilter webFilter() {
+        return new MdcWebFilter();
+    }
+
     private String getBaseUrl() {
         return Optional.ofNullable(mockServerUrl).filter(s -> !s.isBlank()).orElseGet(SpringBootWebFluxIntegrationTest::getMockServerUrl);
     }
