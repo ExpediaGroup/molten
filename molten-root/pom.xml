@@ -32,6 +32,7 @@
     <module>../molten-metrics</module>
     <module>../molten-remote-cache</module>
     <module>../molten-test</module>
+    <module>../molten-test-mockito-autoconfigure</module>
   </modules>
 
   <dependencyManagement>
