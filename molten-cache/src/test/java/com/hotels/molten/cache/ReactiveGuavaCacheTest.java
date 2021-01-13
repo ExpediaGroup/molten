@@ -19,11 +19,12 @@ package com.hotels.molten.cache;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import com.google.common.cache.Cache;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.testng.annotations.BeforeMethod;
+import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -31,18 +32,14 @@ import reactor.test.StepVerifier;
 /**
  * Unit test for {@link ReactiveGuavaCache}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class ReactiveGuavaCacheTest {
     private static final String VALUE = "one";
     private static final int KEY = 1;
     @Mock
     private Cache<Integer, String> cache;
+    @InjectMocks
     private ReactiveGuavaCache<Integer, String> reactiveCache;
-
-    @BeforeMethod
-    public void initContext() {
-        initMocks(this);
-        reactiveCache = new ReactiveGuavaCache<>(cache);
-    }
 
     @Test
     public void shouldDelegateGetLazily() {

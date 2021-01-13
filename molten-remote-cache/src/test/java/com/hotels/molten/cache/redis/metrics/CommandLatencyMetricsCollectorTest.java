@@ -28,8 +28,9 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
@@ -37,6 +38,7 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
 /**
  * Unit test for {@link CommandLatencyMetricsCollector}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class CommandLatencyMetricsCollectorTest {
     private static final String QUALIFIER = "qualifier";
     private static final String REMOTE_HOST = "remote.host";
@@ -52,7 +54,6 @@ public class CommandLatencyMetricsCollectorTest {
 
     @BeforeMethod
     public void initContext() {
-        MockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
     }
 

@@ -18,7 +18,6 @@ package com.hotels.molten.http.client.tracking;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Optional;
 
@@ -39,7 +38,6 @@ public class MdcBasedSessionIdTrackingHeaderSupplierTest {
 
     @BeforeMethod
     public void initContext() {
-        initMocks(this);
         provider = new MdcBasedSessionIdTrackingHeaderSupplier(HEADER_NAME);
     }
 

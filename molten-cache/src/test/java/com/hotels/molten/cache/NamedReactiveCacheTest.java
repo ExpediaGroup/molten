@@ -18,13 +18,14 @@ package com.hotels.molten.cache;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.time.Duration;
 import java.util.function.Function;
 
 import org.mockito.Mock;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -32,6 +33,7 @@ import reactor.test.StepVerifier;
 /**
  * Unit test for {@link NamedReactiveCache}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class NamedReactiveCacheTest {
     private static final int KEY = 1;
     private static final String VALUE = "one";
@@ -44,7 +46,6 @@ public class NamedReactiveCacheTest {
 
     @BeforeMethod
     public void initContext() {
-        initMocks(this);
         namedReactiveCache = new NamedReactiveCache<>(cache, CACHENAME, TTL);
     }
 
