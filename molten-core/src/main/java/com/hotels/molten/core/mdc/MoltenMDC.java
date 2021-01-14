@@ -105,23 +105,28 @@ public final class MoltenMDC {
         private MDCCopyingAction(Runnable delegate) {
             this.delegate = requireNonNull(delegate);
             savedContextMap = MDC.getCopyOfContextMap();
+            LOG.trace("saved MDC {}", savedContextMap);
         }
 
         @Override
         public void run() {
             if (savedContextMap != null) {
+                LOG.trace("restoring MDC {}", savedContextMap);
                 var currentContextMap = MDC.getCopyOfContextMap();
                 MDC.setContextMap(savedContextMap);
                 try {
                     delegate.run();
                 } finally {
                     if (currentContextMap != null) {
+                        LOG.trace("restoring previous MDC {}", currentContextMap);
                         MDC.setContextMap(currentContextMap);
                     } else {
+                        LOG.trace("cleaning MDC");
                         MDC.clear();
                     }
                 }
             } else {
+                LOG.trace("no MDC to restore");
                 delegate.run();
             }
         }
