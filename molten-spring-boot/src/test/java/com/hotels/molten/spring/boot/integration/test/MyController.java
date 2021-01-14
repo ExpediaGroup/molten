@@ -41,10 +41,12 @@ public class MyController {
             .transform(MoltenSleuthAdapter.propagate());
     }
 
-    @GetMapping("/request-id")
-    public Mono<String> requestId() {
+    @PostMapping("/request-id")
+    public Mono<String> requestId(@RequestBody Mono<String> body) {
         LOG.info("from controller");
         return Mono.fromCallable(() -> MDC.get("request-id"))
+            .zipWith(body, (id, b) -> id)
+            .flatMap(id -> apiClient.greet("Bob").thenReturn(id))
             .doFinally(s -> LOG.info("from controller mono"));
     }
 

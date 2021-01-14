@@ -20,6 +20,7 @@ import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,14 +82,15 @@ public class SpringBootWebFluxIntegrationTest {
                     + "status=\"success\",type=\"total\",quantile=\"0.5\",}"));
     }
 
-    @Test
+    @RepeatedTest(3)
     public void should_integrate_with_mdc() {
         // This call is just to ensure that former calls don't affect later ones.
         // The order of MdcWebFilter must be lower (higher precedence) than the other filters doing any logging (e.g. TraceWebFilter in this case).
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
         LogCaptor.clearCapturedLogs();
-        var requestId = webClient.get().uri("/request-id").exchange()
+        // Post has more complicated threading due to reactive body handling.
+        var requestId = webClient.post().uri("/request-id").bodyValue("thing").exchange()
             .expectStatus().isOk()
             .returnResult(String.class)
             .getResponseBody()
@@ -96,12 +98,13 @@ public class SpringBootWebFluxIntegrationTest {
         assertThat(LogCaptor.getCapturedLogs()).allSatisfy(log -> assertThat(log.getMdc()).hasEntrySatisfying("request-id", id -> assertThat(id).isEqualTo(requestId)));
     }
 
-    @Test
+    @RepeatedTest(3)
     public void should_integrate_with_tracing() {
         // This call is to rule out former calls potential effect on the tested ones.
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
         SpanCaptor.resetCapturedSpans();
+        assertThat(SpanCaptor.capturedSpans()).isEmpty();
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
         assertThat(SpanCaptor.capturedSpans())
