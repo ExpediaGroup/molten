@@ -70,6 +70,7 @@ public class MoltenMDCTest {
             .expectNext(VALUE + VALUE)
             .expectComplete()
             .verify();
+        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")
@@ -84,13 +85,13 @@ public class MoltenMDCTest {
             .expectNext(VALUE + VALUE)
             .expectComplete()
             .verify();
+        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")
     public void should_propagate_MDC_when_publishing_on_elastic(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
-
         StepVerifier.create(
             Mono.justOrEmpty(MDC.get(KEY))
                 .publishOn(Schedulers.boundedElastic())
@@ -99,13 +100,13 @@ public class MoltenMDCTest {
             .expectNext(VALUE + VALUE)
             .expectComplete()
             .verify();
+        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")
     public void should_propagate_MDC_when_publishing_on_parallel(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
-
         StepVerifier.create(
             Mono.justOrEmpty(MDC.get(KEY))
                 .publishOn(Schedulers.parallel())
@@ -114,6 +115,7 @@ public class MoltenMDCTest {
             .expectNext(VALUE + VALUE)
             .expectComplete()
             .verify();
+        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")
@@ -128,6 +130,7 @@ public class MoltenMDCTest {
             .expectNext(VALUE + VALUE)
             .expectComplete()
             .verify();
+        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")
@@ -142,6 +145,7 @@ public class MoltenMDCTest {
             .expectNext(VALUE + VALUE)
             .expectComplete()
             .verify();
+        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")
@@ -160,6 +164,7 @@ public class MoltenMDCTest {
             .expectNext(VALUE + VALUE + VALUE + VALUE)
             .expectComplete()
             .verify();
+        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
     @Test
