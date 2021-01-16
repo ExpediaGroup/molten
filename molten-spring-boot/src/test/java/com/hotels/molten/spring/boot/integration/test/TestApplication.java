@@ -23,7 +23,7 @@ public class TestApplication {
 
     public static void main(final String[] args) {
         System.setProperty("MOLTEN_HTTP_CLIENT_DEFAULT_TYPE", "OKHTTP");
-        System.setProperty("MOCK_SERVER_URL", "http://localhost:1234");
+        System.setProperty("MOCK_SERVER_URL", "http://localhost:8080");
         SpringApplication.run(TestApplication.class, args);
     }
 }

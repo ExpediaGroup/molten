@@ -37,8 +37,7 @@ public class MyController {
     @GetMapping("/say-hello")
     public Mono<String> sayHello() {
         return apiClient.greet("Bob")
-            .transform(span("around-client-call").forMono())
-            .transform(MoltenSleuthAdapter.propagate());
+            .transform(span("around-client-call").forMono());
     }
 
     @PostMapping("/request-id")
@@ -57,5 +56,10 @@ public class MyController {
             .map(b -> "got: " + b)
             .transform(span("around-body").forMono())
             .doFinally(s -> LOG.info("from controller mono"));
+    }
+
+    @GetMapping("/hello")
+    public Mono<String> helloBob() {
+        return Mono.just("\"Hello Bob!\"");
     }
 }

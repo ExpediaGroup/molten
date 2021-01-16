@@ -28,12 +28,14 @@ import java.util.Optional;
 
 import brave.Tracing;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
+import zipkin2.Span;
 
 import com.hotels.molten.core.MoltenCore;
 import com.hotels.molten.core.mdc.MoltenMDC;
@@ -72,6 +74,36 @@ public class MoltenTraceTest extends AbstractTracingTest {
                 .verifyComplete();
         }
         assertThat(capturedSpans(), contains(spanWithName("inner"), rootSpanWithName("outer")));
+    }
+
+    @Test(dataProvider = "onEachOperatorEnabled")
+    public void should_support_fully_reactive_nesting(boolean onEachOperatorEnabled) {
+        MoltenTrace.initialize(onEachOperatorEnabled);
+        StepVerifier.create(
+            Mono.just("data")
+                .transform(TracingTransformer.span("outer").forMono())
+                .transform(TracingTransformer.span("mid").forMono())
+                .transform(TracingTransformer.span("inner").forMono())
+        )
+            .expectNext("data")
+            .verifyComplete();
+        var outerSpan = capturedSpans().stream().filter(span -> "outer".equals(span.name())).findFirst().orElseThrow();
+        var midSpan = capturedSpans().stream().filter(span -> "mid".equals(span.name())).findFirst().orElseThrow();
+        Assertions.assertThat(capturedSpans())
+            .anySatisfy(span -> {
+                Assertions.assertThat(span).extracting(Span::parentId).isNull();
+                Assertions.assertThat(span).extracting(Span::name).isEqualTo("outer");
+            });
+        Assertions.assertThat(capturedSpans())
+            .anySatisfy(span -> {
+                Assertions.assertThat(span).extracting(Span::parentId).isEqualTo(outerSpan.id());
+                Assertions.assertThat(span).extracting(Span::name).isEqualTo("mid");
+            });
+        Assertions.assertThat(capturedSpans())
+            .anySatisfy(span -> {
+                Assertions.assertThat(span).extracting(Span::parentId).isEqualTo(midSpan.id());
+                Assertions.assertThat(span).extracting(Span::name).isEqualTo("inner");
+            });
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")

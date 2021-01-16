@@ -100,4 +100,9 @@ public final class TraceContextPropagatingSubscriber<T> extends AbstractNonFusin
             this.subscriber.onComplete();
         }
     }
+
+    @Override
+    public Context currentContext() {
+        return context;
+    }
 }
