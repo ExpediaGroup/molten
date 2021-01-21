@@ -31,7 +31,7 @@ public class MoltenCoreSpringBootInitializer implements ApplicationListener<Appl
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
         MoltenCore.initialize();
-        MoltenMDC.initialize(true);
+        MoltenMDC.initialize(false);
         MoltenMetrics.setDimensionalMetricsEnabled(true);
     }
 }

@@ -25,8 +25,10 @@ import static org.hamcrest.Matchers.nullValue;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 
 import brave.Tracing;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.testng.annotations.AfterMethod;
@@ -76,17 +78,24 @@ public class MoltenTraceTest extends AbstractTracingTest {
         assertThat(capturedSpans(), contains(spanWithName("inner"), rootSpanWithName("outer")));
     }
 
+    @SneakyThrows
     @Test(dataProvider = "onEachOperatorEnabled")
     public void should_support_fully_reactive_nesting(boolean onEachOperatorEnabled) {
         MoltenTrace.initialize(onEachOperatorEnabled);
+        CountDownLatch latch = new CountDownLatch(1);
         StepVerifier.create(
             Mono.just("data")
+                .doFinally(s -> latch.countDown())
                 .transform(TracingTransformer.span("outer").forMono())
+                .publishOn(Schedulers.boundedElastic())
                 .transform(TracingTransformer.span("mid").forMono())
+                .publishOn(Schedulers.parallel())
                 .transform(TracingTransformer.span("inner").forMono())
+                .subscribeOn(Schedulers.single())
         )
             .expectNext("data")
             .verifyComplete();
+        latch.await();
         var outerSpan = capturedSpans().stream().filter(span -> "outer".equals(span.name())).findFirst().orElseThrow();
         var midSpan = capturedSpans().stream().filter(span -> "mid".equals(span.name())).findFirst().orElseThrow();
         Assertions.assertThat(capturedSpans())

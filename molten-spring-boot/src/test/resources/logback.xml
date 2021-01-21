@@ -13,7 +13,8 @@
   <logger name="com.hotels.molten.spring.boot.integration.test.HelloApi" level="INFO"/>
 
   <logger name="reactor.netty" level="INFO" />
-  <logger name="com.hotels.molten.trace" level="TRACE" />
+<!--  <logger name="com.hotels.molten.trace" level="TRACE" />-->
+<!--  <logger name="com.hotels.molten.core.mdc" level="TRACE" />-->
 <!--  <logger name="org.springframework.cloud.sleuth" level="TRACE" />-->
 
   <root level="INFO">

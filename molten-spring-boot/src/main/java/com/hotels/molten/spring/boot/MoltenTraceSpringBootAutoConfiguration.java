@@ -20,8 +20,10 @@ import javax.annotation.PostConstruct;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.sleuth.autoconfig.instrument.reactor.TraceReactorAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.hotels.molten.spring.web.SleuthMoltenBridgeWebFilter;
 import com.hotels.molten.trace.MoltenTrace;
 
 @Configuration
@@ -31,6 +33,12 @@ public class MoltenTraceSpringBootAutoConfiguration {
 
     @PostConstruct
     public void initTracing() {
-        MoltenTrace.initialize(false);
+        //TODO make this configurable
+        MoltenTrace.initialize(true);
+    }
+
+    @Bean
+    public SleuthMoltenBridgeWebFilter tracePropagatorWebFilter() {
+        return new SleuthMoltenBridgeWebFilter();
     }
 }
