@@ -4,18 +4,14 @@ Provides helper classes for testing reactive code.
 
 ## Reactive mocks
 
-To create Mockito mocks over reactive APIs one should use the `@ReactiveMock` annotation.
-This creates a mock with default empty answers for reactive return types and also supports default methods on the interfaces.
+After this module is on the test classpath, reactive Mockito mocks are created over your reactive APIs.
+Reactive mock is a mock with default empty answers for reactive return types.
 
 ```java
-public class SomeTestNGTest {
-    @ReactiveMock
+@ExtendWith(MockitoExtension.class)
+public class SomeJunitJupiterTest {
+    @Mock
     private ReactiveApi reactiveApi;
-    
-    @BeforeMethod
-    public void initContext() {
-        ReactiveMockitoAnnotations.initMocks(this);
-    }
     
     @Test
     public void shouldEmitStubValue() {
@@ -45,6 +41,10 @@ public class SomeTestNGTest {
     }
 }
 ```
+
+This is achieved by configuring the default answer in `org.mockito.configuration.MockitoConfiguration`.
+If you are already configuring Mockito through that class, or just want to turn this feature off,
+see the options on [molten-test-mockito-autoconfigure](../molten-test-mockito-autoconfigure/readme.md).
 
 ## Unstable types
 To test hot publishers with resubscription one can use `com.hotels.molten.test.UnstableMono`.
