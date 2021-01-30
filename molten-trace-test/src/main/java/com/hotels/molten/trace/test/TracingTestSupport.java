@@ -144,7 +144,7 @@ public final class TracingTestSupport {
     private Reporter<Span> createReporter(boolean remoteReporterEnabled) {
         List<Reporter<Span>> reporters = new ArrayList<>();
         reporters.add(e -> {
-            LOG.info("captured {}", e);
+            LOG.debug("captured {}", e);
             CAPTURED_SPANS.add(e);
         });
         if (remoteReporterEnabled) {
