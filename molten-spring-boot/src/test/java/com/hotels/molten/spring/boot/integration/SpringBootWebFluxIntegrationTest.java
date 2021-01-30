@@ -99,7 +99,7 @@ public class SpringBootWebFluxIntegrationTest {
     }
 
     @RepeatedTest(3)
-    public void should_integrate_with_tracing() {
+    public void should_work_with_sleuth_tracing() {
         // This call is to rule out former calls potential effect on the tested ones.
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();

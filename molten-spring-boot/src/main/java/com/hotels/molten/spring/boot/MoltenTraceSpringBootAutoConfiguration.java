@@ -33,7 +33,6 @@ public class MoltenTraceSpringBootAutoConfiguration {
 
     @PostConstruct
     public void initTracing() {
-        //TODO make this configurable
         MoltenTrace.initialize(true);
     }
 

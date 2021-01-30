@@ -2,8 +2,8 @@ spring:
   sleuth:
     enabled: true
     reactor:
-      instrumentation-type: manual
       enabled: true
+      instrumentation-type: manual
     sampler:
       probability: 1.0
     trace-id128: true
