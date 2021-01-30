@@ -21,10 +21,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 
 import org.slf4j.MDC;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
@@ -41,8 +43,14 @@ public class MoltenMDCTest {
     private static final String YET_ANOTHER_VALUE = "yet_another_value";
 
     @BeforeClass
-    public void initContext() {
+    public void initClassContext() {
+        Hooks.enableContextLossTracking();
         MoltenCore.initialize();
+    }
+
+    @AfterClass
+    public void clearClassContext() {
+        Hooks.disableContextLossTracking();
     }
 
     @AfterMethod

@@ -31,12 +31,16 @@ import brave.Tracing;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
+import reactor.util.context.Context;
 import zipkin2.Span;
 
 import com.hotels.molten.core.MoltenCore;
@@ -50,6 +54,16 @@ import com.hotels.molten.trace.test.TracingTestSupport;
  */
 @Slf4j
 public class MoltenTraceTest extends AbstractTracingTest {
+
+    @BeforeClass
+    public void initClassContext() {
+        Hooks.enableContextLossTracking();
+    }
+
+    @AfterClass
+    public void clearClassContext() {
+        Hooks.disableContextLossTracking();
+    }
 
     @AfterMethod
     public void clearContext() {
