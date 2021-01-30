@@ -46,10 +46,10 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
     public okhttp3.Call.Factory createCallFactory(RetrofitServiceClientConfiguration<?> configuration, String clientId) {
         var connectionProvider = createConnectionProvider(configuration, clientId);
         var httpClient = HttpClient.create(connectionProvider)
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) configuration.getConnectionSettings().getTimeout().toMillis()) // connection timeout in ms
-            .option(ChannelOption.TCP_NODELAY, true) // TODO: should this be configurable?
-            .runOn(LOOP_RESOURCES)
-            .metrics(false, s -> s) //TODO: consider making this configurable
+            .runOn(LOOP_RESOURCES) // should be singleton shared among clients
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(configuration.getConnectionSettings().getTimeout().toMillis()))
+            .option(ChannelOption.TCP_NODELAY, true) // TODO: consider making this configurable
+            .metrics(false, () -> null) //TODO: consider making this configurable
             .followRedirect(false)
             .compress(true)
             .disableRetry(!configuration.getConnectionSettings().isRetryOnConnectionFailure())
