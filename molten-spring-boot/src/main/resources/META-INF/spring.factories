@@ -1,4 +1,2 @@
 org.springframework.context.ApplicationListener=\
 com.hotels.molten.spring.boot.MoltenCoreSpringBootInitializer
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.hotels.molten.spring.boot.MoltenTraceSpringBootAutoConfiguration

@@ -40,7 +40,6 @@ import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
-import reactor.util.context.Context;
 import zipkin2.Span;
 
 import com.hotels.molten.core.MoltenCore;

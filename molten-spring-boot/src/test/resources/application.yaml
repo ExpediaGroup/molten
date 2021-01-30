@@ -3,7 +3,7 @@ spring:
     enabled: true
     reactor:
       enabled: true
-      instrumentation-type: manual
+      instrumentation-type: decorate_on_each
     sampler:
       probability: 1.0
     trace-id128: true
