@@ -20,21 +20,29 @@ import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Field;
 
+import org.mockito.Answers;
 import org.mockito.MockSettings;
 import org.mockito.Mockito;
 import org.mockito.internal.configuration.FieldAnnotationProcessor;
 
 /**
  * Instantiates a mock on a field annotated by {@link ReactiveMock}.
+ *
+ * @deprecated will be removed along with {@link ReactiveMock}, see details there
  */
+@Deprecated
 public class ReactiveMockAnnotationProcessor implements FieldAnnotationProcessor<ReactiveMock> {
     public Object process(ReactiveMock annotation, Field field) {
+        return mock(field.getType(), createSettings(annotation, field.getName()));
+    }
+
+    private MockSettings createSettings(ReactiveMock annotation, String defaultName) {
         MockSettings mockSettings = Mockito.withSettings();
         if (annotation.extraInterfaces().length > 0) {
             mockSettings.extraInterfaces(annotation.extraInterfaces());
         }
         if ("".equals(annotation.name())) {
-            mockSettings.name(field.getName());
+            mockSettings.name(defaultName);
         } else {
             mockSettings.name(annotation.name());
         }
@@ -44,9 +52,10 @@ public class ReactiveMockAnnotationProcessor implements FieldAnnotationProcessor
         if (annotation.stubOnly()) {
             mockSettings.stubOnly();
         }
-        MockSettings reactiveMockSettings = mockSettings.defaultAnswer(
-            invocation -> invocation.getMethod().isDefault() ? invocation.callRealMethod() : new ReactiveAnswer().answer(invocation));
-        return mock(field.getType(), reactiveMockSettings);
+        if (annotation.lenient()) {
+            mockSettings.lenient();
+        }
+        return mockSettings.defaultAnswer(new SkippedDefaultMethodAnswer(Answers.RETURNS_DEFAULTS));
     }
 }
 

@@ -24,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -39,7 +38,6 @@ public class FlatStringKeyCodecTest {
 
     @BeforeMethod
     public void initContext() {
-        MockitoAnnotations.initMocks(this);
         codec = new FlatStringKeyCodec<>();
     }
 

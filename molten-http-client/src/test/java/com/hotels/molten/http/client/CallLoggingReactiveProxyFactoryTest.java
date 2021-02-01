@@ -37,42 +37,42 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import okhttp3.MediaType;
 import okhttp3.ResponseBody;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import retrofit2.Response;
 
-import com.hotels.molten.test.mockito.ReactiveMock;
-import com.hotels.molten.test.mockito.ReactiveMockitoAnnotations;
-
 /**
  * Unit test for {@link CallLoggingReactiveProxyFactory}.
  */
+@ExtendWith(MockitoExtension.class)
 public class CallLoggingReactiveProxyFactoryTest {
     private static final String GROUP_ID = "grpid";
     private static final String OK = "ok";
-    @ReactiveMock
-    private Camoo service;
-    private Logger callLogger = (Logger) LoggerFactory.getLogger(CallLog.class);
+    private final Logger callLogger = (Logger) LoggerFactory.getLogger(CallLog.class);
     @Mock
+    private Camoo service;
+    @Mock(lenient = true)
     private Appender<ILoggingEvent> appender;
     private Camoo wrappedService;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
-        ReactiveMockitoAnnotations.initMocks(this);
         wrappedService = new CallLoggingReactiveProxyFactory(GROUP_ID).wrap(Camoo.class, service);
         when(appender.getName()).thenReturn("MOCK");
         callLogger.setLevel(Level.ALL);
         callLogger.addAppender(appender);
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         callLogger.detachAppender(appender);
     }
@@ -91,8 +91,7 @@ public class CallLoggingReactiveProxyFactoryTest {
             argThat(matchesLogEvent(Level.DEBUG, matchesPattern("target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=SUCCESS"))));
     }
 
-    @DataProvider(name = "errorCases")
-    public Object[][] getErrorCases() {
+    public static Object[][] getErrorCases() {
         return new Object[][]{
             new Object[]{new NullPointerException(), "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL "
                     + "shortCircuited=false rejected=false timedOut=false retry=0 error=java.lang.NullPointerException null"},
@@ -116,7 +115,8 @@ public class CallLoggingReactiveProxyFactoryTest {
         };
     }
 
-    @Test(dataProvider = "errorCases")
+    @ParameterizedTest
+    @MethodSource("getErrorCases")
     public void shouldLogFailedCallWithCause(Exception error, String logPattern) throws InterruptedException {
         when(service.get(200)).thenReturn(Mono.error(error));
 

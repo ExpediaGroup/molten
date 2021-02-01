@@ -30,13 +30,15 @@ import okhttp3.Call;
 import okhttp3.Connection;
 import okhttp3.HttpUrl;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
  * Test for {@link CollectingDelegatingEventsListener}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class CollectingDelegatingEventsListenerTest {
 
     @Mock
@@ -54,7 +56,6 @@ public class CollectingDelegatingEventsListenerTest {
 
     @BeforeMethod
     public void init() {
-        MockitoAnnotations.initMocks(this);
         AtomicLong now = new AtomicLong();
         when(clock.millis()).thenAnswer(ie -> now.getAndAdd(100L));
     }

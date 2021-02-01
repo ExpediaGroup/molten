@@ -28,36 +28,37 @@ import java.time.Duration;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 import com.hotels.molten.healthcheck.HealthIndicatorWatcher;
-import com.hotels.molten.test.mockito.ReactiveMock;
-import com.hotels.molten.test.mockito.ReactiveMockitoAnnotations;
 
 /**
  * Unit test for {@link CircuitBreakingReactiveProxyFactory}.
  */
+@ExtendWith(MockitoExtension.class)
 public class CircuitBreakingReactiveProxyFactoryTest {
     private static final String OK = "ok";
     private static final String CLIENT_ID = "clientId";
-    @ReactiveMock
+    @Mock
     private Camoo service;
     private HealthIndicatorWatcher watcher = indicator -> { };
     private SimpleMeterRegistry meterRegistry;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
-        ReactiveMockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }

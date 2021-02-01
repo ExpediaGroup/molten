@@ -24,8 +24,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.ConnectionPool;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
@@ -33,6 +34,7 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
 /**
  * Unit test for {@link ConnectionPoolInstrumenter}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class ConnectionPoolInstrumenterTest {
     private static final String CLIENT_ID = "clientId";
     private ConnectionPoolInstrumenter instrumenter;
@@ -42,7 +44,6 @@ public class ConnectionPoolInstrumenterTest {
 
     @BeforeMethod
     public void initContext() {
-        MockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         instrumenter = new ConnectionPoolInstrumenter(meterRegistry, CLIENT_ID);
         when(connectionPool.connectionCount()).thenReturn(3);

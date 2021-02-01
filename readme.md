@@ -97,6 +97,7 @@ To define all dependency versions in a consistent way one can use the dependenci
 
 # Test support modules
 * [molten-test](molten-test/readme.md) - reactive test support
+* [molten-test-mockito-autoconfigure](molten-test-mockito-autoconfigure/readme.md) - auto-configured Mockito for reactive test support
 * [molten-trace-test](molten-trace-test/readme.md) - reactive tracing test support
 
 # Experimental features

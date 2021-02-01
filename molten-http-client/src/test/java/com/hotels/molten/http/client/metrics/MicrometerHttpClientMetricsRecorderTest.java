@@ -26,9 +26,10 @@ import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
@@ -36,6 +37,7 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
 /**
  * Unit test for {@link MicrometerHttpClientMetricsRecorder}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class MicrometerHttpClientMetricsRecorderTest {
     private static final String CLIENT_ID = "clientId";
     private MicrometerHttpClientMetricsRecorder recorder;
@@ -43,7 +45,6 @@ public class MicrometerHttpClientMetricsRecorderTest {
 
     @BeforeMethod
     public void initContext() {
-        MockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         recorder = new MicrometerHttpClientMetricsRecorder(meterRegistry, CLIENT_ID);
     }
