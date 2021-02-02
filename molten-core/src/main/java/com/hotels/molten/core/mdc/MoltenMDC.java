@@ -65,7 +65,7 @@ public final class MoltenMDC {
      */
     public static void initialize(boolean onEachOperator) {
         uninitialize();
-        LOG.info("Integrating MDC with Molten...");
+        LOG.info("Integrating MDC with Molten onEachOperator={}", onEachOperator);
         Schedulers.onScheduleHook(HOOK_KEY, MDCCopyingAction::new);
         if (onEachOperator) {
             Hooks.onEachOperator(HOOK_KEY, propagate());

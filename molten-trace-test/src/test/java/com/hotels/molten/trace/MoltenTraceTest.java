@@ -109,18 +109,18 @@ public class MoltenTraceTest extends AbstractTracingTest {
             .expectNext("data")
             .verifyComplete();
         latch.await();
-        var outerSpan = capturedSpans().stream().filter(span -> "outer".equals(span.name())).findFirst().orElseThrow();
-        var midSpan = capturedSpans().stream().filter(span -> "mid".equals(span.name())).findFirst().orElseThrow();
         Assertions.assertThat(capturedSpans())
             .anySatisfy(span -> {
                 Assertions.assertThat(span).extracting(Span::parentId).isNull();
                 Assertions.assertThat(span).extracting(Span::name).isEqualTo("outer");
             });
+        var outerSpan = capturedSpans().stream().filter(span -> "outer".equals(span.name())).findFirst().orElseThrow();
         Assertions.assertThat(capturedSpans())
             .anySatisfy(span -> {
                 Assertions.assertThat(span).extracting(Span::parentId).isEqualTo(outerSpan.id());
                 Assertions.assertThat(span).extracting(Span::name).isEqualTo("mid");
             });
+        var midSpan = capturedSpans().stream().filter(span -> "mid".equals(span.name())).findFirst().orElseThrow();
         Assertions.assertThat(capturedSpans())
             .anySatisfy(span -> {
                 Assertions.assertThat(span).extracting(Span::parentId).isEqualTo(midSpan.id());

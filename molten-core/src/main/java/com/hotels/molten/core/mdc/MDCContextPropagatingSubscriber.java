@@ -35,7 +35,7 @@ final class MDCContextPropagatingSubscriber<T> extends AbstractNonFusingSubscrip
 
     private MDCContextPropagatingSubscriber(CoreSubscriber<? super T> subscriber, Map<String, String> mdc) {
         super(subscriber);
-        this.context = mdc != null ? subscriber.currentContext().put(MDC_CONTEXT_KEY, mdc) : subscriber.currentContext();
+        this.context = subscriber.currentContext().put(MDC_CONTEXT_KEY, mdc);
         LOG.trace("Current context={}", this.context);
     }
 
