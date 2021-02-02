@@ -17,28 +17,34 @@
 package com.hotels.molten.test.mockito;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
 
-import org.mockito.internal.stubbing.defaultanswers.ReturnsEmptyValues;
+import java.util.Map;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Mockito default return values for Reactor reactive types.
+ * Mockito answer to return default values for Reactor reactive types.
  */
-public class ReactiveAnswer extends ReturnsEmptyValues {
+@RequiredArgsConstructor
+public class ReactiveAnswer implements Answer<Object> {
+    private final Map<Class<?>, Object> reactiveDefaultAnswers = Map.of(
+        Mono.class, Mono.empty(),
+        Flux.class, Flux.empty()
+    );
+    @NonNull
+    private final Answer<Object> delegateAnswer;
 
     @Override
-    public Object answer(InvocationOnMock invocation) {
-        Object answer = super.answer(invocation);
+    public Object answer(InvocationOnMock invocation) throws Throwable {
+        Class<?> returnType = invocation.getMethod().getReturnType();
+        Object answer = reactiveDefaultAnswers.get(returnType);
         if (answer == null) {
-            Class<?> returnType = invocation.getMethod().getReturnType();
-            if (returnType == Mono.class) {
-                answer = Mono.empty();
-            } else if (returnType == Flux.class) {
-                answer = Flux.empty();
-            }
+            answer = delegateAnswer.answer(invocation);
         }
         return answer;
     }
@@ -50,9 +56,10 @@ public class ReactiveAnswer extends ReturnsEmptyValues {
      * @param classToMock the type to create mock for
      * @param <T>         the actual type of the mock
      * @return the mock
+     * @deprecated will be removed, use {@link org.mockito.Mockito#mock(Class)} instead
      */
+    @Deprecated
     public static <T> T reactiveMock(Class<T> classToMock) {
-        return mock(classToMock,
-            withSettings().defaultAnswer(invocation -> invocation.getMethod().isDefault() ? invocation.callRealMethod() : new ReactiveAnswer().answer(invocation)));
+        return mock(classToMock);
     }
 }

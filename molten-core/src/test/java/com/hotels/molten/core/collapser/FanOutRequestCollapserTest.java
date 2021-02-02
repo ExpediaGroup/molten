@@ -24,6 +24,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -50,11 +51,12 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.slf4j.MDC;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Ignore;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -72,6 +74,7 @@ import com.hotels.molten.test.AssertSubscriber;
  */
 @SuppressWarnings("unchecked")
 @Slf4j
+@Listeners(MockitoTestNGListener.class)
 public class FanOutRequestCollapserTest {
     private static final int CONTEXT_A = 1;
     private static final String RESULT_A = "1";
@@ -102,7 +105,6 @@ public class FanOutRequestCollapserTest {
         MoltenCore.initialize();
         MoltenMDC.initialize();
         MDC.clear();
-        MockitoAnnotations.initMocks(this);
         clock = new MockClock();
         meterRegistry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
 
@@ -473,7 +475,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     public void should_be_able_to_shutdown_gracefully() {
-        when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
+        lenient().when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
         AssertSubscriber<String> subscriber1 = AssertSubscriber.create();

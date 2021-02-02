@@ -28,6 +28,8 @@ public interface FlowMarker {
 
     /**
      * Marks a failed step.
+     *
+     * @param throwable the cause of the failure
      */
-    void failure(Throwable ex);
+    void failure(Throwable throwable);
 }

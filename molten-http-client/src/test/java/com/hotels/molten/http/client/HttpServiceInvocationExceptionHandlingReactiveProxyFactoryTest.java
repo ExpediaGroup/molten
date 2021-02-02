@@ -32,9 +32,10 @@ import java.net.SocketTimeoutException;
 import okhttp3.MediaType;
 import okhttp3.ResponseBody;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -43,6 +44,7 @@ import retrofit2.Response;
 /**
  * Unit test for {@link HttpServiceInvocationExceptionHandlingReactiveProxyFactory}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     private static final ResponseBody RESPONSE_BODY = ResponseBody.create("", MediaType.parse("application/json"));
     private static final String EXCEPTION_MESSAGE_PREFIX = "service=com.hotels.molten.http.client.Camoo";
@@ -52,7 +54,6 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
 
     @BeforeMethod
     public void initContext() {
-        MockitoAnnotations.initMocks(this);
         proxyFactory = new HttpServiceInvocationExceptionHandlingReactiveProxyFactory(DEFAULT_FAILED_RESPONSE_PREDICATE);
     }
 

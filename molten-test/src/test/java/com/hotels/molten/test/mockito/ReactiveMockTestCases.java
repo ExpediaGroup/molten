@@ -22,60 +22,31 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
 
-import java.util.function.Function;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-/**
- * Unit test for {@link ReactiveMock}.
- */
-public class ReactiveMockTest {
+class ReactiveMockTestCases {
     private static final int ID = 1;
     private static final String VALUE_A = "a";
     private static final String VALUE_B = "b";
-    @ReactiveMock
-    private ReactiveApi reactiveApi;
-    @ReactiveMock(serializable = true, stubOnly = true, extraInterfaces = Function.class, name = "custom name")
-    private ReactiveApi serializableStubOnlyReactiveApi;
 
-    @BeforeMethod
-    public void initContext() {
-        ReactiveMockitoAnnotations.initMocks(this);
-    }
-
-    @Test
-    public void shouldEmitStubValue() {
+    static void shouldEmitStubValue(ReactiveApi reactiveApi) {
         when(reactiveApi.getAll(ID)).thenReturn(Flux.just(VALUE_A, VALUE_B));
 
         StepVerifier.create(reactiveApi.getAll(ID)).expectSubscription().expectNext(VALUE_A, VALUE_B).expectComplete().verify();
     }
 
-    @Test
-    public void shouldEmitEmptyByDefault() {
+    static void shouldEmitEmptyByDefault(ReactiveApi reactiveApi) {
         StepVerifier.create(reactiveApi.getAll(ID)).expectSubscription().expectComplete().verify();
     }
 
-    @Test
-    public void shouldSupportDefaultMethod() {
+    static void shouldSupportDefaultMethod(ReactiveApi reactiveApi) {
         when(reactiveApi.getAll(ID)).thenReturn(Flux.just(VALUE_A, VALUE_B));
 
         StepVerifier.create(reactiveApi.getFirst(ID)).expectSubscription().expectNext(VALUE_A).expectComplete().verify();
     }
 
-    @Test
-    public void shouldSupportMockitoAnnotationProperties() {
-        assertThat(serializableStubOnlyReactiveApi, is(not(nullValue())));
-    }
-
-    private interface ReactiveApi {
-        Flux<String> getAll(int id);
-
-        default Mono<String> getFirst(int id) {
-            return getAll(id).take(1).single();
-        }
+    static void shouldSupportMockitoAnnotationProperties(ReactiveApi reactiveApi) {
+        assertThat(reactiveApi, is(not(nullValue())));
     }
 }

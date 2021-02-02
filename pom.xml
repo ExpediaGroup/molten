@@ -6,7 +6,7 @@
 
   <groupId>com.expediagroup.molten</groupId>
   <artifactId>molten-base</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.1.0-SNAPSHOT</version>
   <name>Molten - base</name>
   <description>Molten - a reactive toolbox for integration</description>
   <packaging>pom</packaging>
@@ -108,6 +108,7 @@
             <exclude>**/*.yml</exclude>
             <exclude>**/*.xml</exclude>
             <exclude>docker/data/**</exclude>
+            <exclude>LICENSE</exclude>
           </excludes>
         </configuration>
         <executions>

@@ -22,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
@@ -34,8 +33,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.assertj.core.api.Assertions;
 import org.mockito.Mock;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -48,6 +49,7 @@ import com.hotels.molten.test.AssertSubscriber;
 /**
  * Unit test for {@link ResilientReactiveCache}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class ResilientReactiveCacheTest {
     private static final Long KEY = 1L;
     private static final String VALUE = "value";
@@ -59,11 +61,9 @@ public class ResilientReactiveCacheTest {
     private VirtualTimeScheduler scheduler;
     private String cacheName;
 
-    @SuppressWarnings("unchecked")
     @BeforeMethod
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         scheduler = VirtualTimeScheduler.create();
         VirtualTimeScheduler.set(scheduler);
