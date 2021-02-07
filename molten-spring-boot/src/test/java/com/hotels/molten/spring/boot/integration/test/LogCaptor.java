@@ -15,11 +15,14 @@
  */
 package com.hotels.molten.spring.boot.integration.test;
 
+import static java.time.Duration.ofSeconds;
 import static java.util.Objects.requireNonNull;
+import static org.awaitility.Awaitility.await;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
@@ -27,19 +30,23 @@ import lombok.Value;
 import org.slf4j.MDC;
 
 public final class LogCaptor extends AppenderBase<ILoggingEvent> {
-    private static final List<CapturedLog> CAPTURED_LOGS = new CopyOnWriteArrayList<>();
+    private static final List<CapturedLog> CAPTURED_LOGS = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     protected void append(ILoggingEvent eventObject) {
         CAPTURED_LOGS.add(new CapturedLog(eventObject));
     }
 
-    public static List<CapturedLog> getCapturedLogs() {
-        return CAPTURED_LOGS;
+    public static List<CapturedLog> capturedLogs() {
+        return List.copyOf(CAPTURED_LOGS);
     }
 
     public static void clearCapturedLogs() {
         CAPTURED_LOGS.clear();
+    }
+
+    public static void awaitForMessage(String expectedMessagePart) {
+        await().atMost(ofSeconds(3)).until(() -> LogCaptor.capturedLogs().stream().anyMatch(c -> c.getEvent().getFormattedMessage().contains(expectedMessagePart)));
     }
 
     @Value

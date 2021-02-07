@@ -15,8 +15,12 @@
  */
 package com.hotels.molten.spring.boot.integration.test;
 
+import static java.time.Duration.ofSeconds;
+import static org.awaitility.Awaitility.await;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 import lombok.extern.slf4j.Slf4j;
 import zipkin2.Span;
@@ -24,15 +28,19 @@ import zipkin2.reporter.Reporter;
 
 @Slf4j
 public class SpanCaptor implements Reporter<Span> {
-    private static final ConcurrentLinkedDeque<Span> CAPTURED_SPANS = new ConcurrentLinkedDeque<>();
+    private static final List<Span> CAPTURED_SPANS = Collections.synchronizedList(new ArrayList<>());
 
-    public static void resetCapturedSpans() {
+    public static void clearCapturedSpans() {
         LOG.info("Clearing captured spans.");
         CAPTURED_SPANS.clear();
     }
 
     public static List<Span> capturedSpans() {
         return List.copyOf(CAPTURED_SPANS);
+    }
+
+    public static void awaitForSpanWithName(String expectedName) {
+        await().atMost(ofSeconds(3)).until(() -> SpanCaptor.capturedSpans().stream().anyMatch(s -> expectedName.equalsIgnoreCase(s.name())));
     }
 
     @Override

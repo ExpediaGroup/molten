@@ -15,6 +15,12 @@
  */
 package com.hotels.molten.spring.boot.integration;
 
+import static com.hotels.molten.spring.boot.integration.test.LogCaptor.awaitForMessage;
+import static com.hotels.molten.spring.boot.integration.test.LogCaptor.capturedLogs;
+import static com.hotels.molten.spring.boot.integration.test.LogCaptor.clearCapturedLogs;
+import static com.hotels.molten.spring.boot.integration.test.SpanCaptor.awaitForSpanWithName;
+import static com.hotels.molten.spring.boot.integration.test.SpanCaptor.capturedSpans;
+import static com.hotels.molten.spring.boot.integration.test.SpanCaptor.clearCapturedSpans;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -32,8 +38,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import zipkin2.Span;
 
-import com.hotels.molten.spring.boot.integration.test.LogCaptor;
-import com.hotels.molten.spring.boot.integration.test.SpanCaptor;
 import com.hotels.molten.spring.boot.integration.test.TestApplication;
 
 /**
@@ -88,14 +92,15 @@ public class SpringBootWebFluxIntegrationTest {
         // The order of MdcWebFilter must be lower (higher precedence) than the other filters doing any logging (e.g. TraceWebFilter in this case).
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
-        LogCaptor.clearCapturedLogs();
+        awaitForMessage("/say-hello");
+        clearCapturedLogs();
         // Post has more complicated threading due to reactive body handling.
         var requestId = webClient.post().uri("/request-id").bodyValue("thing").exchange()
             .expectStatus().isOk()
             .returnResult(String.class)
             .getResponseBody()
             .blockFirst();
-        assertThat(LogCaptor.getCapturedLogs()).allSatisfy(log -> assertThat(log.getMdc()).hasEntrySatisfying("request-id", id -> assertThat(id).isEqualTo(requestId)));
+        assertThat(capturedLogs()).allSatisfy(log -> assertThat(log.getMdc()).hasEntrySatisfying("request-id", id -> assertThat(id).isEqualTo(requestId)));
     }
 
     @RepeatedTest(3)
@@ -103,17 +108,17 @@ public class SpringBootWebFluxIntegrationTest {
         // This call is to rule out former calls potential effect on the tested ones.
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
-        SpanCaptor.resetCapturedSpans();
-        assertThat(SpanCaptor.capturedSpans()).isEmpty();
+        awaitForSpanWithName("get /say-hello");
+        clearCapturedSpans();
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
-        assertThat(SpanCaptor.capturedSpans())
+        assertThat(capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isNull();
                 assertThat(span).extracting(Span::name).isEqualTo("get /say-hello");
             });
-        var rootSpan = SpanCaptor.capturedSpans().stream().filter(span -> "get /say-hello".equals(span.name())).findFirst().orElseThrow();
-        assertThat(SpanCaptor.capturedSpans())
+        var rootSpan = capturedSpans().stream().filter(span -> "get /say-hello".equals(span.name())).findFirst().orElseThrow();
+        assertThat(capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isEqualTo(rootSpan.id());
                 assertThat(span).extracting(Span::name).isEqualTo("get");
