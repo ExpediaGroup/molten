@@ -25,7 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
@@ -38,6 +40,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import zipkin2.Span;
 
+import com.hotels.molten.spring.boot.integration.test.LogCaptor;
 import com.hotels.molten.spring.boot.integration.test.TestApplication;
 
 /**
@@ -45,6 +48,7 @@ import com.hotels.molten.spring.boot.integration.test.TestApplication;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = TestApplication.class)
 @Testcontainers
+@Slf4j
 public class SpringBootWebFluxIntegrationTest {
     @Container
     private static final MockServerContainer MOCK_SERVER = new MockServerContainer(DockerImageName.parse("jamesdbloom/mockserver:mockserver-5.11.2"));
@@ -54,12 +58,19 @@ public class SpringBootWebFluxIntegrationTest {
     @BeforeAll
     static void initMockServer() {
         System.setProperty("MOLTEN_HTTP_CLIENT_DEFAULT_TYPE", "OKHTTP");
+        LOG.info("Initialize Wiremock");
         new MockServerClient(MOCK_SERVER.getHost(), MOCK_SERVER.getServerPort())
             .when(request()
                 .withPath("/hello")
                 .withQueryStringParameter("name", "Bob"))
             .respond(response()
                 .withBody("\"Hello Bob!\""));
+
+    }
+
+    @BeforeEach
+    void initTestCase() {
+        LogCaptor.clearCapturedLogs();
     }
 
     public static String getMockServerUrl() {
