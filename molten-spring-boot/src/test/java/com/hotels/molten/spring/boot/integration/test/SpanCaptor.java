@@ -16,6 +16,7 @@
 package com.hotels.molten.spring.boot.integration.test;
 
 import static java.time.Duration.ofSeconds;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.util.ArrayList;
@@ -40,7 +41,9 @@ public class SpanCaptor implements Reporter<Span> {
     }
 
     public static void awaitForSpanWithName(String expectedName) {
-        await().atMost(ofSeconds(3)).until(() -> SpanCaptor.capturedSpans().stream().anyMatch(s -> expectedName.equalsIgnoreCase(s.name())));
+        await().atMost(ofSeconds(3)).untilAsserted(() -> assertThat(capturedSpans())
+            .anySatisfy(span -> assertThat(span).extracting(Span::name).isEqualTo(expectedName))
+        );
     }
 
     @Override

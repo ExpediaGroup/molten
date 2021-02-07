@@ -17,6 +17,7 @@ package com.hotels.molten.spring.boot.integration.test;
 
 import static java.time.Duration.ofSeconds;
 import static java.util.Objects.requireNonNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.util.ArrayList;
@@ -46,7 +47,9 @@ public final class LogCaptor extends AppenderBase<ILoggingEvent> {
     }
 
     public static void awaitForMessage(String expectedMessagePart) {
-        await().atMost(ofSeconds(3)).until(() -> LogCaptor.capturedLogs().stream().anyMatch(c -> c.getEvent().getFormattedMessage().contains(expectedMessagePart)));
+        await().atMost(ofSeconds(3)).untilAsserted(() -> assertThat(capturedLogs())
+            .anySatisfy(log -> assertThat(log.getEvent().getFormattedMessage()).contains(expectedMessagePart))
+        );
     }
 
     @Value

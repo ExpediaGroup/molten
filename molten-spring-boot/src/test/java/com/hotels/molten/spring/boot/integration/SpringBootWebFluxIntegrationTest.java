@@ -112,12 +112,14 @@ public class SpringBootWebFluxIntegrationTest {
         clearCapturedSpans();
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
+        awaitForSpanWithName("get /say-hello");
         assertThat(capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isNull();
                 assertThat(span).extracting(Span::name).isEqualTo("get /say-hello");
             });
         var rootSpan = capturedSpans().stream().filter(span -> "get /say-hello".equals(span.name())).findFirst().orElseThrow();
+        awaitForSpanWithName("get");
         assertThat(capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isEqualTo(rootSpan.id());
