@@ -15,8 +15,6 @@
  */
 package com.hotels.molten.spring.boot.integration.test;
 
-import static com.hotels.molten.trace.TracingTransformer.span;
-
 import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +33,7 @@ public class MyController {
 
     @GetMapping("/say-hello")
     public Mono<String> sayHello() {
-        return apiClient.greet("Bob")
-            .transform(span("around-client-call").forMono());
+        return apiClient.greet("Bob");
     }
 
     @PostMapping("/request-id")
@@ -52,8 +49,6 @@ public class MyController {
     public Mono<String> postMe(@RequestBody Mono<String> body) {
         LOG.info("from controller");
         return body
-            .map(b -> "got: " + b)
-            .transform(span("around-body").forMono())
             .doFinally(s -> LOG.info("from controller mono"));
     }
 

@@ -116,12 +116,6 @@ public class SpringBootWebFluxIntegrationTest {
         assertThat(SpanCaptor.capturedSpans())
             .anySatisfy(span -> {
                 assertThat(span).extracting(Span::parentId).isEqualTo(rootSpan.id());
-                assertThat(span).extracting(Span::name).isEqualTo("around-client-call");
-            });
-        var aroundSpan = SpanCaptor.capturedSpans().stream().filter(span -> "around-client-call".equals(span.name())).findFirst().orElseThrow();
-        assertThat(SpanCaptor.capturedSpans())
-            .anySatisfy(span -> {
-                assertThat(span).extracting(Span::parentId).isEqualTo(aroundSpan.id());
                 assertThat(span).extracting(Span::name).isEqualTo("get");
                 assertThat(span).extracting(Span::tags).satisfies(tags -> assertThat(tags).containsEntry("http.path", "/hello").containsEntry("http.method", "GET"));
             });
