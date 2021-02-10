@@ -93,6 +93,7 @@ To define all dependency versions in a consistent way one can use the dependenci
 * [molten-http-client](molten-http-client/readme.md) - reactive http client builder
 * [molten-metrics](molten-metrics/readme.md) - reactive metrics support
 * [molten-remote-cache](molten-remote-cache/readme.md) - reactive off-heap cache support (e.g. redis)
+* [molten-spring-boot](molten-spring-boot/readme.md) - Spring Boot 2 integration support
 * [molten-trace](molten-trace/readme.md) - reactive tracing support
 
 # Test support modules
@@ -110,3 +111,8 @@ Please refer to our [CONTRIBUTING](CONTRIBUTING.md) file.
 This project is available under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 Copyright 2020 Expedia, Inc.
+
+To add/update licence headers use:
+```
+mvn license:format
+```

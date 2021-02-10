@@ -1,8 +1,8 @@
-# reactive-remote-cache
+# Molten remote cache support
 
 A reactive remote cache implementation over Redis.
 
-In order to have a reactive cache using Redis one should create a shared cluster connection with: 
+In order to have a reactive cache using Redis (or compatible e.g. AWS ElastiCache) one should create a shared cluster connection with: 
 
 ```java
 StatefulRedisClusterConnection<Object, Object> redisConnection = RedisConnectionBuilder.builder()

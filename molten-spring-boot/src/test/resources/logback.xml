@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{ISO8601} [%thread] %-5level %logger{36} request_id=%X{request-id} span_id=%X{spanId} trace_id=%X{traceId} %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="CAPTURE" class="com.hotels.molten.spring.boot.integration.test.LogCaptor">
+  </appender>
+
+  <logger name="com.hotels.molten.spring.boot.integration.test.HelloApi" level="INFO"/>
+
+  <logger name="reactor.netty" level="INFO" />
+<!--  <logger name="com.hotels.molten.trace" level="TRACE" />-->
+<!--  <logger name="com.hotels.molten.core.mdc" level="TRACE" />-->
+<!--  <logger name="org.springframework.cloud.sleuth" level="TRACE" />-->
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="CAPTURE" />
+  </root>
+</configuration>

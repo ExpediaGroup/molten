@@ -103,6 +103,11 @@
       </dependency>
       <dependency>
         <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-spring-boot</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
         <artifactId>molten-test</artifactId>
         <version>${project.version}</version>
         <scope>test</scope>

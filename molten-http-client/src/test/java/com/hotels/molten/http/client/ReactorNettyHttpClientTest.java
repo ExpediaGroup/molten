@@ -77,12 +77,9 @@ public class ReactorNettyHttpClientTest {
             .build();
         HttpClient.create(connectionProvider)
             //.secure(spec -> spec.sslContext(SslContextBuilder.forClient()))
-            .tcpConfiguration(tcpClient ->
-                tcpClient
-                    .runOn(LoopResources.create("molten-http")) // should be singleton shared among clients
-                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // connection timeout
-                    .option(ChannelOption.TCP_NODELAY, true)
-            )
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+            .option(ChannelOption.TCP_NODELAY, true)
+            .runOn(LoopResources.create("molten-http"))
             .followRedirect(false)
             .compress(true)
             .baseUrl(BASE_URL)
@@ -155,13 +152,9 @@ public class ReactorNettyHttpClientTest {
             .build();
         var httpClient = HttpClient.create(connectionProvider)
             //.secure(spec -> spec.sslContext(SslContextBuilder.forClient()))
-            .tcpConfiguration(tcpClient ->
-                tcpClient
-                    .runOn(LoopResources.create("molten-http")) // should be singleton shared among clients
-                    .metrics(true)
-                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // connection timeout
-                    .option(ChannelOption.TCP_NODELAY, true) // https://www.extrahop.com/company/blog/2016/tcp-nodelay-nagle-quickack-best-practices/
-            )
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+            .option(ChannelOption.TCP_NODELAY, true)
+            .runOn(LoopResources.create("molten-http"))
             .followRedirect(false)
             .compress(true)
             .metrics(true, u -> u)
