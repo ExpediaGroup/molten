@@ -41,6 +41,7 @@ import org.testcontainers.utility.DockerImageName;
 import zipkin2.Span;
 
 import com.hotels.molten.spring.boot.integration.test.LogCaptor;
+import com.hotels.molten.spring.boot.integration.test.SpanCaptor;
 import com.hotels.molten.spring.boot.integration.test.TestApplication;
 
 /**
@@ -74,9 +75,9 @@ public class SpringBootWebFluxIntegrationTest {
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk()
             .expectBody(String.class).isEqualTo("Hello Bob!");
-        awaitForMessage("/say-hello", 10);
         LOG.info("Warmup finished");
         LogCaptor.clearCapturedLogs();
+        SpanCaptor.clearCapturedSpans();
     }
 
     public static String getMockServerUrl() {
