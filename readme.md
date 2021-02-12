@@ -51,13 +51,13 @@ To build Molten you should have the followings available:
 
 To compile the library and run all tests execute the following: 
 
-```
+```bash
 ./mvnw clean verify
 ``` 
 
 To also package the library execute:
 
-```
+```bash
 ./mvnw clean install
 ```
 
@@ -65,7 +65,7 @@ To also package the library execute:
 
 For your convenience there's a BOM (Bill of Materials) to import consistent module and dependency versions (defines reactor and resilience4j as well).
 
-```
+```xml
 <dependency>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-bom</artifactId>
@@ -73,10 +73,10 @@ For your convenience there's a BOM (Bill of Materials) to import consistent modu
     <scope>import</scope>
     <type>pom</type>
 </dependency>
-```             
-
-To define all dependency versions in a consistent way one can use the dependencies BOM:
 ```
+
+To define all dependency versions consistently, one can use the dependencies BOM:
+```xml
 <dependency>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-dependencies</artifactId>
