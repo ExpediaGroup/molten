@@ -19,7 +19,6 @@
   <properties>
     <checkstyle.suppressions.location>build/suppressions.xml</checkstyle.suppressions.location>
     <skip.integration.tests>false</skip.integration.tests>
-    <integration.test.concurrency>4</integration.test.concurrency>
   </properties>
 
   <modules>
@@ -88,8 +87,8 @@
           <includes>
             <include>**/*IntegrationTest</include>
           </includes>
-          <parallel>classes</parallel>
-          <threadCount>${integration.test.concurrency}</threadCount>
+          <parallel>none</parallel>
+          <threadCount>1</threadCount>
         </configuration>
         <executions>
           <execution>

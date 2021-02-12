@@ -41,6 +41,7 @@ import org.testcontainers.utility.DockerImageName;
 import zipkin2.Span;
 
 import com.hotels.molten.spring.boot.integration.test.LogCaptor;
+import com.hotels.molten.spring.boot.integration.test.SpanCaptor;
 import com.hotels.molten.spring.boot.integration.test.TestApplication;
 
 /**
@@ -70,7 +71,13 @@ public class SpringBootWebFluxIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
+        LOG.info("Warmup");
+        webClient.get().uri("/say-hello").exchange()
+            .expectStatus().isOk()
+            .expectBody(String.class).isEqualTo("Hello Bob!");
+        LOG.info("Warmup finished");
         LogCaptor.clearCapturedLogs();
+        SpanCaptor.clearCapturedSpans();
     }
 
     public static String getMockServerUrl() {
@@ -103,7 +110,7 @@ public class SpringBootWebFluxIntegrationTest {
         // The order of MdcWebFilter must be lower (higher precedence) than the other filters doing any logging (e.g. TraceWebFilter in this case).
         webClient.get().uri("/say-hello").exchange()
             .expectStatus().isOk().expectBody();
-        awaitForMessage("/say-hello");
+        awaitForMessage("/say-hello", 3);
         clearCapturedLogs();
         // Post has more complicated threading due to reactive body handling.
         var requestId = webClient.post().uri("/request-id").bodyValue("thing").exchange()

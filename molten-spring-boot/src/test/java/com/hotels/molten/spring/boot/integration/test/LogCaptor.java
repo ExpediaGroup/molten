@@ -46,8 +46,8 @@ public final class LogCaptor extends AppenderBase<ILoggingEvent> {
         CAPTURED_LOGS.clear();
     }
 
-    public static void awaitForMessage(String expectedMessagePart) {
-        await().atMost(ofSeconds(3)).untilAsserted(() -> assertThat(capturedLogs())
+    public static void awaitForMessage(String expectedMessagePart, int waitSeconds) {
+        await().atMost(ofSeconds(waitSeconds)).untilAsserted(() -> assertThat(capturedLogs())
             .anySatisfy(log -> assertThat(log.getEvent().getFormattedMessage()).contains(expectedMessagePart))
         );
     }

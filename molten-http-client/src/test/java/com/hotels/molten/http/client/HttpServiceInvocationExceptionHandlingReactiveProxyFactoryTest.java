@@ -46,7 +46,7 @@ import retrofit2.Response;
  */
 @Listeners(MockitoTestNGListener.class)
 public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
-    private static final ResponseBody RESPONSE_BODY = ResponseBody.create("", MediaType.parse("application/json"));
+    private static final String RAW_ERROR_RESPONSE_BODY = "error-body";
     private static final String EXCEPTION_MESSAGE_PREFIX = "service=com.hotels.molten.http.client.Camoo";
     @Mock
     private Camoo service;
@@ -58,7 +58,7 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldDelegateCallToActualService() {
+    public void should_delegate_call_to_actual_service() {
         when(service.get(Camoo.PARAM)).thenReturn(Mono.just(Camoo.RESULT));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -66,7 +66,7 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldCatchServiceInvocationExceptions() {
+    public void should_catch_service_invocation_exceptions() {
         NullPointerException npe = new NullPointerException();
         when(service.get(Camoo.PARAM)).thenThrow(npe);
 
@@ -84,7 +84,7 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test(dataProvider = "permanentExceptions")
-    public void shouldMapToPermanentServiceInvocationException(Exception cause) {
+    public void should_map_to_permanent_service_invocation_exception(Exception cause) {
         when(service.get(Camoo.PARAM)).thenReturn(Mono.error(cause));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -104,7 +104,7 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test(dataProvider = "temporaryExceptions")
-    public void shouldMapToTemporaryServiceInvocationException(Exception cause) {
+    public void should_map_to_temporary_service_invocation_exception(Exception cause) {
         when(service.get(Camoo.PARAM)).thenReturn(Mono.error(cause));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -114,8 +114,8 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldMapCertainHttpExceptionsToPermanentServiceInvocationExceptionWrapped() {
-        retrofit2.HttpException exception = new retrofit2.HttpException(Response.error(404, RESPONSE_BODY));
+    public void should_map_certain_http_exceptions_to_permanent_service_invocation_exception_wrapped() {
+        var exception = new retrofit2.HttpException(Response.error(404, ResponseBody.create(RAW_ERROR_RESPONSE_BODY, MediaType.parse("application/json"))));
         when(service.get(Camoo.PARAM)).thenReturn(Mono.error(exception));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -123,13 +123,13 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
             .expectErrorSatisfies(ex -> assertThat(ex)
                 .isInstanceOf(PermanentServiceInvocationException.class)
                 .hasCauseInstanceOf(HttpException.class)
-                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("httpStatus=404")))
+                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("http_status=404")))
             .verify();
     }
 
     @Test
-    public void shouldMapCertainHttpExceptionsToTemporaryServiceInvocationExceptionWrapped() {
-        retrofit2.HttpException exception = new retrofit2.HttpException(Response.error(503, RESPONSE_BODY));
+    public void should_map_certain_http_exceptions_to_temporary_service_invocation_exception_wrapped() {
+        var exception = new retrofit2.HttpException(Response.error(503, ResponseBody.create(RAW_ERROR_RESPONSE_BODY, MediaType.parse("application/json"))));
         when(service.get(Camoo.PARAM)).thenReturn(Mono.error(exception));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -137,13 +137,14 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
             .expectErrorSatisfies(ex -> assertThat(ex)
                 .isInstanceOf(TemporaryServiceInvocationException.class)
                 .hasCauseInstanceOf(HttpException.class)
-                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("httpStatus=503")))
+                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("http_status=503")))
             .verify();
     }
 
     @Test
-    public void shouldLogServiceNameAndStatusCodeWhenAHttpExceptionCausedTemporaryExceptionHappens() {
-        when(service.get(Camoo.PARAM)).thenReturn(Mono.error(new retrofit2.HttpException(Response.error(503, RESPONSE_BODY))));
+    public void should_log_service_name_and_status_code_when_ahttp_exception_caused_temporary_exception_happens() {
+        when(service.get(Camoo.PARAM))
+            .thenReturn(Mono.error(new retrofit2.HttpException(Response.error(503, ResponseBody.create(RAW_ERROR_RESPONSE_BODY, MediaType.parse("application/json"))))));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
         StepVerifier.create(wrappedService.get(PARAM))
@@ -151,12 +152,12 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
                 .hasMessageContaining(EXCEPTION_MESSAGE_PREFIX)
                 .hasMessageContaining("Temporary service invocation exception")
                 .hasCauseInstanceOf(HttpException.class)
-                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("httpStatus=503")))
+                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("http_status=503")))
             .verify();
     }
 
     @Test
-    public void shouldLogServiceNameWhenAConnectionExceptionHappens() {
+    public void should_log_service_name_when_aconnection_exception_happens() {
         when(service.get(Camoo.PARAM)).thenReturn(Mono.error(new ConnectException()));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -169,7 +170,7 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldLogServiceNameWhenASocketTimeoutExceptionHappens() {
+    public void should_log_service_name_when_asocket_timeout_exception_happens() {
         when(service.get(Camoo.PARAM)).thenReturn(Mono.error(new SocketTimeoutException()));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -179,7 +180,7 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldLogServiceNameWhenAnUnExceptedExceptionHappens() {
+    public void should_log_service_name_when_an_un_excepted_exception_happens() {
         when(service.get(Camoo.PARAM)).thenReturn(Mono.error(new NullPointerException()));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
@@ -189,8 +190,9 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldLogServiceNameAndStatusCodeWhenAHttpExceptionCausedPermanentExceptionHappens() {
-        when(service.get(Camoo.PARAM)).thenReturn(Mono.error(new retrofit2.HttpException(Response.error(404, RESPONSE_BODY))));
+    public void should_log_service_name_and_status_code_when_ahttp_exception_caused_permanent_exception_happens() {
+        when(service.get(Camoo.PARAM))
+            .thenReturn(Mono.error(new retrofit2.HttpException(Response.error(404, ResponseBody.create(RAW_ERROR_RESPONSE_BODY, MediaType.parse("application/json"))))));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
         StepVerifier.create(wrappedService.get(PARAM))
@@ -198,20 +200,34 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldHandleHttpExceptionForRetrofitResponse() {
-        when(service.getResponse()).thenReturn(Mono.just(Response.error(404, RESPONSE_BODY)));
+    public void should_be_possible_to_read_error_body_twice() {
+        Response<String> errorResponse = Response.error(404, ResponseBody.create(RAW_ERROR_RESPONSE_BODY, MediaType.parse("application/json")));
+        var httpException = new HttpException(new retrofit2.HttpException(errorResponse));
+        assertThat(httpException.getMessage()).contains("error_body=" + RAW_ERROR_RESPONSE_BODY);
+        assertThat(new String(httpException.getErrorBody(), httpException.getCharset())).isEqualTo(RAW_ERROR_RESPONSE_BODY);
+        assertThat(httpException.getErrorBody()).isEqualTo(httpException.getErrorBody());
+    }
+
+    @Test
+    public void should_handle_http_exception_for_retrofit_response() {
+        Response<String> expectedResponse = Response.error(404, ResponseBody.create(RAW_ERROR_RESPONSE_BODY, MediaType.parse("application/json")));
+        when(service.getResponse()).thenReturn(Mono.just(expectedResponse));
 
         Camoo wrappedService = proxyFactory.wrap(Camoo.SERVICE_TYPE, service);
         StepVerifier.create(wrappedService.getResponse())
             .expectErrorSatisfies(ex -> assertThat(ex)
                 .isInstanceOf(PermanentServiceInvocationException.class)
                 .hasCauseInstanceOf(HttpException.class)
-                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("httpStatus=404")))
+                .satisfies(e -> {
+                    assertThat(e.getCause()).hasMessageContaining("http_status=" + expectedResponse.code());
+                    assertThat(e.getCause()).hasMessageContaining("error_message=" + expectedResponse.message());
+                    assertThat(e.getCause()).hasMessageContaining("error_body=" + RAW_ERROR_RESPONSE_BODY);
+                }))
             .verify();
     }
 
     @Test
-    public void shouldApplyCustomResponseSuccessfulPredicate() {
+    public void should_apply_custom_response_successful_predicate() {
         proxyFactory = new HttpServiceInvocationExceptionHandlingReactiveProxyFactory(response -> !response.isSuccessful() || response.code() == 204);
         when(service.getResponse()).thenReturn(Mono.just(Response.success(204, null)));
 
@@ -220,7 +236,7 @@ public class HttpServiceInvocationExceptionHandlingReactiveProxyFactoryTest {
             .expectErrorSatisfies(ex -> assertThat(ex)
                 .isInstanceOf(TemporaryServiceInvocationException.class)
                 .hasCauseInstanceOf(HttpException.class)
-                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("httpStatus=204")))
+                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("http_status=204")))
             .verify();
     }
 }

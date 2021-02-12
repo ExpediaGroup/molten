@@ -111,7 +111,7 @@ public class CallLoggingReactiveProxyFactoryTest {
             new Object[]{new PermanentServiceInvocationException("doh", Camoo.class,
                     new HttpException(new retrofit2.HttpException(Response.error(400, ResponseBody.create("this is bad", MediaType.parse("text/plain")))))),
                          "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=false timedOut=false retry=0 "
-                    + "error=com.hotels.molten.http.client.HttpException httpStatus=400 error_message=Response.error\\(\\) error_body=this is bad"}
+                    + "error=com.hotels.molten.http.client.HttpException http_status=400 error_message=Response.error\\(\\) error_body=this is bad"}
         };
     }
 
