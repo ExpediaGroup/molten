@@ -112,8 +112,4 @@ final class CallLog {
     private Throwable causeOrSelf(Throwable e) {
         return e.getCause() != null ? e.getCause() : e;
     }
-
-    private String getMessage(Throwable ex) {
-        return ex instanceof HttpException ? "httpStatus=" + ((HttpException) ex).getStatusCode() : ex.getMessage();
-    }
 }

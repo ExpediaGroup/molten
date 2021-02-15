@@ -79,8 +79,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "max by (m_application, name) (client_request_circuit_status)",
-          "legendFormat": "{{m_application}} - {{name}}",
+          "expr": "max by (application, client) (http_client_request_circuit_status)",
+          "legendFormat": "{{application}} - {{client}}",
           "refId": "A"
         }
       ],
@@ -196,8 +196,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (m_application,name) (rate(client_request_bulkhead_rejected[$window]))",
-          "legendFormat": "{{m_application}} - {{name}}",
+          "expr": "sum by (application,client) (rate(http_client_request_bulkhead_rejected[$window]))",
+          "legendFormat": "{{application}} - {{client}}",
           "refId": "A"
         }
       ],
@@ -288,8 +288,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (m_application,name) (rate(client_request_timeouts[$window]))",
-          "legendFormat": "{{m_application}} - {{name}}",
+          "expr": "sum by (application,client) (rate(http_client_request_timeouts_total[$window]))",
+          "legendFormat": "{{application}} - {{client}}",
           "refId": "A"
         }
       ],
@@ -380,8 +380,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum by (m_application,name) (rate(client_requests_seconds{type=\"total\", status=~\"error|failure\"}[$window]))",
-          "legendFormat": "{{m_application}} - {{name}}",
+          "expr": "sum by (application,client) (rate(http_client_requests_seconds_count{type=\"total\", status=~\"error|failure\"}[$window]))",
+          "legendFormat": "{{application}} - {{client}}",
           "refId": "A"
         }
       ],
@@ -505,7 +505,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", type=\"total\", status=\"success\"}[$window]))\n/sum(rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", type=\"total\"}[$window]))",
+          "expr": "sum(rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", type=\"total\", status=\"success\"}[$window]))\n/sum(rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", type=\"total\"}[$window]))",
           "refId": "A"
         }
       ],
@@ -573,7 +573,7 @@
       "pluginVersion": "6.6.1",
       "targets": [
         {
-          "expr": "max(rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", type=\"total\"}[$window]))",
+          "expr": "max(rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", type=\"total\"}[$window]))",
           "refId": "A"
         }
       ],
@@ -620,7 +620,7 @@
       "pluginVersion": "6.6.1",
       "targets": [
         {
-          "expr": "max(rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", type=\"total\"}[$window]))",
+          "expr": "max(rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", type=\"total\"}[$window]))",
           "refId": "A"
         }
       ],
@@ -667,7 +667,7 @@
       "pluginVersion": "6.6.1",
       "targets": [
         {
-          "expr": "sum(rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", type=\"total\"}[$window]))",
+          "expr": "sum(rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", type=\"total\"}[$window]))",
           "refId": "A"
         }
       ],
@@ -729,17 +729,17 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max by (endpoint,quantile)(client_requests_seconds{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", status=\"success\", type=\"raw\"})",
+              "expr": "max by (endpoint,quantile)(http_client_requests_seconds{application=\"$application\", pod=~\"$pod\", client=\"$client\", status=\"success\", type=\"raw\"})",
               "legendFormat": "{{endpoint}} - {{quantile}}",
               "refId": "A"
             },
             {
-              "expr": "max (client_config_averageTimeInMs{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"}/1000)",
+              "expr": "max (http_client_config_averageTimeInMs{application=\"$application\", pod=~\"$pod\", client=\"$client\"}/1000)",
               "legendFormat": "config - avg response time",
               "refId": "B"
             },
             {
-              "expr": "max (client_config_peakTimeInMs{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"}/1000)",
+              "expr": "max (http_client_config_peakTimeInMs{application=\"$application\", pod=~\"$pod\", client=\"$client\"}/1000)",
               "legendFormat": "config - peak response time",
               "refId": "C"
             }
@@ -830,7 +830,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (endpoint,type,status) (rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", status=\"success\"}[$window]))",
+              "expr": "sum by (endpoint,type,status) (rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", status=\"success\"}[$window]))",
               "legendFormat": "{{endpoint}} - {{type}} - {{status}}",
               "refId": "A"
             }
@@ -920,7 +920,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (endpoint,type,status) (rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", status=~\"error|failure\"}[$window]))",
+              "expr": "sum by (endpoint,type,status) (rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", status=~\"error|failure\"}[$window]))",
               "legendFormat": "{{endpoint}} - {{type}} - {{status}}",
               "refId": "A"
             }
@@ -1010,7 +1010,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (endpoint,type,status) (client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint,type,status) (http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - {{type}} - {{status}}",
               "refId": "A"
             }
@@ -1101,7 +1101,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max by (endpoint) (client_request_circuit_status{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max by (endpoint) (http_client_request_circuit_status{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}}",
               "refId": "A"
             }
@@ -1223,12 +1223,12 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max by (endpoint) (client_request_circuit_failure{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max by (endpoint) (http_client_request_circuit_failure{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}}",
               "refId": "A"
             },
             {
-              "expr": "max (client_config_failureThresholdPercentage{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max (http_client_config_failureThresholdPercentage{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "failure threshold",
               "refId": "B"
             }
@@ -1326,12 +1326,12 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max by (endpoint) (client_request_circuit_slowness{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max by (endpoint) (http_client_request_circuit_slowness{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}}",
               "refId": "A"
             },
             {
-              "expr": "max (client_config_slowCallRateThreshold{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max (http_client_config_slowCallRateThreshold{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "failure threshold",
               "refId": "B"
             }
@@ -1428,37 +1428,37 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (endpoint) (client_request_circuit_buffered{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint) (http_client_request_circuit_buffered{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - buffered",
               "refId": "A"
             },
             {
-              "expr": "sum by (endpoint) (client_request_circuit_successful{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint) (http_client_request_circuit_successful{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - successful",
               "refId": "F"
             },
             {
-              "expr": "sum by (endpoint) (client_request_circuit_failed{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint) (http_client_request_circuit_failed{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - failed",
               "refId": "B"
             },
             {
-              "expr": "sum by (endpoint) (client_request_circuit_rejected{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint) (http_client_request_circuit_rejected{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - rejected",
               "refId": "C"
             },
             {
-              "expr": "sum by (endpoint) (client_request_circuit_slow{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint) (http_client_request_circuit_slow{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - slow",
               "refId": "G"
             },
             {
-              "expr": "sum by (endpoint) (client_request_circuit_slow_failed{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint) (http_client_request_circuit_slow_failed{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - slow failed",
               "refId": "D"
             },
             {
-              "expr": "sum by (endpoint) (client_request_circuit_slow_successful{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "sum by (endpoint) (http_client_request_circuit_slow_successful{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{endpoint}} - slow successful",
               "refId": "E"
             }
@@ -1549,7 +1549,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (endpoint,retry) (rate(client_request_retries{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"}[$window]))",
+              "expr": "sum by (endpoint,retry) (rate(http_client_request_retries_total{application=\"$application\", pod=~\"$pod\", client=\"$client\"}[$window]))",
               "legendFormat": "{{endpoint}} - {{retry}}",
               "refId": "A"
             }
@@ -1640,27 +1640,27 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max (client_http_dispatcher_max{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max (http_client_dispatcher_max_calls{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "dispatcher - max",
               "refId": "B"
             },
             {
-              "expr": "max (client_http_dispatcher_running{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max (http_client_dispatcher_running_calls{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "dispatcher - running ",
               "refId": "A"
             },
             {
-              "expr": "max (client_http_dispatcher_queued{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max (http_client_dispatcher_queued_calls{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "dispatcher - queued",
               "refId": "E"
             },
             {
-              "expr": "max (client_http_connection_pool_total{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max (http_client_connection_pool_total_connections{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "connection pool - total",
               "refId": "C"
             },
             {
-              "expr": "max (client_http_connection_pool_idle{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max (http_client_connection_pool_idle_connections{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "connection pool - idle",
               "refId": "D"
             }
@@ -1752,7 +1752,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max by (config) (client_configuration{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\"})",
+              "expr": "max by (config) (http_client_configuration{application=\"$application\", pod=~\"$pod\", client=\"$client\"})",
               "legendFormat": "{{config}}",
               "refId": "B"
             }
@@ -1799,7 +1799,7 @@
           }
         }
       ],
-      "title": "Client details in $application $pod_name instance(s)",
+      "title": "Client details in $application $pod instance(s)",
       "type": "row"
     },
     {
@@ -1859,8 +1859,8 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max by (endpoint,pod_name)(client_requests_seconds{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", quantile=\"$percentile\", type=\"raw\"})",
-              "legendFormat": "{{endpoint}} - {{pod_name}}",
+              "expr": "max by (endpoint,pod)(http_client_requests_seconds{application=\"$application\", pod=~\"$pod\", client=\"$client\", quantile=\"$percentile\", type=\"raw\"})",
+              "legendFormat": "{{endpoint}} - {{pod}}",
               "refId": "A"
             }
           ],
@@ -1950,8 +1950,8 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (endpoint,pod_name) (rate(client_requests_seconds_count{m_application=\"$application\", pod_name=~\"$pod_name\", name=\"$client\", type=\"total\"}[$window]))",
-              "legendFormat": "{{endpoint}} - {{pod_name}}",
+              "expr": "sum by (endpoint,pod) (rate(http_client_requests_seconds_count{application=\"$application\", pod=~\"$pod\", client=\"$client\", type=\"total\"}[$window]))",
+              "legendFormat": "{{endpoint}} - {{pod}}",
               "refId": "A"
             }
           ],
@@ -2032,14 +2032,14 @@
         "current": {
         },
         "datasource": "$datasource",
-        "definition": "label_values(m_application)",
+        "definition": "label_values(application)",
         "hide": 0,
         "includeAll": false,
         "label": null,
         "multi": false,
         "name": "application",
         "options": [],
-        "query": "label_values(m_application)",
+        "query": "label_values(application)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -2058,14 +2058,14 @@
           "value": "$__all"
         },
         "datasource": "$datasource",
-        "definition": "label_values(jvm_memory_used_bytes{m_application=\"$application\"}, pod_name)",
+        "definition": "label_values(jvm_memory_used_bytes{application=\"$application\"}, pod)",
         "hide": 0,
         "includeAll": true,
         "label": null,
         "multi": false,
-        "name": "pod_name",
+        "name": "pod",
         "options": [],
-        "query": "label_values(jvm_memory_used_bytes{m_application=\"$application\"}, pod_name)",
+        "query": "label_values(jvm_memory_used_bytes{application=\"$application\"}, pod)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -2081,14 +2081,14 @@
         "current": {
         },
         "datasource": "$datasource",
-        "definition": "label_values(client_requests_seconds, name)",
+        "definition": "label_values(http_client_requests_seconds, client)",
         "hide": 0,
         "includeAll": false,
         "label": null,
         "multi": false,
         "name": "client",
         "options": [],
-        "query": "label_values(client_requests_seconds, name)",
+        "query": "label_values(http_client_requests_seconds, client)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,

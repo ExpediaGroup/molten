@@ -19,7 +19,6 @@ package com.hotels.molten.cache.redis;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.time.Duration;
 import java.util.function.Supplier;
@@ -28,8 +27,10 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mock;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -39,6 +40,7 @@ import reactor.test.scheduler.VirtualTimeScheduler;
  * Unit test for {@link RetryingRedisConnectionProvider}.
  */
 @Slf4j
+@Listeners(MockitoTestNGListener.class)
 public class RetryingRedisConnectionProviderTest {
 
     @Mock
@@ -52,7 +54,6 @@ public class RetryingRedisConnectionProviderTest {
 
     @BeforeMethod
     public void initContext() {
-        initMocks(this);
         scheduler = VirtualTimeScheduler.create();
         VirtualTimeScheduler.set(scheduler);
         connectionProvider = new RetryingRedisConnectionProvider(connectionSupplier);

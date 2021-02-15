@@ -30,12 +30,12 @@ import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
+import reactor.test.StepVerifier;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
@@ -49,7 +49,6 @@ import com.hotels.molten.trace.test.TracingTestSupport;
  * Metrics: reactor.netty.http.client.HttpClient#metrics(boolean, reactor.netty.http.client.HttpClientMetricsRecorder)
  * reactor.netty.channel.MicrometerChannelMetricsRecorder
  */
-@Ignore
 public class ReactorNettyHttpClientTest {
     private static final Logger LOG = LoggerFactory.getLogger("TEST");
 
@@ -62,7 +61,7 @@ public class ReactorNettyHttpClientTest {
     }
 
     @Test
-    public void should() throws InterruptedException {
+    public void shouldWork() throws InterruptedException {
         var connectionProvider = ConnectionProvider.builder("fixed")
             .name("my-connection-pool")
             .maxConnections(1)
@@ -77,26 +76,22 @@ public class ReactorNettyHttpClientTest {
             .build();
         HttpClient.create(connectionProvider)
             //.secure(spec -> spec.sslContext(SslContextBuilder.forClient()))
-            .tcpConfiguration(tcpClient ->
-                tcpClient
-                    .runOn(LoopResources.create("molten-http")) // should be singleton shared among clients
-                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // connection timeout
-                    .option(ChannelOption.TCP_NODELAY, true)
-            )
+            .runOn(LoopResources.create("molten-http")) // should be singleton shared among clients
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // connection timeout
+            .option(ChannelOption.TCP_NODELAY, true)
             .followRedirect(false)
             .compress(true)
             .baseUrl(BASE_URL)
             .get()
-            //.post().send(ByteBufFlux.fromString(Mono.just("hello")))
             .uri("/delay/100")
-            //.response((response, body) -> {})
             .responseContent()
             .asString()
             .doOnSubscribe(s -> LOG.info("subscribing 0"))
-            .timeout(Duration.ofMillis(1320))
+            .timeout(Duration.ofMillis(1000))
             .doFinally(s -> LOG.info("finally 0 {}", s))
-            .subscribe(r -> LOG.info("result 0 {}", r), e -> LOG.error("error 0", e), () -> LOG.info("completed 0"));
-        Thread.sleep(5000);
+            .as(StepVerifier::create)
+            .expectNext("\"success\"")
+            .verifyComplete();
     }
 
     @Test
@@ -155,13 +150,9 @@ public class ReactorNettyHttpClientTest {
             .build();
         var httpClient = HttpClient.create(connectionProvider)
             //.secure(spec -> spec.sslContext(SslContextBuilder.forClient()))
-            .tcpConfiguration(tcpClient ->
-                tcpClient
-                    .runOn(LoopResources.create("molten-http")) // should be singleton shared among clients
-                    .metrics(true)
-                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // connection timeout
-                    .option(ChannelOption.TCP_NODELAY, true) // https://www.extrahop.com/company/blog/2016/tcp-nodelay-nagle-quickack-best-practices/
-            )
+            .runOn(LoopResources.create("molten-http"))
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+            .option(ChannelOption.TCP_NODELAY, true)
             .followRedirect(false)
             .compress(true)
             .metrics(true, u -> u)
@@ -175,20 +166,23 @@ public class ReactorNettyHttpClientTest {
 
         ServiceEndpoint serviceClient = retrofit.create(ServiceEndpoint.class);
 
-        serviceClient.postData(new Request("text", 123))
+        serviceClient.postData(new Request("mirror me!", 1234))
             .doOnSubscribe(s -> LOG.info("subscribing"))
             .timeout(Duration.ofMillis(1000))
             .doFinally(s -> LOG.info("finally {}", s))
-            .subscribe(r -> LOG.info("result {}", r), e -> LOG.error("error", e), () -> LOG.info("completed"));
-        //Thread.sleep(50000);
-        Flux.interval(Duration.ZERO, Duration.ofMillis(200))
-            .take(1000)
+            .as(StepVerifier::create)
+            .expectNext(new Response("mirror me!", 1234))
+            .verifyComplete();
+
+        Flux.interval(Duration.ZERO, Duration.ofMillis(100))
+            .take(100)
             .flatMap(i -> serviceClient.getDelayed(new Random().nextInt(400) + 100)
                 .doOnSubscribe(s -> LOG.info("subscribing"))
                 .timeout(Duration.ofMillis(1000))
                 .doFinally(s -> LOG.info("finally {}", s))
             )
-            .subscribe(r -> LOG.info("result {}", r), e -> LOG.error("error", e), () -> LOG.info("completed"));
-        Thread.sleep(50000);
+            .as(StepVerifier::create)
+            .expectNextCount(100)
+            .verifyComplete();
     }
 }

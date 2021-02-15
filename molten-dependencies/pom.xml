@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-platform</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.1-SNAPSHOT</version>
     <relativePath>../molten-platform/pom.xml</relativePath>
   </parent>
 
@@ -18,19 +18,19 @@
   <properties>
     <caffeine.version>2.8.6</caffeine.version>
     <jackson.version>2.11.3</jackson.version>
-    <guava.version>30.0-jre</guava.version><!-- tested from 24.0-jre -->
+    <guava.version>30.0-jre</guava.version>
     <lettuce-core.version>5.3.5.RELEASE</lettuce-core.version>
     <logback.version>1.2.3</logback.version>
     <lombok.version>1.18.16</lombok.version>
-    <micrometer.version>1.5.4</micrometer.version>
-    <zipkin-brave.version>5.12.6</zipkin-brave.version>
+    <micrometer.version>1.6.2</micrometer.version>
+    <zipkin-brave.version>5.13.2</zipkin-brave.version>
     <zipkin-reporter.version>2.16.3</zipkin-reporter.version>
     <kryo.version>4.0.2</kryo.version>
     <kryo-serializers.version>0.45</kryo-serializers.version>
     <jsr305.version>3.0.2</jsr305.version>
     <vertx.version>3.9.4</vertx.version>
-    <netty.version>4.1.54.Final</netty.version>
-    <reactor-netty.version>0.9.11.RELEASE</reactor-netty.version><!-- TODO: upgrade to 1.0+ once https://github.com/reactor/reactor-netty/issues/1397 is resolved -->
+    <netty.version>4.1.59.Final</netty.version>
+    <reactor-netty.version>1.0.4</reactor-netty.version>
     <protobuf.version>3.0.0</protobuf.version>
     <retrofit.version>2.9.0</retrofit.version>
     <okhttp.version>4.9.0</okhttp.version>

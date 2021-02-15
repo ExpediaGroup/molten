@@ -27,8 +27,9 @@ import io.github.resilience4j.core.EventConsumer;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.test.StepVerifier;
 
@@ -37,6 +38,7 @@ import com.hotels.molten.healthcheck.Status;
 /**
  * Unit test for {@link HealthIndicatorOverCircuitBreaker}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class HealthIndicatorOverCircuitBreakerTest {
     private static final String A_NAME = "any";
     @Mock
@@ -49,7 +51,6 @@ public class HealthIndicatorOverCircuitBreakerTest {
 
     @BeforeMethod
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         when(circuitBreaker.getEventPublisher()).thenReturn(eventPublisher);
         when(circuitBreaker.getState()).thenReturn(CircuitBreaker.State.CLOSED);
         when(circuitBreaker.getName()).thenReturn(A_NAME);

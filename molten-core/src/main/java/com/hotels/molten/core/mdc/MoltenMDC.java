@@ -65,7 +65,7 @@ public final class MoltenMDC {
      */
     public static void initialize(boolean onEachOperator) {
         uninitialize();
-        LOG.info("Integrating MDC with Molten...");
+        LOG.info("Integrating MDC with Molten onEachOperator={}", onEachOperator);
         Schedulers.onScheduleHook(HOOK_KEY, MDCCopyingAction::new);
         if (onEachOperator) {
             Hooks.onEachOperator(HOOK_KEY, propagate());
@@ -105,23 +105,21 @@ public final class MoltenMDC {
         private MDCCopyingAction(Runnable delegate) {
             this.delegate = requireNonNull(delegate);
             savedContextMap = MDC.getCopyOfContextMap();
+            LOG.trace("saved MDC {}", savedContextMap);
         }
 
         @Override
         public void run() {
             if (savedContextMap != null) {
-                var currentContextMap = MDC.getCopyOfContextMap();
+                LOG.trace("restoring MDC {}", savedContextMap);
                 MDC.setContextMap(savedContextMap);
                 try {
                     delegate.run();
                 } finally {
-                    if (currentContextMap != null) {
-                        MDC.setContextMap(currentContextMap);
-                    } else {
-                        MDC.clear();
-                    }
+                    MDC.clear();
                 }
             } else {
+                LOG.trace("no MDC to restore");
                 delegate.run();
             }
         }

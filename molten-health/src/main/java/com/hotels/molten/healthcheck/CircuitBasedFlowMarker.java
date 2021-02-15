@@ -59,8 +59,8 @@ public final class CircuitBasedFlowMarker implements HealthIndicator, FlowMarker
     }
 
     @Override
-    public void failure(Throwable ex) {
-        circuitBreaker.onError(0, TimeUnit.MILLISECONDS, ex);
+    public void failure(Throwable throwable) {
+        circuitBreaker.onError(0, TimeUnit.MILLISECONDS, throwable);
     }
 
 }

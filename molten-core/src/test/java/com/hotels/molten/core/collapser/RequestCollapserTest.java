@@ -38,10 +38,11 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.slf4j.MDC;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -58,6 +59,7 @@ import com.hotels.molten.test.AssertSubscriber;
  * Unit test for {@link RequestCollapser}.
  */
 @Slf4j
+@Listeners(MockitoTestNGListener.class)
 public class RequestCollapserTest {
     private static final int CONTEXT = 1;
     private static final String RESULT = "result";
@@ -78,7 +80,6 @@ public class RequestCollapserTest {
         MDC.clear();
         MoltenCore.initialize();
         MoltenMDC.initialize();
-        MockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         scheduler = VirtualTimeScheduler.create();
         timeoutScheduler = VirtualTimeScheduler.create();

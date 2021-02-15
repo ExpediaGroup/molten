@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
@@ -45,7 +46,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import com.hotels.molten.test.mockito.ReactiveMockitoAnnotations;
 import com.hotels.molten.trace.test.AbstractTracingTest;
 import com.hotels.molten.trace.test.SpanMatcher;
 
@@ -54,6 +54,7 @@ import com.hotels.molten.trace.test.SpanMatcher;
  */
 @Slf4j
 public class TracingTransformerTest extends AbstractTracingTest {
+    private AutoCloseable mocks;
     private Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     @Mock
     private Appender<ILoggingEvent> appender;
@@ -62,14 +63,15 @@ public class TracingTransformerTest extends AbstractTracingTest {
 
     @BeforeMethod
     public void init() {
-        ReactiveMockitoAnnotations.initMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
         when(appender.getName()).thenReturn("MOCK");
         rootLogger.addAppender(appender);
     }
 
     @AfterClass
-    public void tearDown() {
+    public void tearDown() throws Exception {
         rootLogger.detachAppender(appender);
+        mocks.close();
     }
 
     @Test

@@ -16,7 +16,6 @@
 
 package com.hotels.molten.cache.resilience;
 
-import static com.hotels.molten.test.mockito.ReactiveMockitoAnnotations.initMocks;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,32 +25,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import com.hotels.molten.cache.ReactiveCache;
 import com.hotels.molten.test.AssertSubscriber;
-import com.hotels.molten.test.mockito.ReactiveMock;
 
 /**
  * Unit test for {@link ResilientSharedReactiveCache}.
  */
+@ExtendWith(MockitoExtension.class)
 public class ResilientSharedReactiveCacheTest {
     private static final Long KEY = 1L;
     private static final String VALUE = "value";
     private static final String CACHE_NAME = "cacheName";
     private static final AtomicInteger IDX = new AtomicInteger();
     private ResilientSharedReactiveCache<Long, String> resilientCache;
-    @ReactiveMock
+    @Mock
     private ReactiveCache<Long, String> cache;
     private MeterRegistry meterRegistry;
 
-    @SuppressWarnings("unchecked")
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
-        initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
     }
 

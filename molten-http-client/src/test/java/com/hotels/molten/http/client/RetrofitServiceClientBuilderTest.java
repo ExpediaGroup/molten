@@ -241,7 +241,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
             .verifyErrorSatisfies(ex -> assertThat(ex).isInstanceOf(PermanentServiceInvocationException.class)
                 .hasCauseInstanceOf(HttpException.class)
                 .satisfies(e -> assertThat(e.getCause()).hasCauseInstanceOf(retrofit2.HttpException.class)
-                    .hasMessage("httpStatus=400 error_message=Bad Request error_body=\"error\"")));
+                    .hasMessage("http_status=400 error_message=Bad Request error_body=\"error\"")));
     }
 
     @Test(dataProvider = "common")

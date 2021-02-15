@@ -26,22 +26,47 @@ import java.lang.annotation.Target;
 /**
  * Marks a field as a reactive mock.
  * <p>
- * <strong><code>ReactiveMockitoAnnotations.initMocks(this)</code></strong> method has to be called to initialize annotated objects.
+ * <strong>{@link ReactiveMockitoAnnotations#initMocks(Object)}</strong> method has to be called to initialize annotated objects.
  *
+ * @see org.mockito.Mock
  * @see org.mockito.Spy
  * @see org.mockito.InjectMocks
- * @see ReactiveMockitoAnnotations#initMocks(Object)
+ * @see org.mockito.MockitoAnnotations#openMocks(Object)
  * @see org.mockito.junit.MockitoJUnitRunner
+ * @deprecated Please use the usual way to create your reactive mocks, like annotation with {@link org.mockito.Mock} or creating with {@link org.mockito.Mockito#mock(Class)}.
+ * <p>
+ * To skip stubbing non-abstract methods on a mock, please configure it's default answer with {@link org.mockito.Answers#CALLS_REAL_METHODS}.
+ * <p>
+ * To skip stubbing a specific non-abstract method, use the usual mocking mechanisms, like {@code when(mock.someMethod()).thenCallRealMethod()}.
  */
 @Target(FIELD)
 @Retention(RUNTIME)
 @Documented
+@Deprecated
 public @interface ReactiveMock {
+
+    /**
+     * Mock will have custom name (shown in verification errors), see {@link org.mockito.MockSettings#name(String)}.
+     */
     String name() default "";
 
+    /**
+     * Mock will have extra interfaces, see {@link org.mockito.MockSettings#extraInterfaces(Class[])}.
+     */
     Class<?>[] extraInterfaces() default {};
 
+    /**
+     * Mock will be 'stubOnly', see {@link org.mockito.MockSettings#stubOnly()}.
+     */
     boolean stubOnly() default false;
 
+    /**
+     * Mock will be serializable, see {@link org.mockito.MockSettings#serializable()}.
+     */
     boolean serializable() default false;
+
+    /**
+     * Mock will be lenient, see {@link org.mockito.MockSettings#lenient()}.
+     */
+    boolean lenient() default false;
 }
