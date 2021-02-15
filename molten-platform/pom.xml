@@ -53,7 +53,7 @@
     <logback.version>1.2.3</logback.version>
     <logback.json.version>0.1.5</logback.json.version>
     <logstash.logback.encoder.version>6.6</logstash.logback.encoder.version>
-    <guava.version>30.0-jre</guava.version>
+    <guava.version>30.1-jre</guava.version>
     <testng.version>7.3.0</testng.version>
     <assertj.version>3.18.1</assertj.version>
     <hamcrest.version>2.0.0.0</hamcrest.version>
