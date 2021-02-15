@@ -23,13 +23,13 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableMultimap;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.HttpUrl;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
@@ -37,18 +37,16 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
 /**
  * Unit test for {@link HttpMetricsReporterHandler}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class HttpMetricsReporterHandlerTest {
     private static final String CLIENT_ID = "clientId";
     private MeterRegistry meterRegistry;
     @Mock
     private HttpUrl httpUrl;
-    @Mock
-    private Timer timer;
     private HttpMetricsReporterHandler handler;
 
     @BeforeMethod
     public void init() {
-        MockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         handler = new HttpMetricsReporterHandler(meterRegistry, CLIENT_ID);
     }

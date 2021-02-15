@@ -28,8 +28,9 @@ import io.lettuce.core.event.connection.DisconnectedEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
@@ -43,6 +44,7 @@ import com.hotels.molten.test.AssertSubscriber;
  * Unit test for {@link LettuceEventBasedHealthIndicator}.
  */
 @Slf4j
+@Listeners(MockitoTestNGListener.class)
 public class LettuceEventBasedHealthIndicatorTest {
 
     private static final InetSocketAddress LOCAL = new InetSocketAddress("local", 1111);
@@ -55,7 +57,6 @@ public class LettuceEventBasedHealthIndicatorTest {
 
     @BeforeMethod
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         events = EmitterProcessor.create();
         when(eventBus.get()).thenReturn(events);
     }

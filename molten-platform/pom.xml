@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-base</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -35,7 +35,8 @@
     <checkstyle.skip>false</checkstyle.skip>
     <checkstyle.rules.directory>build</checkstyle.rules.directory>
     <checkstyle.config.location>${checkstyle.rules.directory}/checkstyle_rules.xml</checkstyle.config.location>
-    <checkstyle.default.suppressions.location>${checkstyle.rules.directory}/suppressions_defaults.xml</checkstyle.default.suppressions.location>
+    <checkstyle.default.suppressions.location>${checkstyle.rules.directory}/suppressions_defaults.xml
+    </checkstyle.default.suppressions.location>
     <checkstyle.suppressions.location>${checkstyle.rules.directory}/suppressions.xml</checkstyle.suppressions.location>
     <checkstyle.considered.severity>error</checkstyle.considered.severity>
     <checkstyle.considered.match>true</checkstyle.considered.match>
@@ -56,7 +57,8 @@
     <testng.version>7.3.0</testng.version>
     <assertj.version>3.18.1</assertj.version>
     <hamcrest.version>2.0.0.0</hamcrest.version>
-    <mockito.version>3.3.3</mockito.version><!-- 3.4.0 has a breaking change -->
+    <mockito.version>3.7.0</mockito.version>
+    <mockito-testng.version>0.2.5</mockito-testng.version>
     <byte-buddy.version>1.10.19</byte-buddy.version>
     <janino.version>3.1.2</janino.version>
     <junit.jupiter.version>5.7.0</junit.jupiter.version>
@@ -71,10 +73,10 @@
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
         <exclusions>
-           <exclusion>
-             <groupId>org.checkerframework</groupId>
-             <artifactId>checker-compat-qual</artifactId>
-           </exclusion>
+          <exclusion>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-compat-qual</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -256,8 +258,20 @@
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
+        <artifactId>mockito-testng</artifactId>
+        <version>${mockito-testng.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
         <artifactId>mockito-junit-jupiter</artifactId>
         <version>${mockito.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>4.0.3</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -267,6 +281,10 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-testng</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
@@ -654,7 +672,7 @@
             <!-- add support for ssh/scp -->
             <groupId>org.apache.maven.wagon</groupId>
             <artifactId>wagon-ssh</artifactId>
-            <version>3.4.1</version>
+            <version>3.4.2</version>
           </dependency>
           <dependency>
             <groupId>org.apache.maven.doxia</groupId>
@@ -716,27 +734,39 @@
               <skip>${skip.platform.banned.dependency.check}</skip>
               <rules>
                 <bannedDependencies>
-                  <message>Sorry, I am unable to provide you with JRuby artifacts as they are banned from use at Hotels.com.  Please contact Árpád Tomán if you have a real requirement to use JRuby</message>
+                  <message>Sorry, I am unable to provide you with JRuby artifacts as they are banned from use at
+                    Hotels.com. Please contact Árpád Tomán if you have a real requirement to use JRuby
+                  </message>
                   <excludes>
                     <exclude>org.jruby:jruby</exclude>
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Sorry, I am unable to provide you with commons-logging as this artifact is banned from use at Hotels.com as we favor the logback framework for logging.  Logback natively implements the SLF4J API and so ch.qos.logback:logback-classic:${logback.version} can be considered a direct drop-in replacement.</message>
+                  <message>Sorry, I am unable to provide you with commons-logging as this artifact is banned from use at
+                    Hotels.com as we favor the logback framework for logging. Logback natively implements the SLF4J API
+                    and so ch.qos.logback:logback-classic:${logback.version} can be considered a direct drop-in
+                    replacement.
+                  </message>
                   <excludes>
                     <exclude>commons-logging:commons-logging</exclude>
                     <exclude>org.apache.commons:commons-logging</exclude>
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Sorry, I am unable to provide you with Log4J as this artifact is banned from use at Hotels.com as we favor the logback framework for logging.</message>
+                  <message>Sorry, I am unable to provide you with Log4J as this artifact is banned from use at
+                    Hotels.com as we favor the logback framework for logging.
+                  </message>
                   <excludes>
                     <exclude>log4j:log4j</exclude>
                   </excludes>
                   <searchTransitive>true</searchTransitive>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Sorry, I am unable to provide you with SLF4J artifacts as they are banned from use at Hotels.com as we favor the logback framework for logging.  Logback natively implements the SLF4J API and so ch.qos.logback:logback-classic:${logback.version} can be considered a direct drop-in replacement.</message>
+                  <message>Sorry, I am unable to provide you with SLF4J artifacts as they are banned from use at
+                    Hotels.com as we favor the logback framework for logging. Logback natively implements the SLF4J API
+                    and so ch.qos.logback:logback-classic:${logback.version} can be considered a direct drop-in
+                    replacement.
+                  </message>
                   <excludes>
                     <exclude>org.slf4j:slf4j-jcl</exclude>
                     <exclude>org.slf4j:slf4j-jdk14</exclude>
@@ -803,7 +833,8 @@
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Please use cglib:cglib instead of org.sonatype.sisu.inject:cglib or cglib:cglib-nodep</message>
+                  <message>Please use cglib:cglib instead of org.sonatype.sisu.inject:cglib or cglib:cglib-nodep
+                  </message>
                   <excludes>
                     <exclude>org.sonatype.sisu.inject:cglib</exclude>
                     <exclude>cglib:cglib-nodep</exclude>
@@ -816,7 +847,8 @@
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Please use org.aspectj:aspectjweaver instead of aspectj:aspectjrt or org.aspectj:aspectjrt</message>
+                  <message>Please use org.aspectj:aspectjweaver instead of aspectj:aspectjrt or org.aspectj:aspectjrt
+                  </message>
                   <excludes>
                     <exclude>aspectj:aspectjrt</exclude>
                     <exclude>org.aspectj:aspectjrt</exclude>
@@ -829,13 +861,17 @@
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Please use commons-collections:commons-collections instead of org.apache.commons:commons-collections</message>
+                  <message>Please use commons-collections:commons-collections instead of
+                    org.apache.commons:commons-collections
+                  </message>
                   <excludes>
                     <exclude>org.apache.commons:commons-collections</exclude>
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Please use commons-lang:commons-lang instead of org.apache.commons:commons-lang or org.apache:commons-lang</message>
+                  <message>Please use commons-lang:commons-lang instead of org.apache.commons:commons-lang or
+                    org.apache:commons-lang
+                  </message>
                   <excludes>
                     <exclude>org.apache:commons-lang</exclude>
                     <exclude>org.apache.commons:commons-lang</exclude>
@@ -860,13 +896,17 @@
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Please exclude org.springframework:spring-asm because this dependency no longer exists in Spring 3.2+ and its content was moved to org.springframework:spring-core.</message>
+                  <message>Please exclude org.springframework:spring-asm because this dependency no longer exists in
+                    Spring 3.2+ and its content was moved to org.springframework:spring-core.
+                  </message>
                   <excludes>
                     <exclude>org.springframework:spring-asm</exclude>
                   </excludes>
                 </bannedDependencies>
                 <bannedDependencies>
-                  <message>Please exclude org.springframework:spring-transaction because it has been renamed in Spring 3.2+ to org.springframework:spring-tx.</message>
+                  <message>Please exclude org.springframework:spring-transaction because it has been renamed in Spring
+                    3.2+ to org.springframework:spring-tx.
+                  </message>
                   <excludes>
                     <exclude>org.springframework:spring-transaction</exclude>
                   </excludes>

@@ -27,40 +27,41 @@ import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
-import com.hotels.molten.test.mockito.ReactiveMock;
-import com.hotels.molten.test.mockito.ReactiveMockitoAnnotations;
 
 /**
  * Unit test for {@link TimeoutReactiveProxyFactory}.
  */
+@ExtendWith(MockitoExtension.class)
 public class TimeoutReactiveProxyFactoryTest {
     private static final String OK = "ok";
     private static final Duration TIMEOUT = Duration.ofMillis(1000);
     private static final String CLIENT_ID = "clientId";
-    @ReactiveMock
+    @Mock
     private Camoo service;
     private TimeoutReactiveProxyFactory proxyFactory;
     private Camoo wrappedService;
     private MeterRegistry meterRegistry;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        ReactiveMockitoAnnotations.initMocks(this);
         proxyFactory = new TimeoutReactiveProxyFactory(TIMEOUT);
         meterRegistry = MeterRegistrySupport.simpleRegistry();
         proxyFactory.withMetrics(meterRegistry, CLIENT_ID, "raw");
         wrappedService = proxyFactory.wrap(Camoo.class, service);
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }

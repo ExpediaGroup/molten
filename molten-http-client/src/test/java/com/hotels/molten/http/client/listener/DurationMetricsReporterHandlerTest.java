@@ -26,9 +26,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.HttpUrl;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
@@ -36,6 +37,7 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
 /**
  * Test for {@link DurationMetricsReporterHandler}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class DurationMetricsReporterHandlerTest {
     private static final String CLIENT_ID = "clientId";
     private MeterRegistry meterRegistry;
@@ -45,7 +47,6 @@ public class DurationMetricsReporterHandlerTest {
 
     @BeforeMethod
     public void init() {
-        MockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         handler = new DurationMetricsReporterHandler(meterRegistry, CLIENT_ID);
     }

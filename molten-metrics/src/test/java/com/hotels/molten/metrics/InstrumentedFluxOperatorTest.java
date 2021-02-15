@@ -21,7 +21,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +53,6 @@ public class InstrumentedFluxOperatorTest {
     @BeforeMethod
     public void init() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
     }
 

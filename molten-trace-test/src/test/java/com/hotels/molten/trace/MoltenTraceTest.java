@@ -25,15 +25,22 @@ import static org.hamcrest.Matchers.nullValue;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 
 import brave.Tracing;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
+import zipkin2.Span;
 
 import com.hotels.molten.core.MoltenCore;
 import com.hotels.molten.core.mdc.MoltenMDC;
@@ -46,6 +53,16 @@ import com.hotels.molten.trace.test.TracingTestSupport;
  */
 @Slf4j
 public class MoltenTraceTest extends AbstractTracingTest {
+
+    @BeforeClass
+    public void initClassContext() {
+        Hooks.enableContextLossTracking();
+    }
+
+    @AfterClass
+    public void clearClassContext() {
+        Hooks.disableContextLossTracking();
+    }
 
     @AfterMethod
     public void clearContext() {
@@ -72,6 +89,43 @@ public class MoltenTraceTest extends AbstractTracingTest {
                 .verifyComplete();
         }
         assertThat(capturedSpans(), contains(spanWithName("inner"), rootSpanWithName("outer")));
+    }
+
+    @SneakyThrows
+    @Test(dataProvider = "onEachOperatorEnabled")
+    public void should_support_fully_reactive_nesting(boolean onEachOperatorEnabled) {
+        MoltenTrace.initialize(onEachOperatorEnabled);
+        CountDownLatch latch = new CountDownLatch(1);
+        StepVerifier.create(
+            Mono.just("data")
+                .doFinally(s -> latch.countDown())
+                .transform(TracingTransformer.span("outer").forMono())
+                .publishOn(Schedulers.boundedElastic())
+                .transform(TracingTransformer.span("mid").forMono())
+                .publishOn(Schedulers.parallel())
+                .transform(TracingTransformer.span("inner").forMono())
+                .subscribeOn(Schedulers.single())
+        )
+            .expectNext("data")
+            .verifyComplete();
+        latch.await();
+        Assertions.assertThat(capturedSpans())
+            .anySatisfy(span -> {
+                Assertions.assertThat(span).extracting(Span::parentId).isNull();
+                Assertions.assertThat(span).extracting(Span::name).isEqualTo("outer");
+            });
+        var outerSpan = capturedSpans().stream().filter(span -> "outer".equals(span.name())).findFirst().orElseThrow();
+        Assertions.assertThat(capturedSpans())
+            .anySatisfy(span -> {
+                Assertions.assertThat(span).extracting(Span::parentId).isEqualTo(outerSpan.id());
+                Assertions.assertThat(span).extracting(Span::name).isEqualTo("mid");
+            });
+        var midSpan = capturedSpans().stream().filter(span -> "mid".equals(span.name())).findFirst().orElseThrow();
+        Assertions.assertThat(capturedSpans())
+            .anySatisfy(span -> {
+                Assertions.assertThat(span).extracting(Span::parentId).isEqualTo(midSpan.id());
+                Assertions.assertThat(span).extracting(Span::name).isEqualTo("inner");
+            });
     }
 
     @Test(dataProvider = "onEachOperatorEnabled")

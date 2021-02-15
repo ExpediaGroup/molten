@@ -23,11 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -37,9 +37,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.mockito.Mock;
+import org.mockito.testng.MockitoTestNGListener;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -50,6 +52,7 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
  * Unit test for {@link RetryingReactiveProxyFactory}.
  */
 @Slf4j
+@Listeners(MockitoTestNGListener.class)
 public class RetryingReactiveProxyFactoryTest {
     private static final String CLIENT_ID = "clientId";
     private RetryingReactiveProxyFactory proxyFactory;
@@ -63,10 +66,9 @@ public class RetryingReactiveProxyFactoryTest {
     @BeforeMethod
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
         proxyFactory = new RetryingReactiveProxyFactory(2, CLIENT_ID).withMetrics(meterRegistry);
-        when(appender.getName()).thenReturn("MOCK");
+        lenient().when(appender.getName()).thenReturn("MOCK");
         callLogger.addAppender(appender);
     }
 

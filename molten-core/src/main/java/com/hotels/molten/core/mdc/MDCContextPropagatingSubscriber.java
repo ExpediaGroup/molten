@@ -30,7 +30,7 @@ import com.hotels.molten.core.common.AbstractNonFusingSubscription;
  */
 @Slf4j
 final class MDCContextPropagatingSubscriber<T> extends AbstractNonFusingSubscription<T> {
-    private static final String MDC_CONTEXT_KEY = "X-MDC";
+    private static final String MDC_CONTEXT_KEY = "X-Molten-MDC";
     private final Context context;
 
     private MDCContextPropagatingSubscriber(CoreSubscriber<? super T> subscriber, Map<String, String> mdc) {
@@ -43,6 +43,11 @@ final class MDCContextPropagatingSubscriber<T> extends AbstractNonFusingSubscrip
     static CoreSubscriber decorate(CoreSubscriber sub) {
         var mdc = MDC.getCopyOfContextMap();
         return mdc == null ? sub : new MDCContextPropagatingSubscriber(sub, mdc);
+    }
+
+    @Override
+    public Context currentContext() {
+        return context;
     }
 
     @Override
@@ -78,7 +83,8 @@ final class MDCContextPropagatingSubscriber<T> extends AbstractNonFusingSubscrip
     private void runWithMDC(Runnable runnable) {
         var currentMDC = MDC.getCopyOfContextMap();
         try {
-            MDC.setContextMap(this.context.get(MDC_CONTEXT_KEY));
+            this.context.<Map<String, String>>getOrEmpty(MDC_CONTEXT_KEY)
+                .ifPresent(MDC::setContextMap);
             runnable.run();
         } finally {
             if (currentMDC != null) {

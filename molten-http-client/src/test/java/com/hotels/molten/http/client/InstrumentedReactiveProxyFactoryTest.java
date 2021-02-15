@@ -29,37 +29,38 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
-import com.hotels.molten.test.mockito.ReactiveMock;
-import com.hotels.molten.test.mockito.ReactiveMockitoAnnotations;
 
 /**
  * Unit test for {@link InstrumentedReactiveProxyFactory}.
  */
+@ExtendWith(MockitoExtension.class)
 public class InstrumentedReactiveProxyFactoryTest {
     private static final String CLIENT_ID = "clientId";
     private InstrumentedReactiveProxyFactory proxyFactory;
-    @ReactiveMock
+    @Mock
     private Camoo service;
     private MockClock clock;
     private MeterRegistry meterRegistry;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        ReactiveMockitoAnnotations.initMocks(this);
         clock = new MockClock();
         meterRegistry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         proxyFactory = new InstrumentedReactiveProxyFactory(meterRegistry, CLIENT_ID, "raw");
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }

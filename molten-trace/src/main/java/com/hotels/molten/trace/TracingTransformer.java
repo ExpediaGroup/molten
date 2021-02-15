@@ -28,6 +28,8 @@ import reactor.core.scheduler.Schedulers;
  * Transformer to wrap upstream in a trace span. The span is opened when upstream is subscribed to and closed when it completed, ran to an error, or was cancelled.
  * <p>
  * <strong>Be sure to have tracing initialized with {@link MoltenTrace#initialize()}.</strong>
+ * <strong>Please note that this solution not necessarily yields the expected result and should be handled with care.
+ * If the thread is changed between subscription and completion the span won't be nested and closed properly.</strong>
  * <p>
  * If tracing is disabled it leaves upstream unchanged. Please note that tracing context is still propagated.
  * <p>
@@ -37,11 +39,9 @@ import reactor.core.scheduler.Schedulers;
  */
 public final class TracingTransformer {
     private final Tracer tracer;
-    private final boolean debugOnly;
     private boolean asyncBoundary;
 
     private TracingTransformer(String spanName, boolean debugOnly) {
-        this.debugOnly = debugOnly;
         if (debugOnly) {
             this.tracer = Tracer.debugSpan(spanName);
         } else {
@@ -93,6 +93,8 @@ public final class TracingTransformer {
 
     /**
      * Creates a Mono transformer for this span.
+     * Please note that this not necessarily yield the expected result and should be handled with care.
+     * If the thread is changed between subscription and completion the span won't be nested and closed properly.
      *
      * @param <T> the type of element in the Mono
      * @return the transformer function for Mono flow
@@ -115,6 +117,8 @@ public final class TracingTransformer {
 
     /**
      * Creates a Flux transformer for this span.
+     * Please note that this not necessarily yield the expected result and should be handled with care.
+     * If the thread is changed between subscription and completion the span won't be nested and closed properly.
      *
      * @param <T> the type of element in the Flux
      * @return the transformer function for Flux flow
