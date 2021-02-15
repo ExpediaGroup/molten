@@ -61,11 +61,11 @@ import com.hotels.molten.cache.resilience.ResilientReactiveCacheBuilder;
 @Testcontainers
 public class RemoteRedisCacheIntegrationTest {
     @Container
-    private final GenericContainer<?> redis = createRedisCluster();
+    private static final GenericContainer<?> REDIS_CLUSTER = createRedisCluster();
 
     private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    private GenericContainer<?> createRedisCluster() {
+    private static GenericContainer<?> createRedisCluster() {
         Consumer<CreateContainerCmd> containerCmdModifier = cmd -> cmd.getHostConfig().withCapAdd(Capability.NET_ADMIN);
         return new GenericContainer<>(DockerImageName.parse("redis:5.0.3-alpine"))
             .withCreateContainerCmdModifier(containerCmdModifier)
@@ -115,9 +115,9 @@ public class RemoteRedisCacheIntegrationTest {
     }
 
     private RedisConnectionBuilder redisConnectionBuilder() {
-        LOG.info("Creating redis client for {}:{}", redis.getHost(), redis.getFirstMappedPort());
+        LOG.info("Creating redis client for {}:{}", REDIS_CLUSTER.getHost(), REDIS_CLUSTER.getFirstMappedPort());
         return RedisConnectionBuilder.builder()
-            .withRedisSeedUris("redis://" + redis.getHost() + ":" + redis.getFirstMappedPort() + "?timeout=10000")
+            .withRedisSeedUris("redis://" + REDIS_CLUSTER.getHost() + ":" + REDIS_CLUSTER.getFirstMappedPort() + "?timeout=10000")
             .withClusterClientOptions(defaultClusterClientOptions(defaultClusterTopologyRefreshOptions()))
             .withCodec(createCodec())
             .withMeterRegistry(meterRegistry, "remote-cache.sharedRemoteCache.redis");

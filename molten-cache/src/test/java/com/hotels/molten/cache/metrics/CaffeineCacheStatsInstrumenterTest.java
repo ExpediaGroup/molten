@@ -30,9 +30,10 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
@@ -40,6 +41,7 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
 /**
  * Unit test for {@link CaffeineCacheStatsInstrumenter}.
  */
+@Listeners(MockitoTestNGListener.class)
 public class CaffeineCacheStatsInstrumenterTest {
     private CaffeineCacheStatsInstrumenter instrumenter;
     private MeterRegistry meterRegistry;
@@ -49,7 +51,6 @@ public class CaffeineCacheStatsInstrumenterTest {
     @BeforeMethod
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        MockitoAnnotations.initMocks(this);
         meterRegistry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         instrumenter = new CaffeineCacheStatsInstrumenter(meterRegistry, "pre.fix");
     }

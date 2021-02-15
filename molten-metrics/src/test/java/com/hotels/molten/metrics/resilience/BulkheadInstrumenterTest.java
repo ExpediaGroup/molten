@@ -18,7 +18,6 @@ package com.hotels.molten.metrics.resilience;
 
 import static com.hotels.molten.core.metrics.MetricsSupport.GRAPHITE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.time.Duration;
 
@@ -53,7 +52,6 @@ public class BulkheadInstrumenterTest {
 
     @BeforeMethod
     public void initContext() {
-        initMocks(this);
         meterRegistry = new SimpleMeterRegistry();
     }
 

@@ -111,6 +111,7 @@ public final class ReactorNettyCall implements Call {
             .responseSingle((response, rawBody) -> toResponse(finalRequest, response, rawBody))
             .doOnEach(e -> {
                 if (traceHandler != null && !e.isOnComplete()) {
+                    // FIXME: response might be null causing NPE at brave.http.HttpHandler.handleFinish(HttpHandler.java:66)
                     traceHandler.handleReceive(HttpClientResponse.maybeFrom(e.get()), currentSpan);
                 }
             })

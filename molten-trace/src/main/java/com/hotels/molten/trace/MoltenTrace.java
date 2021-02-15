@@ -56,7 +56,7 @@ public final class MoltenTrace {
      */
     public static void initialize(boolean onEachOperator) {
         uninitialize();
-        LOG.info("Integrating tracing with Molten...");
+        LOG.info("Integrating tracing with Molten onEachOperator={}", onEachOperator);
         var currentTracing = Tracing.current();
         requireNonNull(currentTracing, "Tracing must be already initialized");
         Schedulers.onScheduleHook(HOOK_KEY, runnable -> new TraceContextPropagatingRunnable(runnable, currentTracing.currentTraceContext()));

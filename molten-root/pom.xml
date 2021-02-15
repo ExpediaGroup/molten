@@ -6,12 +6,12 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-platform</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.1-SNAPSHOT</version>
     <relativePath>../molten-platform/pom.xml</relativePath>
   </parent>
 
   <artifactId>molten-root</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
+  <version>1.1.1-SNAPSHOT</version>
   <name>Molten - root</name>
   <description>A reactive toolbox for integration</description>
   <packaging>pom</packaging>
@@ -19,7 +19,6 @@
   <properties>
     <checkstyle.suppressions.location>build/suppressions.xml</checkstyle.suppressions.location>
     <skip.integration.tests>false</skip.integration.tests>
-    <integration.test.concurrency>4</integration.test.concurrency>
   </properties>
 
   <modules>
@@ -31,7 +30,9 @@
     <module>../molten-http-client</module>
     <module>../molten-metrics</module>
     <module>../molten-remote-cache</module>
+    <module>../molten-spring-boot</module>
     <module>../molten-test</module>
+    <module>../molten-test-mockito-autoconfigure</module>
   </modules>
 
   <dependencyManagement>
@@ -86,8 +87,8 @@
           <includes>
             <include>**/*IntegrationTest</include>
           </includes>
-          <parallel>classes</parallel>
-          <threadCount>${integration.test.concurrency}</threadCount>
+          <parallel>none</parallel>
+          <threadCount>1</threadCount>
         </configuration>
         <executions>
           <execution>

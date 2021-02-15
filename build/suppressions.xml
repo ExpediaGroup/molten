@@ -5,4 +5,5 @@
   <suppress checks="FileLength|MethodLength" files="com.hotels.molten.http.client.StubJsonServiceServer.java" />
   <suppress checks="NoClone" files="com.hotels.molten.http.client.retrofit.ReactorNettyCall.java" />
   <suppress checks="VisibilityModifier" files="com.hotels.molten.core.common.AbstractNonFusingSubscription.java" />
+  <suppress checks="IllegalInstantiation" files="com.hotels.molten.http.client.HttpException.java" />
 </suppressions>

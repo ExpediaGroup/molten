@@ -33,14 +33,18 @@ import com.hotels.molten.core.common.AbstractNonFusingSubscription;
  * A {@link CoreSubscriber} that continues current trace context if any.
  */
 @Slf4j
-final class TraceContextPropagatingSubscriber<T> extends AbstractNonFusingSubscription<T> {
+public final class TraceContextPropagatingSubscriber<T> extends AbstractNonFusingSubscription<T> {
     private final CurrentTraceContext currentTraceContext;
     private final TraceContext traceContext;
     private final Context context;
 
     private TraceContextPropagatingSubscriber(CoreSubscriber<? super T> subscriber, TraceContext traceContextInScope) {
+        this(subscriber, traceContextInScope, Tracing.current().currentTraceContext());
+    }
+
+    public TraceContextPropagatingSubscriber(CoreSubscriber<? super T> subscriber, TraceContext traceContextInScope, CurrentTraceContext currentTraceContext) {
         super(subscriber);
-        this.currentTraceContext = requireNonNull(Tracing.current().currentTraceContext());
+        this.currentTraceContext = requireNonNull(currentTraceContext);
         this.traceContext = requireNonNull(traceContextInScope);
         this.context = subscriber.currentContext().put(TraceContext.class, traceContext);
         LOG.trace("Current tracecontext={}, context={}", traceContext, this.context);
@@ -49,7 +53,6 @@ final class TraceContextPropagatingSubscriber<T> extends AbstractNonFusingSubscr
     @SuppressWarnings({"rawtypes", "unchecked"})
     static CoreSubscriber decorate(CoreSubscriber sub) {
         Context context = sub.currentContext();
-        //TODO: check that this is the expected behavior indeed. create test for nested trace contexts with propagation
         TraceContext traceContextInScope = context.hasKey(TraceContext.class)
             ? context.get(TraceContext.class) // restore if we saved it
             : Optional.ofNullable(Tracing.current()).map(Tracing::currentTraceContext).map(CurrentTraceContext::get).orElse(null);
@@ -96,5 +99,10 @@ final class TraceContextPropagatingSubscriber<T> extends AbstractNonFusingSubscr
         try (CurrentTraceContext.Scope scope = this.currentTraceContext.maybeScope(this.traceContext)) {
             this.subscriber.onComplete();
         }
+    }
+
+    @Override
+    public Context currentContext() {
+        return context;
     }
 }

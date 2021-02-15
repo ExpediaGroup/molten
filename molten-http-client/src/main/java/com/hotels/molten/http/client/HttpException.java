@@ -17,37 +17,50 @@
 package com.hotels.molten.http.client;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 @Getter
+@Slf4j
 public final class HttpException extends RuntimeException {
     private final int statusCode;
+    private final String message;
+    private final Charset charset;
+    private final byte[] errorBody;
 
     public HttpException(retrofit2.HttpException ex) {
         super(getMessage(ex), ex, false, false);
         statusCode = ex.code();
+        errorBody = Optional.ofNullable(ex.response())
+            .map(Response::errorBody)
+            .map(errorBody -> {
+                byte[] error;
+                try {
+                    error = errorBody.bytes();
+                } catch (IOException e) {
+                    LOG.warn("Error reading error body", e);
+                    error = null;
+                }
+                return error;
+            }).orElse(null);
+        charset = Optional.ofNullable(ex.response())
+            .map(Response::errorBody)
+            .map(ResponseBody::contentType)
+            .map(MediaType::charset)
+            .orElse(StandardCharsets.UTF_8);
+        message = errorBody == null
+            ? super.getMessage()
+            : super.getMessage() + " error_body=" + new String(errorBody, charset);
     }
 
     private static String getMessage(retrofit2.HttpException ex) {
-        StringBuilder msg = new StringBuilder("httpStatus=")
-            .append(ex.code())
-            .append(" error_message=")
-            .append(ex.message());
-        Optional.ofNullable(ex.response())
-            .map(Response::errorBody)
-            .map(errorBody -> {
-                String error;
-                try {
-                    error = errorBody.string();
-                } catch (IOException e) {
-                    error = "error reading body";
-                }
-                return error;
-            })
-            .ifPresent(error -> msg.append(" error_body=").append(error));
-        return msg.toString();
+        return "http_status=" + ex.code() + " error_message=" + ex.message();
     }
 }
