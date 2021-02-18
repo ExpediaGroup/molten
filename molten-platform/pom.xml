@@ -62,7 +62,7 @@
     <byte-buddy.version>1.10.19</byte-buddy.version>
     <janino.version>3.1.2</janino.version>
     <junit.jupiter.version>5.7.0</junit.jupiter.version>
-    <junit.platform.version>1.7.0</junit.platform.version>
+    <junit.platform.version>1.7.1</junit.platform.version>
     <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
   </properties>
 
