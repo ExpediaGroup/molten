@@ -6,7 +6,7 @@
 
   <groupId>com.expediagroup.molten</groupId>
   <artifactId>molten-base</artifactId>
-  <version>1.1.1-SNAPSHOT</version>
+  <version>1.1.2-SNAPSHOT</version>
   <name>Molten - base</name>
   <description>Molten - a reactive toolbox for integration</description>
   <packaging>pom</packaging>
