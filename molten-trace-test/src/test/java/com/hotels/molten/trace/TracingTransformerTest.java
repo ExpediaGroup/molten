@@ -23,9 +23,9 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import brave.Tracing;
 import brave.propagation.TraceContext;
@@ -34,14 +34,15 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -53,29 +54,27 @@ import com.hotels.molten.trace.test.SpanMatcher;
  * Unit test for {@link TracingTransformer}.
  */
 @Slf4j
+@ExtendWith(MockitoExtension.class)
 public class TracingTransformerTest extends AbstractTracingTest {
-    private AutoCloseable mocks;
     private Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     @Mock
     private Appender<ILoggingEvent> appender;
     @Captor
     private ArgumentCaptor<ILoggingEvent> captorLoggingEvent;
 
-    @BeforeMethod
+    @BeforeEach
     public void init() {
-        mocks = MockitoAnnotations.openMocks(this);
-        when(appender.getName()).thenReturn("MOCK");
+        lenient().when(appender.getName()).thenReturn("MOCK");
         rootLogger.addAppender(appender);
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
+    @AfterEach
+    public void tearDown() {
         rootLogger.detachAppender(appender);
-        mocks.close();
     }
 
     @Test
-    public void shouldCreateSpanWithSimpleName() {
+    public void should_create_span_with_simple_name() {
         StepVerifier.create(Mono.just(1)
             .transform(TracingTransformer.span("trace").forMono()))
             .expectNext(1)
@@ -85,7 +84,7 @@ public class TracingTransformerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldCreateSpanWithTags() {
+    public void should_create_span_with_tags() {
         StepVerifier.create(Mono.just(1)
             .transform(TracingTransformer.span("trace").tag("number", 2).forMono()))
             .expectNext(1)
@@ -95,7 +94,7 @@ public class TracingTransformerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldCreateDebugSpanWithSimpleName() {
+    public void should_create_debug_span_with_simple_name() {
         TraceContext rootContext = TraceContext.newBuilder().traceId(1).spanId(1).debug(true).build();
         Tracing.current().currentTraceContext().maybeScope(rootContext);
         StepVerifier.create(Mono.just(1)
@@ -107,7 +106,7 @@ public class TracingTransformerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldNotCreateDebugSpan() {
+    public void should_not_create_debug_span() {
         StepVerifier.create(Mono.just(1)
             .transform(TracingTransformer.debugSpan("trace").forMono()))
             .expectNext(1)
@@ -125,7 +124,7 @@ public class TracingTransformerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void showSideEffectOfAsyncBoundary() {
+    public void show_side_effect_of_async_boundary() {
         StepVerifier.create(Mono.just(1)
             .doOnNext(i -> LOG.debug("upstream {}", i))
             .transform(TracingTransformer.span("trace").withAsyncBoundary().forMono())
@@ -138,7 +137,7 @@ public class TracingTransformerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldSupportFlux() {
+    public void should_support_flux() {
         StepVerifier.create(Flux.just(1, 2, 3)
             .transform(TracingTransformer.span("trace").forFlux()))
             .expectNext(1, 2, 3)

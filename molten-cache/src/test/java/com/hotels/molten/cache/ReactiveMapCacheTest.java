@@ -49,7 +49,7 @@ class ReactiveMapCacheTest implements ReactiveCacheContract {
     }
 
     @Test
-    void shouldDelegateGetLazily() {
+    void should_delegate_get_lazily() {
         when(cache.get(KEY)).thenReturn(VALUE);
         Mono<String> get = reactiveCache.get(KEY);
         verifyNoInteractions(cache);
@@ -62,7 +62,7 @@ class ReactiveMapCacheTest implements ReactiveCacheContract {
     }
 
     @Test
-    void shouldDelegatePutLazily() {
+    void should_delegate_put_lazily() {
         Mono<Void> put = reactiveCache.put(KEY, VALUE);
         verifyNoInteractions(cache);
         StepVerifier.create(put)

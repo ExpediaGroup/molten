@@ -19,7 +19,7 @@ package com.hotels.molten.healthcheck.snapshot;
 import java.time.Duration;
 import java.util.List;
 
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 

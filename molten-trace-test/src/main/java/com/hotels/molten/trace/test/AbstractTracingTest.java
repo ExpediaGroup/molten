@@ -25,6 +25,9 @@ import java.util.List;
 import brave.ScopedSpan;
 import brave.Tracing;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -42,19 +45,22 @@ import com.hotels.molten.trace.MoltenTrace;
 public abstract class AbstractTracingTest {
 
     @BeforeClass
-    public void initTraceContext() {
+    @BeforeAll
+    public static void initTraceContext() {
         MoltenCore.initialize();
         TracingTestSupport.initialize(false);
         MoltenTrace.initialize();
     }
 
     @AfterClass
-    public void tearDownTraceContext() {
+    @AfterAll
+    public static void tearDownTraceContext() {
         MoltenTrace.uninitialize();
         TracingTestSupport.cleanUp();
     }
 
     @BeforeMethod
+    @BeforeEach
     public void clearTraceContext() {
         TracingTestSupport.resetCapturedSpans();
         Tracing current = Tracing.current();

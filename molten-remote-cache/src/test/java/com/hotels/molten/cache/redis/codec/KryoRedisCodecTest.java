@@ -23,8 +23,8 @@ import java.nio.ByteBuffer;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.pool.KryoPool;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit test for {@link KryoRedisCodec}.
@@ -34,14 +34,14 @@ public class KryoRedisCodecTest {
     private KryoRedisCodec<Object, Object> codec;
     private Kryo kryo;
 
-    @BeforeClass
-    public void initContext() {
+    @BeforeEach
+    void initContext() {
         kryo = new Kryo();
         codec = new KryoRedisCodec<>(new KryoPool.Builder(() -> kryo).build());
     }
 
     @Test
-    public void shouldDeserializeWhichWasSerialized() {
+    void should_deserialize_which_was_serialized() {
         ByteBuffer encodedKey = codec.encodeKey("key");
         ComplexType value = new ComplexType("text", new ComplexType.Nested(1, "txt"));
         ByteBuffer encodedValue = codec.encodeValue(value);

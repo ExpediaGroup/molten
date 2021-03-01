@@ -18,8 +18,8 @@ package com.hotels.molten.healthcheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -31,7 +31,7 @@ import com.hotels.molten.test.AssertSubscriber;
 public class HealthIndicatorTest {
     private CompositeHealthIndicator composite;
 
-    @BeforeMethod
+    @BeforeEach
     public void setUp() {
         composite = HealthIndicator.composite("test");
     }

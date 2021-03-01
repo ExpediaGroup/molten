@@ -24,9 +24,9 @@ import java.time.Duration;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
@@ -38,13 +38,13 @@ public class RetrofitServiceClientConfigurationReporterTest {
     private MeterRegistry meterRegistry;
     private RetrofitServiceClientConfigurationReporter reporter;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         meterRegistry = new SimpleMeterRegistry();
         reporter = new RetrofitServiceClientConfigurationReporter(meterRegistry, CLIENT_ID);
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }

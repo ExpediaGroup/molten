@@ -26,30 +26,29 @@ import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import reactor.netty.http.client.HttpClientMetricsRecorder;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
 /**
  * Unit test for {@link MicrometerHttpClientMetricsRecorder}.
  */
-@Listeners(MockitoTestNGListener.class)
 public class MicrometerHttpClientMetricsRecorderTest {
     private static final String CLIENT_ID = "clientId";
-    private MicrometerHttpClientMetricsRecorder recorder;
-    private MeterRegistry meterRegistry;
 
-    @BeforeMethod
+    private MeterRegistry meterRegistry;
+    private HttpClientMetricsRecorder recorder;
+
+    @BeforeEach
     public void initContext() {
         meterRegistry = new SimpleMeterRegistry();
         recorder = new MicrometerHttpClientMetricsRecorder(meterRegistry, CLIENT_ID);
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }

@@ -19,8 +19,8 @@ package com.hotels.molten.healthcheck;
 import java.time.Duration;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 /**
@@ -29,7 +29,7 @@ import reactor.test.StepVerifier;
 public class CircuitBasedFlowMarkerTest {
     private CircuitBasedFlowMarker indicator;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         indicator = new CircuitBasedFlowMarker("component", CircuitBreakerConfig.custom()
             .slidingWindow(2, 1, CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)

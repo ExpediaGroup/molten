@@ -37,13 +37,13 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -59,7 +59,7 @@ import com.hotels.molten.test.AssertSubscriber;
  * Unit test for {@link RequestCollapser}.
  */
 @Slf4j
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class RequestCollapserTest {
     private static final int CONTEXT = 1;
     private static final String RESULT = "result";
@@ -75,7 +75,7 @@ public class RequestCollapserTest {
     private VirtualTimeScheduler timeoutScheduler;
     private MeterRegistry meterRegistry;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MDC.clear();
         MoltenCore.initialize();
@@ -85,7 +85,7 @@ public class RequestCollapserTest {
         timeoutScheduler = VirtualTimeScheduler.create();
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         MDC.clear();
@@ -275,7 +275,7 @@ public class RequestCollapserTest {
     }
 
     @Test
-    public void should_time_out_if_collapsed_call_doesnt_complete_in_time() {
+    public void should_time_out_if_collapsed_call_not_complete_in_time() {
         when(valueProvider.apply(CONTEXT)).thenReturn(Mono.delay(Duration.ofMillis(100), scheduler).map(i -> RESULT));
         collapsedProvider = RequestCollapser.builder(valueProvider)
             .withScheduler(scheduler)

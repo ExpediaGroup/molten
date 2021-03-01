@@ -29,51 +29,51 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
 /**
  * Unit test for {@link CaffeineCacheStatsInstrumenter}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class CaffeineCacheStatsInstrumenterTest {
     private CaffeineCacheStatsInstrumenter instrumenter;
     private MeterRegistry meterRegistry;
     @Mock
     private Cache cache;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         meterRegistry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         instrumenter = new CaffeineCacheStatsInstrumenter(meterRegistry, "pre.fix");
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }
 
     @Test
-    public void shouldRecordHits() {
+    public void should_record_hits() {
         instrumenter.recordHits(2);
         assertThat(meterRegistry.get("pre.fix.hit-count").counter().count()).isEqualTo(2D);
     }
 
     @Test
-    public void shouldRecordMisses() {
+    public void should_record_misses() {
         instrumenter.recordMisses(2);
         assertThat(meterRegistry.get("pre.fix.miss-count").counter().count()).isEqualTo(2D);
     }
 
     @Test
-    public void shouldRecordLoadSuccessTime() {
+    public void should_record_load_success_time() {
         instrumenter.recordLoadSuccess(60);
         instrumenter.recordLoadSuccess(50);
         Timer timer = meterRegistry.get("pre.fix.load-success").timer();
@@ -84,7 +84,7 @@ public class CaffeineCacheStatsInstrumenterTest {
     }
 
     @Test
-    public void shouldRecordLoadFailureTime() {
+    public void should_record_load_failure_time() {
         instrumenter.recordLoadFailure(60);
         instrumenter.recordLoadFailure(50);
         Timer timer = meterRegistry.get("pre.fix.load-failure").timer();
@@ -95,21 +95,21 @@ public class CaffeineCacheStatsInstrumenterTest {
     }
 
     @Test
-    public void shouldRecordEvictions() {
+    public void should_record_evictions() {
         instrumenter.recordEviction(2);
         assertThat(meterRegistry.get("pre.fix.eviction-count").counter().count()).isEqualTo(1D);
         assertThat(instrumenter.snapshot().evictionWeight()).isEqualTo(2L);
     }
 
     @Test
-    public void shouldRegisterCacheSize() {
+    public void should_register_cache_size() {
         instrumenter.registerCache(cache);
         when(cache.estimatedSize()).thenReturn(2L);
         assertThat(meterRegistry.get("pre.fix.size").gauge().value()).isEqualTo(2D);
     }
 
     @Test
-    public void shouldAssembleSnapshot() {
+    public void should_assemble_snapshot() {
         //this is not used though
         CacheStats snapshot = instrumenter.snapshot();
         assertThat(snapshot).isNotNull();

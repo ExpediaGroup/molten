@@ -29,12 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.scheduler.VirtualTimeScheduler;
@@ -45,7 +45,7 @@ import com.hotels.molten.test.AssertSubscriber;
 /**
  * Unit test for {@link BulkheadingReactiveProxyFactory}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class BulkheadingReactiveProxyFactoryTest {
     private static final AtomicInteger ISO_GRP_IDX = new AtomicInteger();
     private static final int REQUEST_PARAM = 1;
@@ -57,21 +57,21 @@ public class BulkheadingReactiveProxyFactoryTest {
     private VirtualTimeScheduler scheduler;
     private SimpleMeterRegistry meterRegistry;
 
-    @BeforeMethod
-    public void initContext() {
+    @BeforeEach
+    void initContext() {
         scheduler = VirtualTimeScheduler.create();
         VirtualTimeScheduler.set(scheduler);
         meterRegistry = new SimpleMeterRegistry();
     }
 
-    @AfterMethod
-    public void clearContext() {
+    @AfterEach
+    void clearContext() {
         VirtualTimeScheduler.reset();
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }
 
     @Test
-    public void should_prevent_too_many_concurrent_requests() {
+    void should_prevent_too_many_concurrent_requests() {
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(true);
         AtomicInteger callCount = new AtomicInteger();
