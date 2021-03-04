@@ -18,8 +18,19 @@ package com.hotels.molten.http.client;
  * Enums for protocols.
  */
 public enum Protocols {
+    /**
+     * Cleartext HTTP/2 with no "upgrade" round trip.
+     *
+     */
     HTTP_2C,
+    /**
+     * The IETF's binary-framed protocol that includes header compression.
+     * HTTP/2 requires deployments of HTTP/2 that use TLS 1.2 support
+     */
     HTTP_2,
+    /**
+     * A plaintext framing that includes persistent connections.
+     */
     HTTP_1_1,
 
 }

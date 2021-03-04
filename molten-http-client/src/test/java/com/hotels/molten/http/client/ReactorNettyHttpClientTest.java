@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
+import reactor.netty.http.HttpProtocol;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.resources.LoopResources;
@@ -75,6 +76,7 @@ public class ReactorNettyHttpClientTest {
             .metrics(true)
             .build();
         HttpClient.create(connectionProvider)
+            .protocol(HttpProtocol.H2C)
             //.secure(spec -> spec.sslContext(SslContextBuilder.forClient()))
             .runOn(LoopResources.create("molten-http")) // should be singleton shared among clients
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // connection timeout
@@ -149,6 +151,7 @@ public class ReactorNettyHttpClientTest {
             .metrics(true)
             .build();
         var httpClient = HttpClient.create(connectionProvider)
+            .protocol(HttpProtocol.HTTP11)
             //.secure(spec -> spec.sslContext(SslContextBuilder.forClient()))
             .runOn(LoopResources.create("molten-http"))
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)

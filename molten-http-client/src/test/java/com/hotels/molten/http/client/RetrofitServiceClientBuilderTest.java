@@ -43,6 +43,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.vertx.core.http.HttpVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.testng.annotations.AfterClass;
@@ -86,7 +87,6 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
             .expectedLoad(ExpectedLoad.builder().peakResponseTime(Duration.ofSeconds(20)).peakRequestRatePerSecond(1).build())
             .connectionSettings(ConnectionSettings.builder().timeout(Duration.ofSeconds(20)).keepAliveIdle(Duration.ofMinutes(15)).build())
             .maxRetries(2)
-            .protocol(Protocols.HTTP_1_1)
             .buildClient();
         StepVerifier.create(warmupClient.getData("warmup").retry(1)).expectNext(response("warmup", 1)).verifyComplete();
         System.setProperty("MOLTEN_HTTP_CLIENT_REPORT_TRACE_com_hotels_molten_http_client_ServiceEndpoint", "false");
@@ -136,10 +136,34 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
 
     @Test(dataProvider = "common")
     public void should_get_response(String clientType) {
-        ServiceEndpoint client = defaultClientBuilder(clientType).buildClient();
+        ServiceEndpoint client = defaultClientBuilder(clientType)
+            .protocol(List.of(Protocols.HTTP_2C))
+            .buildClient();
         StepVerifier.create(client.getData("test"))
             .thenAwait()
             .expectNext(response("test", 1))
+            .verifyComplete();
+    }
+
+    @Test(dataProvider = "common")
+    public void should_get_responseWhen_called_With_HTTP_1_1(String clientType) {
+        ServiceEndpoint client = defaultClientBuilder(clientType)
+            .protocol(List.of(Protocols.HTTP_1_1))
+            .buildClient();
+        StepVerifier.create(client.checkProtocol(HttpVersion.HTTP_1_1))
+            .thenAwait()
+            .expectNextCount(1L)
+            .verifyComplete();
+    }
+
+    @Test(dataProvider = "common")
+    public void should_get_responseWhen_called_With_HTTP_2C(String clientType) {
+        ServiceEndpoint client = defaultClientBuilder(clientType)
+            .protocol(List.of(Protocols.HTTP_2C))
+            .buildClient();
+        StepVerifier.create(client.checkProtocol(HttpVersion.HTTP_2))
+            .thenAwait()
+            .expectNextCount(1L)
             .verifyComplete();
     }
 

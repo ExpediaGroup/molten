@@ -43,7 +43,6 @@ public class TlsRetrofitServiceClientBuilderTest extends AbstractTracingTest {
         ServiceEndpoint warmupClient = defaultClientBuilder()
             .expectedLoad(ExpectedLoad.builder().peakResponseTime(Duration.ofMillis(2000)).peakRequestRatePerSecond(1).build())
             .connectionSettings(ConnectionSettings.builder().timeout(Duration.ofMillis(2000)).keepAliveIdle(Duration.ofSeconds(15)).build())
-            .protocol(Protocols.HTTP_1_1)
             .maxRetries(2)
             .buildClient();
         StepVerifier.create(warmupClient.getData("warmup").retry(1)).expectNext(response("warmup", 1)).verifyComplete();

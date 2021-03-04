@@ -23,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -359,12 +360,12 @@ public final class RetrofitServiceClientBuilder<API> {
         return this;
     }
     /**
-     * Sets configuration http protocol.
+     * Sets configuration http protocol if not set okhttp/netty default will be set.
      *
      * @param protocol the (@code Protocol} to set.
      * @return this builder
      */
-    public RetrofitServiceClientBuilder<API> protocol(Protocols protocol) {
+    public RetrofitServiceClientBuilder<API> protocol(List<Protocols> protocol) {
         this.configuration.setProtocol(protocol);
         return this;
     }

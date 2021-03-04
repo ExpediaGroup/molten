@@ -119,18 +119,28 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
         return client;
     }
 
-    private HttpProtocol getProtocol(Protocols protocol) {
-        HttpProtocol result = null;
-        if (protocol == Protocols.HTTP_2) {
-            result = HttpProtocol.H2;
-        }
-        if (protocol == Protocols.HTTP_1_1) {
-            result = HttpProtocol.HTTP11;
-        }
-        if (protocol == Protocols.HTTP_2C) {
-            result = HttpProtocol.H2C;
-        }
+    private HttpProtocol[] getProtocol(List<Protocols> protocol) {
+        HttpProtocol[] result;
+        result = protocol
+            .stream()
+            .map(this::convertToHttpProtocol)
+            .distinct()
+            .toArray(HttpProtocol[]::new);
         return result;
 
+    }
+
+    private HttpProtocol convertToHttpProtocol(Protocols protocol) {
+        HttpProtocol result;
+        if (protocol == Protocols.HTTP_2) {
+            result = HttpProtocol.H2;
+        } else if (protocol == Protocols.HTTP_1_1) {
+            result = HttpProtocol.HTTP11;
+        } else if (protocol == Protocols.HTTP_2C) {
+            result = HttpProtocol.H2C;
+        } else {
+            throw new RuntimeException("Non managed value Protocols" + protocol);
+        }
+        return result;
     }
 }
