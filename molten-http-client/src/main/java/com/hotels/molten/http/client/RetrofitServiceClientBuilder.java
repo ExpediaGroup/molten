@@ -174,8 +174,7 @@ public final class RetrofitServiceClientBuilder<API> {
     private ObjectMapper objectMapper = defaultJsonObjectMapper();
     private boolean useProtobuf;
     private Predicate<Response<?>> failedResponsePredicate = DEFAULT_FAILED_RESPONSE_PREDICATE;
-    private HealthIndicatorWatcher healthIndicatorWatcher = indicator -> {
-    };
+    private HealthIndicatorWatcher healthIndicatorWatcher = indicator -> { };
 
     private RetrofitServiceClientBuilder(Class<API> api, String baseUrl) {
         this.api = requireNonNull(api);
@@ -360,7 +359,7 @@ public final class RetrofitServiceClientBuilder<API> {
         return this;
     }
     /**
-     * Sets configuration http protocol if not set okhttp/netty default will be set.
+     * Sets configuration http protocol. If not set default protocols of OkHttpClient/HttpClient will be used.
      *
      * @param protocol the (@code Protocol} to set.
      * @return this builder

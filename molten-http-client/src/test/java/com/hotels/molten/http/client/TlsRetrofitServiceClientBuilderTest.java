@@ -91,7 +91,7 @@ public class TlsRetrofitServiceClientBuilderTest extends AbstractTracingTest {
             .verifyComplete();
     }
 
-    private static RetrofitServiceClientBuilder<ServiceEndpoint> defaultClientBuilder() {
+    private RetrofitServiceClientBuilder<ServiceEndpoint> defaultClientBuilder() {
         return RetrofitServiceClientBuilder.createOver(ServiceEndpoint.class, BASE_URL)
             .groupId("secure-grp" + GRP_ID.incrementAndGet())
             .customSSLContext(TlsSocketFactoryConfigFactory.createConfig("certificate/testkeystore.jks", "password").getSslContextConfiguration());
