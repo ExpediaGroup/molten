@@ -86,6 +86,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
             .expectedLoad(ExpectedLoad.builder().peakResponseTime(Duration.ofSeconds(20)).peakRequestRatePerSecond(1).build())
             .connectionSettings(ConnectionSettings.builder().timeout(Duration.ofSeconds(20)).keepAliveIdle(Duration.ofMinutes(15)).build())
             .maxRetries(2)
+            .protocol(Protocols.HTTP_1_1)
             .buildClient();
         StepVerifier.create(warmupClient.getData("warmup").retry(1)).expectNext(response("warmup", 1)).verifyComplete();
         System.setProperty("MOLTEN_HTTP_CLIENT_REPORT_TRACE_com_hotels_molten_http_client_ServiceEndpoint", "false");

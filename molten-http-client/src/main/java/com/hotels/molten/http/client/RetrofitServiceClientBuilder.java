@@ -173,7 +173,8 @@ public final class RetrofitServiceClientBuilder<API> {
     private ObjectMapper objectMapper = defaultJsonObjectMapper();
     private boolean useProtobuf;
     private Predicate<Response<?>> failedResponsePredicate = DEFAULT_FAILED_RESPONSE_PREDICATE;
-    private HealthIndicatorWatcher healthIndicatorWatcher = indicator -> { };
+    private HealthIndicatorWatcher healthIndicatorWatcher = indicator -> {
+    };
 
     private RetrofitServiceClientBuilder(Class<API> api, String baseUrl) {
         this.api = requireNonNull(api);
@@ -206,6 +207,7 @@ public final class RetrofitServiceClientBuilder<API> {
         this.customGroupId = groupId;
         return this;
     }
+
 
     /**
      * Sets the {@link HttpTracing} to be used for propagating Zipkin compatible distributed trace information.
@@ -354,6 +356,16 @@ public final class RetrofitServiceClientBuilder<API> {
      */
     public RetrofitServiceClientBuilder<API> reportHttpEvents() {
         this.configuration.setReportHttpEvents(true);
+        return this;
+    }
+    /**
+     * Sets configuration http protocol.
+     *
+     * @param protocol the (@code Protocol} to set.
+     * @return this builder
+     */
+    public RetrofitServiceClientBuilder<API> protocol(Protocols protocol) {
+        this.configuration.setProtocol(protocol);
         return this;
     }
 

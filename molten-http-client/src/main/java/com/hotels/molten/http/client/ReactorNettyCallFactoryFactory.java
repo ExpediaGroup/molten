@@ -25,6 +25,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.HttpProtocol;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientMetricsRecorder;
 import reactor.netty.resources.ConnectionProvider;
@@ -62,6 +63,9 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
                 })
             );
 
+        if (configuration.getProtocol() != null) {
+            httpClient = httpClient.protocol(getProtocol(configuration.getProtocol()));
+        }
         var sslContextConfiguration = configuration.getSslContextConfiguration();
         if (sslContextConfiguration != null) {
             httpClient = httpClient.secure(spec -> {
@@ -113,5 +117,20 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
             client = client.metrics(true, () -> new DelegatingHttpClientMetricsReporter(recorders));
         }
         return client;
+    }
+
+    private HttpProtocol getProtocol(Protocols protocol) {
+        HttpProtocol result = null;
+        if (protocol == Protocols.HTTP_2) {
+            result = HttpProtocol.H2;
+        }
+        if (protocol == Protocols.HTTP_1_1) {
+            result = HttpProtocol.HTTP11;
+        }
+        if (protocol == Protocols.HTTP_2C) {
+            result = HttpProtocol.H2C;
+        }
+        return result;
+
     }
 }

@@ -17,6 +17,7 @@
 package com.hotels.molten.http.client;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,7 @@ import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.EventListener;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.LoggingEventListener;
 import org.slf4j.LoggerFactory;
@@ -80,6 +82,9 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
                     throw new IllegalStateException("Couldn't initialize SSL context", e);
                 }
             });
+        }
+        if (configuration.getProtocol() != null) {
+            clientBuilder.protocols(Collections.singletonList(getProtocol(configuration.getProtocol())));
         }
         if (configuration.getHttpTracing() != null) {
             clientBuilder.addNetworkInterceptor(TracingInterceptor.create(configuration.getHttpTracing()));
@@ -140,5 +145,19 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
         if (!eventListenerFactories.isEmpty()) {
             clientBuilder.eventListenerFactory(DelegatingEventListener.delegatedFactory(eventListenerFactories)::apply);
         }
+    }
+
+    private Protocol getProtocol(Protocols protocol) {
+        Protocol result = null;
+        if (protocol == Protocols.HTTP_2) {
+            result = Protocol.HTTP_2;
+        }
+        if (protocol == Protocols.HTTP_1_1) {
+            result = Protocol.HTTP_1_1;
+        }
+        if (protocol == Protocols.HTTP_2C) {
+            result = Protocol.H2_PRIOR_KNOWLEDGE;
+        }
+        return result;
     }
 }

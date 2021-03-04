@@ -64,6 +64,7 @@ class RetrofitServiceClientConfiguration<API> {
     private RecoveryConfiguration recoveryConfiguration = DEFAULT_RECOVERY_CONFIGURATION;
     private int retries = DEFAULT_NUMBER_OF_RETRIES;
     private ConnectionSettings connectionSettings = DEFAULT_CONNECTION_SETTINGS;
+    private Protocols protocol;
     @Setter
     @NonNull
     private RequestTracking requestTracking = RequestTracking.builder().build();
@@ -100,6 +101,11 @@ class RetrofitServiceClientConfiguration<API> {
     void setConnectionSettings(ConnectionSettings connectionSettings) {
         checkArgument(connectionSettings != null, "Non-null connection settings must be set");
         this.connectionSettings = connectionSettings;
+    }
+
+    public void setProtocol(Protocols protocol) {
+        checkArgument(protocol != null, "Non-null protocol settings must be set");
+        this.protocol = protocol;
     }
 
     /**
