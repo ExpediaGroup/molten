@@ -16,12 +16,15 @@
 
 package com.hotels.molten.cache;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import lombok.Value;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -64,5 +67,47 @@ public class ReactiveMapCacheTest {
             .thenRequest(1)
             .then(() -> verify(cache).put(KEY, VALUE))
             .verifyComplete();
+    }
+
+    @Test
+    public void shouldPutViaOperator() {
+        Mono.just(VALUE)
+            .as(reactiveCache.withKey(KEY))
+            .as(StepVerifier::create)
+            .expectSubscription()
+            .thenRequest(1)
+            .then(() -> verify(cache).put(KEY, VALUE))
+            .expectNext(VALUE)
+            .verifyComplete();
+    }
+
+    @Test
+    public void shouldConvertValueViaOperator() {
+        Mono.just(VALUE)
+            .as(reactiveCache.withKey(KEY, String::toUpperCase, String::toLowerCase))
+            .as(StepVerifier::create)
+            .expectSubscription()
+            .thenRequest(1)
+            .then(() -> verify(cache).put(KEY, "ONE"))
+            .expectNext(VALUE)
+            .verifyComplete();
+    }
+
+    @Test
+    public void shouldWorkAsNegativeCacheViaOperator() {
+        Map<Integer, StringWrapper> negativeCache = new ConcurrentHashMap<>();
+        ReactiveCache<Integer, StringWrapper> negativeReactiveCache = new ReactiveMapCache<>(negativeCache);
+        Mono.<String>empty()
+            .as(negativeReactiveCache.withKey(KEY, StringWrapper::new, StringWrapper::getValue))
+            .as(StepVerifier::create)
+            .expectSubscription()
+            .thenRequest(1)
+            .verifyComplete();
+        assertThat(negativeCache).containsEntry(KEY, new StringWrapper(null));
+    }
+
+    @Value
+    private static class StringWrapper {
+        String value;
     }
 }
