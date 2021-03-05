@@ -53,14 +53,14 @@ public interface ReactiveCache<K, V> {
      *
      * <pre>
      * return Mono.fromCallable(() -&gt; expensiveServiceCall(key))
-     *   .as(serviceCallCache.withKey(key));
+     *   .as(serviceCallCache.cachingWith(key));
      * </pre>
      *
      * @param key the cache key
      * @return a function
      */
-    default Function<Mono<V>, Mono<V>> withKey(K key) {
-        return withKey(key, Function.identity(), Function.identity());
+    default Function<Mono<V>, Mono<V>> cachingWith(K key) {
+        return cachingWith(key, Function.identity(), Function.identity());
     }
 
     /**
@@ -76,9 +76,9 @@ public interface ReactiveCache<K, V> {
      * @param <U> type of the exposed value
      * @return a function
      */
-    default <U> Function<Mono<U>, Mono<U>> withKey(K key,
-                                                   Function<U, V> valueToConverter,
-                                                   Function<V, U> valueFromConverter) {
+    default <U> Function<Mono<U>, Mono<U>> cachingWith(K key,
+                                                       Function<U, V> valueToConverter,
+                                                       Function<V, U> valueFromConverter) {
         return nonCachedMono -> get(key)
             .switchIfEmpty(nonCachedMono
                 .map(valueToConverter)
