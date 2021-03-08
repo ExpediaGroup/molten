@@ -71,7 +71,7 @@ public interface ReactiveCache<K, V> {
      * <p>Useful for negative cache implementations.</p>
      *
      * @param key the cache key
-     * @param valueToConverter transforming the non-cached value to be storable, must not return null
+     * @param valueToConverter transforming the non-cached value to be storable, should not return null
      * @param valueFromConverter transforming the cached value
      * @param <U> type of the exposed value
      * @return a function
@@ -82,7 +82,7 @@ public interface ReactiveCache<K, V> {
         return nonCachedMono -> get(key)
             .switchIfEmpty(nonCachedMono
                 .map(valueToConverter)
-                .switchIfEmpty(Mono.defer(() -> Mono.just(valueToConverter.apply(null))))
+                .switchIfEmpty(Mono.defer(() -> Mono.justOrEmpty(valueToConverter.apply(null))))
                 .flatMap(nonCachedWrapped -> put(key, nonCachedWrapped)
                     .thenReturn(nonCachedWrapped)))
             .flatMap(value -> Mono.justOrEmpty(valueFromConverter.apply(value)));

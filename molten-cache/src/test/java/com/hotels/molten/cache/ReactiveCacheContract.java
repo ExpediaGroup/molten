@@ -78,6 +78,16 @@ public abstract class ReactiveCacheContract {
     }
 
     @Test
+    public void shouldNotFailIfThereAreNoEmittedItems() {
+        Mono.<String>empty()
+            .as(reactiveCache.cachingWith(KEY))
+            .as(StepVerifier::create)
+            .expectSubscription()
+            .thenRequest(1)
+            .verifyComplete();
+    }
+
+    @Test
     public void shouldWorkAsNegativeCacheViaOperator() {
         ReactiveCache<Integer, StringWrapper> reactiveNegativeCache = spy(createCacheForContractTest());
         Mono.<String>empty()
