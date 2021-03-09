@@ -23,19 +23,19 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link ReactiveMapCache}.
  */
-@Listeners(MockitoTestNGListener.class)
-public class ReactiveMapCacheTest extends ReactiveCacheContract {
+@ExtendWith(MockitoExtension.class)
+class ReactiveMapCacheTest implements ReactiveCacheContract {
     private static final String VALUE = "one";
     private static final int KEY = 1;
     @Mock
@@ -44,12 +44,12 @@ public class ReactiveMapCacheTest extends ReactiveCacheContract {
     private ReactiveMapCache<Integer, String> reactiveCache;
 
     @Override
-    protected <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
         return new ReactiveMapCache<>(new ConcurrentHashMap<>());
     }
 
     @Test
-    public void shouldDelegateGetLazily() {
+    void shouldDelegateGetLazily() {
         when(cache.get(KEY)).thenReturn(VALUE);
         Mono<String> get = reactiveCache.get(KEY);
         verifyNoInteractions(cache);
@@ -62,7 +62,7 @@ public class ReactiveMapCacheTest extends ReactiveCacheContract {
     }
 
     @Test
-    public void shouldDelegatePutLazily() {
+    void shouldDelegatePutLazily() {
         Mono<Void> put = reactiveCache.put(KEY, VALUE);
         verifyNoInteractions(cache);
         StepVerifier.create(put)

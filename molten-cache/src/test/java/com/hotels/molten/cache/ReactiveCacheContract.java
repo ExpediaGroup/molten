@@ -21,30 +21,23 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import lombok.Value;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
  * {@code ReactiveCache} contract to test the expected behaviours.
  */
-public abstract class ReactiveCacheContract {
+public interface ReactiveCacheContract {
 
-    private static final String VALUE = "one";
-    private static final int KEY = 1;
+    String VALUE = "one";
+    int KEY = 1;
 
-    private ReactiveCache<Integer, String> reactiveCache;
-
-    protected abstract <T> ReactiveCache<Integer, T> createCacheForContractTest();
-
-    @BeforeMethod
-    public void setUp() {
-        reactiveCache = spy(createCacheForContractTest());
-    }
+    <T> ReactiveCache<Integer, T> createCacheForContractTest();
 
     @Test
-    public void shouldCacheValueViaOperator() {
+    default void shouldCacheValueViaOperator() {
+        ReactiveCache<Integer, String> reactiveCache = spy(createCacheForContractTest());
         Mono.just(VALUE)
             .as(reactiveCache.cachingWith(KEY))
             .as(StepVerifier::create)
@@ -65,7 +58,8 @@ public abstract class ReactiveCacheContract {
     }
 
     @Test
-    public void shouldConvertValueViaOperator() {
+    default void shouldConvertValueViaOperator() {
+        ReactiveCache<Integer, String> reactiveCache = spy(createCacheForContractTest());
         Mono.just(VALUE)
             .as(reactiveCache.cachingWith(KEY, String::toUpperCase, String::toLowerCase))
             .as(StepVerifier::create)
@@ -78,7 +72,8 @@ public abstract class ReactiveCacheContract {
     }
 
     @Test
-    public void shouldNotFailIfThereAreNoEmittedItems() {
+    default void shouldNotFailIfThereAreNoEmittedItems() {
+        ReactiveCache<Integer, String> reactiveCache = createCacheForContractTest();
         Mono.<String>empty()
             .as(reactiveCache.cachingWith(KEY))
             .as(StepVerifier::create)
@@ -88,7 +83,7 @@ public abstract class ReactiveCacheContract {
     }
 
     @Test
-    public void shouldWorkAsNegativeCacheViaOperator() {
+    default void shouldWorkAsNegativeCacheViaOperator() {
         ReactiveCache<Integer, StringWrapper> reactiveNegativeCache = spy(createCacheForContractTest());
         Mono.<String>empty()
             .as(reactiveNegativeCache.cachingWith(KEY, StringWrapper::new, StringWrapper::getValue))
@@ -108,7 +103,7 @@ public abstract class ReactiveCacheContract {
     }
 
     @Value
-    private static class StringWrapper {
+    class StringWrapper {
         private String value;
     }
 }
