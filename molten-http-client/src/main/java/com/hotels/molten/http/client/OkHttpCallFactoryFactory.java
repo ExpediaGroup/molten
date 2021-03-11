@@ -168,7 +168,7 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
         } else if (protocol == Protocols.HTTP_2C) {
             result = Protocol.H2_PRIOR_KNOWLEDGE;
         } else {
-            throw new RuntimeException("Non managed value Protocols" + protocol);
+            throw new RuntimeException("Not managed Protocols value: " + protocol);
         }
         return result;
     }
