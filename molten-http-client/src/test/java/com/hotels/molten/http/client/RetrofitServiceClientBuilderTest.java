@@ -136,9 +136,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
 
     @Test(dataProvider = "common")
     public void should_get_response(String clientType) {
-        ServiceEndpoint client = defaultClientBuilder(clientType)
-            .protocol(List.of(Protocols.HTTP_2C))
-            .buildClient();
+        ServiceEndpoint client = defaultClientBuilder(clientType).buildClient();
         StepVerifier.create(client.getData("test"))
             .thenAwait()
             .expectNext(response("test", 1))

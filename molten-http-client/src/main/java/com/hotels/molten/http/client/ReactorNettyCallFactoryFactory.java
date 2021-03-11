@@ -139,7 +139,7 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
         } else if (protocol == Protocols.HTTP_2C) {
             result = HttpProtocol.H2C;
         } else {
-            throw new RuntimeException("Non managed value Protocols" + protocol);
+            throw new RuntimeException("Not managed Protocols value: " + protocol);
         }
         return result;
     }

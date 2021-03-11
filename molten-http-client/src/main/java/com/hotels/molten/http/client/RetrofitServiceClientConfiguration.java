@@ -105,7 +105,7 @@ class RetrofitServiceClientConfiguration<API> {
     }
 
     void setProtocol(List<Protocols> protocol) {
-        checkArgument(protocol != null, "Non-null protocol settings must be set");
+        checkArgument(protocol != null, "Non-null protocol settings must be set.");
         this.protocol = protocol;
     }
 
