@@ -22,6 +22,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 import brave.http.HttpTracing;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -106,6 +107,8 @@ class RetrofitServiceClientConfiguration<API> {
 
     void setProtocol(List<Protocol> protocol) {
         checkArgument(protocol != null, "Non-null protocol settings must be set.");
+        checkArgument(!protocol.isEmpty(), "Non-empty protocol settings must be set.");
+        checkArgument(!protocol.stream().allMatch(Objects::isNull), "Non-null elements at least one must be set.");
         this.protocol = protocol;
     }
 

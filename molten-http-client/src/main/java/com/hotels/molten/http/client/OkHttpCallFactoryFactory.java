@@ -18,6 +18,7 @@ package com.hotels.molten.http.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -149,26 +150,9 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
     private List<okhttp3.Protocol> getProtocol(List<Protocol> protocol) {
         return protocol
             .stream()
-            .map(this::convertToHttpProtocol)
+            .filter(Objects::nonNull)
+            .map(Protocol::getOkProtocol)
             .distinct()
             .collect(Collectors.toList());
     }
-
-
-    private okhttp3.Protocol convertToHttpProtocol(Protocol protocol) {
-        okhttp3.Protocol result;
-
-        if (protocol == Protocol.HTTP_2) {
-            result = okhttp3.Protocol.HTTP_2;
-        } else if (protocol == Protocol.HTTP_1_1) {
-            result = okhttp3.Protocol.HTTP_1_1;
-        } else if (protocol == Protocol.HTTP_2C) {
-            result = okhttp3.Protocol.H2_PRIOR_KNOWLEDGE;
-        } else {
-            throw new RuntimeException("Not managed Protocol value: " + protocol);
-        }
-        return result;
-    }
-
-
 }

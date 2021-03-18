@@ -19,6 +19,7 @@ package com.hotels.molten.http.client;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.logging.LogLevel;
@@ -122,23 +123,9 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
     private HttpProtocol[] getProtocol(List<Protocol> protocol) {
         return protocol
             .stream()
-            .map(this::convertToHttpProtocol)
+            .filter(Objects::nonNull)
+            .map(Protocol::getNettyProtocol)
             .distinct()
             .toArray(HttpProtocol[]::new);
-
-    }
-
-    private HttpProtocol convertToHttpProtocol(Protocol protocol) {
-        HttpProtocol result;
-        if (protocol == Protocol.HTTP_2) {
-            result = HttpProtocol.H2;
-        } else if (protocol == Protocol.HTTP_1_1) {
-            result = HttpProtocol.HTTP11;
-        } else if (protocol == Protocol.HTTP_2C) {
-            result = HttpProtocol.H2C;
-        } else {
-            throw new RuntimeException("Not managed Protocol value: " + protocol);
-        }
-        return result;
     }
 }

@@ -17,7 +17,6 @@
 package com.hotels.molten.http.client;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -26,7 +25,6 @@ import com.jakewharton.retrofit2.adapter.reactor.ReactorCallAdapterFactory;
 import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.LoggingEventListener;
 import org.slf4j.Logger;
@@ -64,7 +62,6 @@ public class OkHttpTest {
         ConnectionPool connectionPool = connectionPoolFor(concurrency);
         Dispatcher dispatcher = dispatcherFor(concurrency);
         OkHttpClient.Builder clientBuilder = new OkHttpClient().newBuilder()
-                .protocols(Collections.singletonList(Protocol.H2_PRIOR_KNOWLEDGE))
             .connectTimeout(connectionTimeoutMs, TimeUnit.MILLISECONDS)
             .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)
             .writeTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)

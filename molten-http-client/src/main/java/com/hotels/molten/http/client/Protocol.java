@@ -14,23 +14,35 @@ package com.hotels.molten.http.client;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import lombok.Getter;
+import reactor.netty.http.HttpProtocol;
+
 /**
  * The different configurable types of http protocols.
  */
+@Getter
 public enum Protocol {
+
     /**
      * Cleartext HTTP/2 with no "upgrade" round trip.
-     *
      */
-    HTTP_2C,
+    HTTP_2C(HttpProtocol.H2C, okhttp3.Protocol.H2_PRIOR_KNOWLEDGE),
     /**
      * The IETF's binary-framed protocol that includes header compression.
      * HTTP/2 requires deployments of HTTP/2 that use TLS 1.2 support
      */
-    HTTP_2,
+    HTTP_2(HttpProtocol.H2, okhttp3.Protocol.HTTP_2),
     /**
      * A plaintext framing that includes persistent connections.
      */
-    HTTP_1_1,
+    HTTP_1_1(HttpProtocol.HTTP11, okhttp3.Protocol.HTTP_1_1);
+
+    private final HttpProtocol nettyProtocol;
+    private final okhttp3.Protocol okProtocol;
+
+    Protocol(HttpProtocol nettyProtocol, okhttp3.Protocol okProtocol) {
+        this.nettyProtocol = nettyProtocol;
+        this.okProtocol = okProtocol;
+    }
 
 }
