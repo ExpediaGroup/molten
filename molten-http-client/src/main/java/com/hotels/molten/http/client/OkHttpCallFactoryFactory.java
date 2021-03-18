@@ -18,7 +18,6 @@ package com.hotels.molten.http.client;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -148,9 +147,7 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
     }
 
     private List<okhttp3.Protocol> getProtocol(List<Protocol> protocol) {
-        return protocol
-            .stream()
-            .filter(Objects::nonNull)
+        return protocol.stream()
             .map(Protocol::getOkProtocol)
             .distinct()
             .collect(Collectors.toList());

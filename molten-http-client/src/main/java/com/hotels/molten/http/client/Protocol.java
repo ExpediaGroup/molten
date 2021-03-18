@@ -14,13 +14,16 @@ package com.hotels.molten.http.client;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
 import reactor.netty.http.HttpProtocol;
 
 /**
  * The different configurable types of http protocols.
  */
 @Getter
+@AllArgsConstructor
 public enum Protocol {
 
     /**
@@ -37,12 +40,9 @@ public enum Protocol {
      */
     HTTP_1_1(HttpProtocol.HTTP11, okhttp3.Protocol.HTTP_1_1);
 
+    @NonNull
     private final HttpProtocol nettyProtocol;
+    @NonNull
     private final okhttp3.Protocol okProtocol;
-
-    Protocol(HttpProtocol nettyProtocol, okhttp3.Protocol okProtocol) {
-        this.nettyProtocol = nettyProtocol;
-        this.okProtocol = okProtocol;
-    }
 
 }

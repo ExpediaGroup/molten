@@ -108,7 +108,7 @@ class RetrofitServiceClientConfiguration<API> {
     void setProtocol(List<Protocol> protocol) {
         checkArgument(protocol != null, "Non-null protocol settings must be set.");
         checkArgument(!protocol.isEmpty(), "Non-empty protocol settings must be set.");
-        checkArgument(!protocol.stream().allMatch(Objects::isNull), "Non-null elements at least one must be set.");
+        checkArgument(protocol.stream().noneMatch(Objects::isNull), "All the protocols must be non-null.");
         this.protocol = protocol;
     }
 
