@@ -15,9 +15,9 @@ package com.hotels.molten.http.client;
  * limitations under the License.
  */
 /**
- * Enums for protocols.
+ * The different configurable types of http protocols.
  */
-public enum Protocols {
+public enum Protocol {
     /**
      * Cleartext HTTP/2 with no "upgrade" round trip.
      *

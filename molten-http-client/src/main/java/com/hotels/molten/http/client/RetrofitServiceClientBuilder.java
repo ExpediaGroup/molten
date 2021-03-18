@@ -208,7 +208,6 @@ public final class RetrofitServiceClientBuilder<API> {
         return this;
     }
 
-
     /**
      * Sets the {@link HttpTracing} to be used for propagating Zipkin compatible distributed trace information.
      *
@@ -364,7 +363,7 @@ public final class RetrofitServiceClientBuilder<API> {
      * @param protocol the (@code Protocol} to set.
      * @return this builder
      */
-    public RetrofitServiceClientBuilder<API> protocol(List<Protocols> protocol) {
+    public RetrofitServiceClientBuilder<API> protocol(List<Protocol> protocol) {
         this.configuration.setProtocol(protocol);
         return this;
     }

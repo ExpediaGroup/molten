@@ -32,7 +32,6 @@ import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.EventListener;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.LoggingEventListener;
 import org.slf4j.LoggerFactory;
@@ -147,28 +146,26 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
         }
     }
 
-    private List<Protocol> getProtocol(List<Protocols> protocol) {
-        List<Protocol> result;
-        result = protocol
+    private List<okhttp3.Protocol> getProtocol(List<Protocol> protocol) {
+        return protocol
             .stream()
             .map(this::convertToHttpProtocol)
             .distinct()
             .collect(Collectors.toList());
-        return result;
     }
 
 
-    private Protocol convertToHttpProtocol(Protocols protocol) {
-        Protocol result;
+    private okhttp3.Protocol convertToHttpProtocol(Protocol protocol) {
+        okhttp3.Protocol result;
 
-        if (protocol == Protocols.HTTP_2) {
-            result = Protocol.HTTP_2;
-        } else if (protocol == Protocols.HTTP_1_1) {
-            result = Protocol.HTTP_1_1;
-        } else if (protocol == Protocols.HTTP_2C) {
-            result = Protocol.H2_PRIOR_KNOWLEDGE;
+        if (protocol == Protocol.HTTP_2) {
+            result = okhttp3.Protocol.HTTP_2;
+        } else if (protocol == Protocol.HTTP_1_1) {
+            result = okhttp3.Protocol.HTTP_1_1;
+        } else if (protocol == Protocol.HTTP_2C) {
+            result = okhttp3.Protocol.H2_PRIOR_KNOWLEDGE;
         } else {
-            throw new RuntimeException("Not managed Protocols value: " + protocol);
+            throw new RuntimeException("Not managed Protocol value: " + protocol);
         }
         return result;
     }

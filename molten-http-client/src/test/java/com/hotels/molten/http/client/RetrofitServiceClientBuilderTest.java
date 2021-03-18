@@ -146,7 +146,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
     @Test(dataProvider = "common")
     public void should_get_responseWhen_called_With_HTTP_1_1(String clientType) {
         ServiceEndpoint client = defaultClientBuilder(clientType)
-            .protocol(List.of(Protocols.HTTP_1_1))
+            .protocol(List.of(Protocol.HTTP_1_1))
             .buildClient();
         StepVerifier.create(client.checkProtocol(HttpVersion.HTTP_1_1))
             .thenAwait()
@@ -157,7 +157,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
     @Test(dataProvider = "common")
     public void should_get_responseWhen_called_With_HTTP_2C(String clientType) {
         ServiceEndpoint client = defaultClientBuilder(clientType)
-            .protocol(List.of(Protocols.HTTP_2C))
+            .protocol(List.of(Protocol.HTTP_2C))
             .buildClient();
         StepVerifier.create(client.checkProtocol(HttpVersion.HTTP_2))
             .thenAwait()
