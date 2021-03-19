@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2]
+### Added
+- Added `ReactiveCache#cachingWith` to use as a caching operator in a reactive chain.
+
 ## [1.1.1]
 ### Added
 - Added the legacy mockito support to the auto-configuration.

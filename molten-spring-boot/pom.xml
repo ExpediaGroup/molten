@@ -15,9 +15,9 @@
   <packaging>jar</packaging>
 
   <properties>
-    <spring.version>5.3.2</spring.version>
+    <spring.version>5.3.5</spring.version>
     <spring-boot.version>2.4.2</spring-boot.version>
-    <spring-cloud.version>2020.0.0</spring-cloud.version>
+    <spring-cloud.version>2020.0.2</spring-cloud.version>
     <testcontainers.version>1.15.2</testcontainers.version>
   </properties>
 

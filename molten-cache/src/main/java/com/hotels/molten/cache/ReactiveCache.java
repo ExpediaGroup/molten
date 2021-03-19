@@ -16,6 +16,8 @@
 
 package com.hotels.molten.cache;
 
+import java.util.function.Function;
+
 import reactor.core.publisher.Mono;
 
 /**
@@ -43,4 +45,46 @@ public interface ReactiveCache<K, V> {
      * @return a completion once the operation has finished
      */
     Mono<Void> put(K key, V value);
+
+    /**
+     * Return the value stored to {@code key} if any,
+     * otherwise subscribe to the given {@code Mono}
+     * and store its return value in the cache.
+     *
+     * <pre>
+     * return Mono.fromCallable(() -&gt; expensiveServiceCall(key))
+     *   .as(serviceCallCache.cachingWith(key));
+     * </pre>
+     *
+     * @param key the cache key
+     * @return a function
+     */
+    default Function<Mono<V>, Mono<V>> cachingWith(K key) {
+        return cachingWith(key, Function.identity(), Function.identity());
+    }
+
+    /**
+     * Return {@code valueFromConverter.apply(value)}, if {@code value} already stored to {@code key},
+     * otherwise subscribe to the given {@code Mono}
+     * and store its return value as {@code valueToConverter.apply(returnValue)} in the cache.
+     *
+     * <p>Useful for negative cache implementations.</p>
+     *
+     * @param key the cache key
+     * @param valueToConverter transforming the non-cached value to be storable, should not return null
+     * @param valueFromConverter transforming the cached value
+     * @param <U> type of the exposed value
+     * @return a function
+     */
+    default <U> Function<Mono<U>, Mono<U>> cachingWith(K key,
+                                                       Function<U, V> valueToConverter,
+                                                       Function<V, U> valueFromConverter) {
+        return nonCachedMono -> get(key)
+            .switchIfEmpty(nonCachedMono
+                .map(valueToConverter)
+                .switchIfEmpty(Mono.defer(() -> Mono.justOrEmpty(valueToConverter.apply(null))))
+                .flatMap(nonCachedWrapped -> put(key, nonCachedWrapped)
+                    .thenReturn(nonCachedWrapped)))
+            .flatMap(value -> Mono.justOrEmpty(valueFromConverter.apply(value)));
+    }
 }
