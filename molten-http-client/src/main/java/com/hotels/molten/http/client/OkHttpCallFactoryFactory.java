@@ -83,7 +83,7 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
             });
         }
         if (configuration.getProtocol() != null) {
-            clientBuilder.protocols(getProtocol(configuration.getProtocol()));
+            clientBuilder.protocols(createProtocols(configuration.getProtocol()));
         }
         if (configuration.getHttpTracing() != null) {
             clientBuilder.addNetworkInterceptor(TracingInterceptor.create(configuration.getHttpTracing()));
@@ -146,9 +146,9 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
         }
     }
 
-    private List<okhttp3.Protocol> getProtocol(List<Protocol> protocol) {
+    private List<okhttp3.Protocol> createProtocols(List<Protocol> protocol) {
         return protocol.stream()
-            .map(Protocol::getOkProtocol)
+            .map(Protocol::getOkhttpProtocol)
             .distinct()
             .collect(Collectors.toList());
     }

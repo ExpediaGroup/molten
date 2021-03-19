@@ -43,6 +43,6 @@ public enum Protocol {
     @NonNull
     private final HttpProtocol nettyProtocol;
     @NonNull
-    private final okhttp3.Protocol okProtocol;
+    private final okhttp3.Protocol okhttpProtocol;
 
 }

@@ -64,7 +64,7 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
             );
 
         if (configuration.getProtocol() != null) {
-            httpClient = httpClient.protocol(getProtocol(configuration.getProtocol()));
+            httpClient = httpClient.protocol(createProtocols(configuration.getProtocol()));
         }
         var sslContextConfiguration = configuration.getSslContextConfiguration();
         if (sslContextConfiguration != null) {
@@ -119,7 +119,7 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
         return client;
     }
 
-    private HttpProtocol[] getProtocol(List<Protocol> protocol) {
+    private HttpProtocol[] createProtocols(List<Protocol> protocol) {
         return protocol.stream()
             .map(Protocol::getNettyProtocol)
             .distinct()
