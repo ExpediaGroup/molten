@@ -25,7 +25,6 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.HttpProtocol;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientMetricsRecorder;
 import reactor.netty.resources.ConnectionProvider;
@@ -63,8 +62,8 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
                 })
             );
 
-        if (configuration.getProtocol() != null) {
-            httpClient = httpClient.protocol(createProtocols(configuration.getProtocol()));
+        if (configuration.getHttpProtocols() != null) {
+            httpClient = httpClient.protocol(createProtocols(configuration.getHttpProtocols()));
         }
         var sslContextConfiguration = configuration.getSslContextConfiguration();
         if (sslContextConfiguration != null) {
@@ -119,10 +118,10 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
         return client;
     }
 
-    private HttpProtocol[] createProtocols(List<Protocol> protocol) {
+    private reactor.netty.http.HttpProtocol[] createProtocols(List<HttpProtocol> protocol) {
         return protocol.stream()
-            .map(Protocol::getNettyProtocol)
+            .map(HttpProtocol::getNettyProtocol)
             .distinct()
-            .toArray(HttpProtocol[]::new);
+            .toArray(reactor.netty.http.HttpProtocol[]::new);
     }
 }

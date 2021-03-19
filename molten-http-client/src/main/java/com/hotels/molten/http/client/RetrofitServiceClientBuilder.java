@@ -358,13 +358,13 @@ public final class RetrofitServiceClientBuilder<API> {
         return this;
     }
     /**
-     * Sets configuration http protocol. If not set default protocols of OkHttpClient/HttpClient will be used.
+     * Sets the HTTP protocol(s) to be solely supported by the client. If not set, the client defaults will be used.
      *
-     * @param protocol the (@code Protocol} to set.
+     * @param httpProtocols the {@link HttpProtocol} to set.
      * @return this builder
      */
-    public RetrofitServiceClientBuilder<API> protocol(List<Protocol> protocol) {
-        this.configuration.setProtocol(protocol);
+    public RetrofitServiceClientBuilder<API> useProtocols(HttpProtocol... httpProtocols) {
+        this.configuration.setProtocols(List.of(httpProtocols));
         return this;
     }
 

@@ -66,7 +66,7 @@ class RetrofitServiceClientConfiguration<API> {
     private RecoveryConfiguration recoveryConfiguration = DEFAULT_RECOVERY_CONFIGURATION;
     private int retries = DEFAULT_NUMBER_OF_RETRIES;
     private ConnectionSettings connectionSettings = DEFAULT_CONNECTION_SETTINGS;
-    private List<Protocol> protocol;
+    private List<HttpProtocol> httpProtocols;
     @Setter
     @NonNull
     private RequestTracking requestTracking = RequestTracking.builder().build();
@@ -105,11 +105,11 @@ class RetrofitServiceClientConfiguration<API> {
         this.connectionSettings = connectionSettings;
     }
 
-    void setProtocol(List<Protocol> protocol) {
-        checkArgument(protocol != null, "Non-null protocol settings must be set.");
-        checkArgument(!protocol.isEmpty(), "Non-empty protocol settings must be set.");
-        checkArgument(protocol.stream().noneMatch(Objects::isNull), "All the protocols must be non-null.");
-        this.protocol = protocol;
+    void setProtocols(List<HttpProtocol> protocols) {
+        checkArgument(protocols != null, "Non-null protocols list must be set.");
+        checkArgument(!protocols.isEmpty(), "At least one protocol must be set.");
+        checkArgument(protocols.stream().noneMatch(Objects::isNull), "All the protocols must be non-null.");
+        this.httpProtocols = protocols;
     }
 
     /**
