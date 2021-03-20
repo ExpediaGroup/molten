@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.2]
 ### Added
 - Added `ReactiveCache#cachingWith` to use as a caching operator in a reactive chain.
+- Added `RetrofitServiceClientBuilder#useProtocols` to set the exact http protocols your client should use.
 
 ## [1.1.1]
 ### Added

@@ -21,6 +21,8 @@ import static com.hotels.molten.http.client.RetrofitServiceClientBuilder.SYSTEM_
 import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Objects;
 
 import brave.http.HttpTracing;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -64,6 +66,7 @@ class RetrofitServiceClientConfiguration<API> {
     private RecoveryConfiguration recoveryConfiguration = DEFAULT_RECOVERY_CONFIGURATION;
     private int retries = DEFAULT_NUMBER_OF_RETRIES;
     private ConnectionSettings connectionSettings = DEFAULT_CONNECTION_SETTINGS;
+    private List<HttpProtocol> httpProtocols;
     @Setter
     @NonNull
     private RequestTracking requestTracking = RequestTracking.builder().build();
@@ -100,6 +103,13 @@ class RetrofitServiceClientConfiguration<API> {
     void setConnectionSettings(ConnectionSettings connectionSettings) {
         checkArgument(connectionSettings != null, "Non-null connection settings must be set");
         this.connectionSettings = connectionSettings;
+    }
+
+    void setProtocols(List<HttpProtocol> protocols) {
+        checkArgument(protocols != null, "Non-null protocols list must be set.");
+        checkArgument(!protocols.isEmpty(), "At least one protocol must be set.");
+        checkArgument(protocols.stream().noneMatch(Objects::isNull), "All the protocols must be non-null.");
+        this.httpProtocols = protocols;
     }
 
     /**

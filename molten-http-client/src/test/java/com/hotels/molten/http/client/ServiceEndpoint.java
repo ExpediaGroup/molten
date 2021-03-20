@@ -18,6 +18,7 @@ package com.hotels.molten.http.client;
 
 import java.util.List;
 
+import io.vertx.core.http.HttpVersion;
 import reactor.core.publisher.Mono;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -76,4 +77,7 @@ interface ServiceEndpoint {
 
     @GET("resetcounter")
     Mono<String> resetCounter();
+
+    @GET("/checkProtocol/{http}")
+    Mono<String> checkProtocol(@Path("http") HttpVersion http);
 }
