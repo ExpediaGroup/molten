@@ -2,7 +2,7 @@
 <!DOCTYPE suppressions PUBLIC "-//Puppy Crawl//DTD Suppressions 1.1//EN" "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 <suppressions>
   <!-- relax rules in unit tests, we need less docs and magic numbers are commonplace in tests -->
-  <suppress checks="JavadocMethod|MissingJavadocMethod|JavadocType|MissingJavadocType|MagicNumber|ParameterNumber|MethodCount|ClassDataAbstractionCoupling|ClassFanOutComplexity|MultipleStringLiterals|VisibilityModifier|IllegalInstantiation|IllegalThrows|FileLength|MethodLength" files=".*Mock.*java$|.*Test\.java$" />
+  <suppress checks="JavadocMethod|MissingJavadocMethod|JavadocType|MissingJavadocType|MagicNumber|ParameterNumber|MethodCount|ClassDataAbstractionCoupling|ClassFanOutComplexity|MultipleStringLiterals|VisibilityModifier|IllegalInstantiation|IllegalThrows|FileLength|MethodLength" files=".*Mock.*java$|.*Test\.java$|.*TestContract\.java$" />
   <!-- relax rules in configuration, we need less docs, more methods and params, and magic numbers are commonplace in configuration -->
   <suppress checks="JavadocMethod|MissingJavadocMethod|JavadocType|MissingJavadocType|MagicNumber|ParameterNumber|MethodCount|ClassDataAbstractionCoupling|ClassFanOutComplexity" files=".*Configuration\.java$" />
   <suppress id="Constant_AN" files=".*(?&lt;!(Test\.java))$"/>

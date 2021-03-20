@@ -17,11 +17,16 @@
 package com.hotels.molten.cache.redis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +46,9 @@ import reactor.util.retry.Retry;
 
 import com.hotels.molten.cache.CachedValue;
 import com.hotels.molten.cache.NamedCacheKey;
+import com.hotels.molten.cache.NamedReactiveCache;
+import com.hotels.molten.cache.ReactiveCache;
+import com.hotels.molten.cache.ReactiveCacheTestContract;
 import com.hotels.molten.core.mdc.MoltenMDC;
 import com.hotels.molten.trace.test.AbstractTracingTest;
 
@@ -49,18 +57,28 @@ import com.hotels.molten.trace.test.AbstractTracingTest;
  */
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class ReactiveRemoteRedisCacheTest extends AbstractTracingTest {
+public class ReactiveRemoteRedisCacheTest extends AbstractTracingTest implements ReactiveCacheTestContract {
     private static final String KEY = "key";
     private static final String CACHE_NAME = "cacheName";
     private static final String VALUE = "value";
     private static final long TTL_IN_SECONDS = 3L;
     private static final Duration TTL = Duration.ofSeconds(TTL_IN_SECONDS);
-    private ReactiveRemoteRedisCache<String, String> redisCache;
+
     @Mock
     private RedisAdvancedClusterReactiveCommands<Object, Object> reactiveCommands;
     @Mock
     private RetryingRedisConnectionProvider redisConnectionProvider;
+    private ReactiveRemoteRedisCache<String, String> redisCache;
     private VirtualTimeScheduler scheduler;
+
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        Map<Object, Object> cache = new ConcurrentHashMap<>();
+        lenient().when(reactiveCommands.get(any())).then(invocation -> Mono.justOrEmpty(cache.get(invocation.getArgument(0))));
+        lenient().when(reactiveCommands.setex(any(), anyLong(), any())).then(invocation -> Mono.justOrEmpty(cache.put(invocation.getArgument(0), invocation.getArgument(2))));
+        when(redisConnectionProvider.connect()).thenReturn(Mono.just(reactiveCommands));
+        return new NamedReactiveCache<Integer, T>(new ReactiveRemoteRedisCache<>(redisConnectionProvider), CACHE_NAME, TTL);
+    }
 
     @BeforeEach
     public void initContext() {

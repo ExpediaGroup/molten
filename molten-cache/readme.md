@@ -112,3 +112,18 @@ If you need to have bulkhead then you can wrap the inner or outer cache in [Resi
 ```java
 ReactiveCache<Integer, List<String>> resilientCache = new ResilientSharedReactiveCache<>(nonResilientCache, "cacheName", maxConcurrency, metricRegistry);
 ```
+
+## Extensibility
+
+To create and verify custom implementations of `ReactiveCache` even more easily,
+the following test jar is exposed to add `ReactiveCacheContract` to the JUnit 5 based unit tests of your custom caches.
+
+```xml
+<dependency>
+    <groupId>com.expediagroup.molten</groupId>
+    <artifactId>molten-cache</artifactId>
+    <classifier>test-contract</classifier>
+    <type>test-jar</type>
+    <scope>test</scope>
+</dependency>
+```

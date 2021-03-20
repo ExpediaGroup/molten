@@ -33,7 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.scheduler.VirtualTimeScheduler;
 
-import com.hotels.molten.cache.ReactiveReloadingCache.Builder;
 import com.hotels.molten.cache.ReactiveReloadingCache.TimestampedValue;
 import com.hotels.molten.core.metrics.MoltenMetrics;
 import com.hotels.molten.test.AssertSubscriber;
@@ -52,9 +50,8 @@ import com.hotels.molten.test.TestClock;
 /**
  * Unit test for {@link ReactiveReloadingCache}.
  */
-@Slf4j
 @ExtendWith(MockitoExtension.class)
-public class ReactiveReloadingCacheTest {
+public class ReactiveReloadingCacheTest implements ReactiveCacheTestContract {
     private static final int KEY = 1;
     private static final String VALUE = "1";
     private static final String OTHER_VALUE = "2";
@@ -71,6 +68,15 @@ public class ReactiveReloadingCacheTest {
     private Gauge loadExceptionCounter;
     private Gauge asyncLoadCounter;
     private Gauge asyncLoadExceptionCounter;
+
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        return ReactiveReloadingCache.<Integer, T>over(new ReactiveMapCache<>(new ConcurrentHashMap<>()))
+            .loadingWith(i -> Mono.<T>empty().delaySubscription(MORE_THAN_REFRESH_TIME))
+            .withTimeToRefresh(REFRESH_TIME)
+            .emptyIfNotCached()
+            .build();
+    }
 
     @BeforeEach
     public void initContext() {
@@ -98,6 +104,7 @@ public class ReactiveReloadingCacheTest {
         waitForGet();
         test.assertResult(VALUE);
     }
+
     @Test
     public void should_delegate_cache_puts() {
         ReactiveCache<Integer, String> reloadingCache = reloadingCacheBuilder().build();
@@ -401,11 +408,11 @@ public class ReactiveReloadingCacheTest {
         scheduler.advanceTimeBy(DelayedReactiveMapCache.GET_DELAY);
     }
 
-    private Builder<Integer, String, Integer, String> reloadingCacheBuilder() {
+    private ReactiveReloadingCache.Builder<Integer, String, Integer, String> reloadingCacheBuilder() {
         return reloadingCacheBuilder(reactiveCache);
     }
 
-    private Builder<Integer, String, Integer, String> reloadingCacheBuilder(ReactiveCache<Integer, TimestampedValue<String>> cache) {
+    private ReactiveReloadingCache.Builder<Integer, String, Integer, String> reloadingCacheBuilder(ReactiveCache<Integer, TimestampedValue<String>> cache) {
         return ReactiveReloadingCache.over(cache)
             .loadingWith(service::get)
             .withTimeToRefresh(REFRESH_TIME)

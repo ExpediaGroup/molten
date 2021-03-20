@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,7 @@ import reactor.test.StepVerifier;
  * Unit test for {@link NamedReactiveCache}.
  */
 @ExtendWith(MockitoExtension.class)
-public class NamedReactiveCacheTest {
+public class NamedReactiveCacheTest implements ReactiveCacheTestContract {
     private static final int KEY = 1;
     private static final String VALUE = "one";
     private static final String CACHENAME = "cachename";
@@ -43,6 +44,11 @@ public class NamedReactiveCacheTest {
     @Mock
     private ReactiveCache<NamedCacheKey<Integer>, CachedValue<String>> cache;
     private NamedReactiveCache<Integer, String> namedReactiveCache;
+
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        return new NamedReactiveCache<>(new ReactiveMapCache<>(new ConcurrentHashMap<>()), CACHENAME, TTL);
+    }
 
     @BeforeEach
     public void initContext() {

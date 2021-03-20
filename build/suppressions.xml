@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE suppressions PUBLIC "-//Puppy Crawl//DTD Suppressions 1.1//EN" "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 <suppressions>
-  <suppress checks="FileLength|MethodLength|ClassDataAbstractionCoupling" files="com.hotels.molten.http.client.RetrofitServiceClientBuilder.java" />
-  <suppress checks="FileLength|MethodLength" files="com.hotels.molten.http.client.StubJsonServiceServer.java" />
-  <suppress checks="NoClone" files="com.hotels.molten.http.client.retrofit.ReactorNettyCall.java" />
-  <suppress checks="VisibilityModifier" files="com.hotels.molten.core.common.AbstractNonFusingSubscription.java" />
-  <suppress checks="IllegalInstantiation" files="com.hotels.molten.http.client.HttpException.java" />
+  <suppress checks="FileLength|MethodLength|ClassDataAbstractionCoupling" files="com.hotels.molten.http.client.RetrofitServiceClientBuilder"/>
+  <suppress checks="FileLength|MethodLength" files="com.hotels.molten.http.client.StubJsonServiceServer"/>
+  <suppress checks="NoClone" files="com.hotels.molten.http.client.retrofit.ReactorNettyCall"/>
+  <suppress checks="VisibilityModifier" files="com.hotels.molten.core.common.AbstractNonFusingSubscription"/>
+  <suppress checks="IllegalInstantiation" files="com.hotels.molten.http.client.HttpException"/>
+  <suppress checks="FinalClass" files="com.hotels.molten.cache.ReactiveReloadingCache"/>
 </suppressions>

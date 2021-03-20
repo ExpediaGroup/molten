@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.resilience4j.bulkhead.BulkheadFullException;
@@ -34,13 +35,15 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import com.hotels.molten.cache.ReactiveCache;
+import com.hotels.molten.cache.ReactiveCacheTestContract;
+import com.hotels.molten.cache.ReactiveMapCache;
 import com.hotels.molten.test.AssertSubscriber;
 
 /**
  * Unit test for {@link ResilientSharedReactiveCache}.
  */
 @ExtendWith(MockitoExtension.class)
-public class ResilientSharedReactiveCacheTest {
+public class ResilientSharedReactiveCacheTest implements ReactiveCacheTestContract {
     private static final Long KEY = 1L;
     private static final String VALUE = "value";
     private static final String CACHE_NAME = "cacheName";
@@ -50,22 +53,27 @@ public class ResilientSharedReactiveCacheTest {
     private ReactiveCache<Long, String> cache;
     private MeterRegistry meterRegistry;
 
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        return getResilientCache(new ReactiveMapCache<>(new ConcurrentHashMap<>()), 2);
+    }
+
     @BeforeEach
     public void initContext() {
         meterRegistry = new SimpleMeterRegistry();
     }
 
     @Test
-    public void shouldDelegateGetCall() {
+    public void should_delegate_get_call() {
         when(cache.get(KEY)).thenReturn(Mono.just(VALUE));
 
-        StepVerifier.create(getResilientCache(2).get(KEY)).expectNext(VALUE).verifyComplete();
+        StepVerifier.create(getResilientCache(cache, 2).get(KEY)).expectNext(VALUE).verifyComplete();
 
         verify(cache).get(KEY);
     }
     @Test
-    public void shouldLimitConcurrencyForGet() {
-        resilientCache = getResilientCache(1);
+    public void should_limit_concurrency_for_get() {
+        resilientCache = getResilientCache(cache, 1);
         when(cache.get(KEY)).thenReturn(Mono.delay(Duration.ofMillis(100)).map(i -> VALUE));
 
         AssertSubscriber<String> test1 = AssertSubscriber.create();
@@ -77,17 +85,17 @@ public class ResilientSharedReactiveCacheTest {
     }
 
     @Test
-    public void shouldDelegatePutCall() {
+    public void should_delegate_put_call() {
         when(cache.put(KEY, VALUE)).thenReturn(Mono.empty());
 
-        StepVerifier.create(getResilientCache(2).put(KEY, VALUE)).verifyComplete();
+        StepVerifier.create(getResilientCache(cache, 2).put(KEY, VALUE)).verifyComplete();
 
         verify(cache).put(KEY, VALUE);
     }
 
     @Test
-    public void shouldLimitConcurrencyForPut() {
-        resilientCache = getResilientCache(1);
+    public void should_limit_concurrency_for_put() {
+        resilientCache = getResilientCache(cache, 1);
         when(cache.put(KEY, VALUE)).thenReturn(Mono.delay(Duration.ofMillis(100)).then());
 
         AssertSubscriber<Void> test1 = AssertSubscriber.create();
@@ -99,8 +107,8 @@ public class ResilientSharedReactiveCacheTest {
     }
 
     @Test
-    public void shouldHaveSeparateBulkheadForGetAndPut() {
-        resilientCache = getResilientCache(1);
+    public void should_have_separate_bulkhead_for_get_and_put() {
+        resilientCache = getResilientCache(cache, 1);
         when(cache.get(KEY)).thenReturn(Mono.delay(Duration.ofMillis(100)).map(i -> VALUE));
         when(cache.put(KEY, VALUE)).thenReturn(Mono.delay(Duration.ofMillis(100)).then());
 
@@ -114,7 +122,7 @@ public class ResilientSharedReactiveCacheTest {
         test2.await().assertComplete();
     }
 
-    private ResilientSharedReactiveCache<Long, String> getResilientCache(int maxConcurrency) {
-        return new ResilientSharedReactiveCache<>(cache, CACHE_NAME + IDX.incrementAndGet(), maxConcurrency, meterRegistry);
+    private <K, V> ResilientSharedReactiveCache<K, V> getResilientCache(ReactiveCache<K, V> reactiveCache, int maxConcurrency) {
+        return new ResilientSharedReactiveCache<>(reactiveCache, CACHE_NAME + IDX.incrementAndGet(), maxConcurrency, meterRegistry);
     }
 }

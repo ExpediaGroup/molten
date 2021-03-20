@@ -124,6 +124,14 @@
         <version>${project.version}</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>com.expediagroup.molten</groupId>
+        <artifactId>molten-cache</artifactId>
+        <version>${project.version}</version>
+        <classifier>test-contract</classifier>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 </project>

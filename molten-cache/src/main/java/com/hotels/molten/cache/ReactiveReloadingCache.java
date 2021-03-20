@@ -49,7 +49,7 @@ import com.hotels.molten.core.metrics.MetricId;
  * @param <CACHED_VALUE> the type of cached value
  */
 @Slf4j
-public final class ReactiveReloadingCache<CONTEXT, VALUE, CACHE_KEY, CACHED_VALUE> implements ReactiveCache<CONTEXT, VALUE> {
+public class ReactiveReloadingCache<CONTEXT, VALUE, CACHE_KEY, CACHED_VALUE> implements ReactiveCache<CONTEXT, VALUE> {
     private final ReactiveCache<CACHE_KEY, TimestampedValue<CACHED_VALUE>> delegate;
     private final Duration timeToRefresh;
     private final Clock clock;

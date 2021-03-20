@@ -16,6 +16,8 @@
 
 package com.hotels.molten.cache;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,7 +30,7 @@ import reactor.test.StepVerifier;
 /**
  * {@code ReactiveCache} contract to test the expected behaviours.
  */
-public interface ReactiveCacheContract {
+public interface ReactiveCacheTestContract {
 
     String VALUE = "one";
     int KEY = 1;
@@ -73,13 +75,15 @@ public interface ReactiveCacheContract {
 
     @Test
     default void should_not_fail_if_there_are_no_emitted_items() {
-        ReactiveCache<Integer, String> reactiveCache = createCacheForContractTest();
+        ReactiveCache<Integer, String> reactiveCache = spy(createCacheForContractTest());
         Mono.<String>empty()
             .as(reactiveCache.cachingWith(KEY))
             .as(StepVerifier::create)
             .expectSubscription()
             .thenRequest(1)
             .verifyComplete();
+
+        verify(reactiveCache, never()).put(any(), any());
     }
 
     @Test

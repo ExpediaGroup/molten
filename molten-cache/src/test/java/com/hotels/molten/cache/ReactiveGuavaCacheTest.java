@@ -21,6 +21,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,13 +34,18 @@ import reactor.test.StepVerifier;
  * Unit test for {@link ReactiveGuavaCache}.
  */
 @ExtendWith(MockitoExtension.class)
-public class ReactiveGuavaCacheTest {
+public class ReactiveGuavaCacheTest implements ReactiveCacheTestContract {
     private static final String VALUE = "one";
     private static final int KEY = 1;
     @Mock
     private Cache<Integer, String> cache;
     @InjectMocks
     private ReactiveGuavaCache<Integer, String> reactiveCache;
+
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        return new ReactiveGuavaCache<>(CacheBuilder.newBuilder().build());
+    }
 
     @Test
     public void should_delegate_get_lazily() {
