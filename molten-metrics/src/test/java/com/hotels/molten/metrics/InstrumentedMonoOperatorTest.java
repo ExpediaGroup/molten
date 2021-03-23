@@ -29,9 +29,9 @@ import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import com.hotels.molten.core.metrics.MetricId;
@@ -50,13 +50,13 @@ public class InstrumentedMonoOperatorTest {
     private MeterRegistry meterRegistry;
     private ReactorInstrument reactorInstrument;
 
-    @BeforeMethod
+    @BeforeEach
     public void init() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         meterRegistry = new SimpleMeterRegistry();
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }

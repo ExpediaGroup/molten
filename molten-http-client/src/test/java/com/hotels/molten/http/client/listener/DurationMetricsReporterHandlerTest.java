@@ -25,19 +25,19 @@ import com.google.common.collect.ImmutableMultimap;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.HttpUrl;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
 /**
  * Test for {@link DurationMetricsReporterHandler}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class DurationMetricsReporterHandlerTest {
     private static final String CLIENT_ID = "clientId";
     private MeterRegistry meterRegistry;
@@ -45,13 +45,13 @@ public class DurationMetricsReporterHandlerTest {
     private HttpUrl httpUrl;
     private DurationMetricsReporterHandler handler;
 
-    @BeforeMethod
+    @BeforeEach
     public void init() {
         meterRegistry = new SimpleMeterRegistry();
         handler = new DurationMetricsReporterHandler(meterRegistry, CLIENT_ID);
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }

@@ -24,13 +24,13 @@ import static org.mockito.Mockito.when;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.event.CircuitBreakerOnStateTransitionEvent;
 import io.github.resilience4j.core.EventConsumer;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.test.StepVerifier;
 
 import com.hotels.molten.healthcheck.Status;
@@ -38,7 +38,7 @@ import com.hotels.molten.healthcheck.Status;
 /**
  * Unit test for {@link HealthIndicatorOverCircuitBreaker}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class HealthIndicatorOverCircuitBreakerTest {
     private static final String A_NAME = "any";
     @Mock
@@ -49,7 +49,7 @@ public class HealthIndicatorOverCircuitBreakerTest {
     private ArgumentCaptor<EventConsumer<CircuitBreakerOnStateTransitionEvent>> eventConsumerCaptor;
     private HealthIndicatorOverCircuitBreaker indicator;
 
-    @BeforeMethod
+    @BeforeEach
     public void setUp() {
         when(circuitBreaker.getEventPublisher()).thenReturn(eventPublisher);
         when(circuitBreaker.getState()).thenReturn(CircuitBreaker.State.CLOSED);
@@ -58,12 +58,12 @@ public class HealthIndicatorOverCircuitBreakerTest {
     }
 
     @Test
-    public void shouldReturnName() {
+    public void should_return_name() {
         assertThat(indicator.name()).isEqualTo(A_NAME);
     }
 
     @Test
-    public void shouldEmitLatestState() {
+    public void should_emit_latest_state() {
         verify(eventPublisher).onStateTransition(eventConsumerCaptor.capture());
         StepVerifier.create(indicator.health().take(2))
             .assertNext(n -> assertThat(n).hasStatus(Status.UP))
@@ -73,7 +73,7 @@ public class HealthIndicatorOverCircuitBreakerTest {
     }
 
     @Test
-    public void shouldHalfOpenStateEmitStruggling() {
+    public void should_half_open_state_emit_struggling() {
         verify(eventPublisher).onStateTransition(eventConsumerCaptor.capture());
         StepVerifier.create(indicator.health().take(4))
             .assertNext(n -> assertThat(n).hasStatus(Status.UP))
@@ -87,7 +87,7 @@ public class HealthIndicatorOverCircuitBreakerTest {
     }
 
     @Test
-    public void shouldHealthBasedOnStateForTheFirstTime() {
+    public void should_health_based_on_state_for_the_first_time() {
         when(circuitBreaker.getState()).thenReturn(CircuitBreaker.State.OPEN);
         indicator = new HealthIndicatorOverCircuitBreaker(circuitBreaker);
         StepVerifier.create(indicator.health().take(1))

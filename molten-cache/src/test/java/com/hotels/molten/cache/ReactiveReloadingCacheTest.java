@@ -34,12 +34,12 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.scheduler.VirtualTimeScheduler;
 
@@ -53,7 +53,7 @@ import com.hotels.molten.test.TestClock;
  * Unit test for {@link ReactiveReloadingCache}.
  */
 @Slf4j
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class ReactiveReloadingCacheTest {
     private static final int KEY = 1;
     private static final String VALUE = "1";
@@ -72,7 +72,7 @@ public class ReactiveReloadingCacheTest {
     private Gauge asyncLoadCounter;
     private Gauge asyncLoadExceptionCounter;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         meterRegistry = new SimpleMeterRegistry();
@@ -82,7 +82,7 @@ public class ReactiveReloadingCacheTest {
         clock = TestClock.get();
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(false);

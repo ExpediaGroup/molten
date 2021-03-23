@@ -17,6 +17,7 @@
 package com.hotels.molten.cache.redis.codec;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -24,9 +25,10 @@ import java.nio.charset.StandardCharsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.hotels.molten.cache.NamedCacheKey;
 
@@ -36,13 +38,12 @@ import com.hotels.molten.cache.NamedCacheKey;
 public class FlatStringKeyCodecTest {
     private FlatStringKeyCodec<Object, Object> codec;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         codec = new FlatStringKeyCodec<>();
     }
 
-    @DataProvider(name = "keys")
-    public Object[][] getKeys() {
+    static Object[][] keys() {
         return new Object[][] {
             new Object[] {"key", "key"},
             new Object[] {new ComplexTypeWithFlatKeySupport("top", new ComplexTypeWithFlatKeySupport.Nested(3, "sometext")), "top:3:sometext"},
@@ -54,14 +55,16 @@ public class FlatStringKeyCodecTest {
         };
     }
 
-    @Test(dataProvider = "keys")
-    public void shouldEncodeKeyAsExpected(Object key, String expectedFlatKey) {
+    @ParameterizedTest
+    @MethodSource("keys")
+    void should_encode_key_as_expected(Object key, String expectedFlatKey) {
         ByteBuffer encodedKey = codec.encodeKey(key);
         assertThat(StandardCharsets.UTF_8.decode(encodedKey).toString()).isEqualTo(expectedFlatKey);
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void shouldThrowUnsupportedForEncodingValue() {
-        codec.encodeValue(1);
+    @Test
+    void should_throw_unsupported_for_encoding_value() {
+        assertThatThrownBy(() -> codec.encodeValue(1))
+            .isInstanceOf(UnsupportedOperationException.class);
     }
 }

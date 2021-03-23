@@ -26,9 +26,9 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.assertj.core.api.AbstractDoubleAssert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
@@ -44,18 +44,18 @@ public class CircuitBreakerInstrumenterTest {
     private static final String OPERATION_TAG_VALUE = "op-value";
     private MeterRegistry meterRegistry;
 
-    @BeforeMethod
-    public void initContext() {
+    @BeforeEach
+    void initContext() {
         meterRegistry = new SimpleMeterRegistry();
     }
 
-    @AfterMethod
-    public void clearContext() {
+    @AfterEach
+    void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }
 
     @Test
-    public void should_instrument_with_hierarchical_metrics() {
+    void should_instrument_with_hierarchical_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         // Given
         var circuitBreaker = CircuitBreaker.of("id", CircuitBreakerConfig.custom()
@@ -94,7 +94,7 @@ public class CircuitBreakerInstrumenterTest {
     }
 
     @Test
-    public void should_instrument_with_dimensional_metrics() {
+    void should_instrument_with_dimensional_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(true);
         // Given
