@@ -16,10 +16,10 @@
 package com.hotels.molten.spring.boot.integration.test;
 
 import java.util.Optional;
-import javax.inject.Inject;
 
 import brave.http.HttpTracing;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -36,9 +36,9 @@ public class WebConfiguration {
     @Value("${MOCK_SERVER_URL:}")
     private String mockServerUrl;
 
-    @Inject
+    @Autowired
     private MeterRegistry meterRegistry;
-    @Inject
+    @Autowired
     private HttpTracing httpTracing;
 
     @Bean(name = ZipkinAutoConfiguration.REPORTER_BEAN_NAME)
