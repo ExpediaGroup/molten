@@ -36,13 +36,13 @@ import ch.qos.logback.core.Appender;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -52,7 +52,7 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
  * Unit test for {@link RetryingReactiveProxyFactory}.
  */
 @Slf4j
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class RetryingReactiveProxyFactoryTest {
     private static final String CLIENT_ID = "clientId";
     private RetryingReactiveProxyFactory proxyFactory;
@@ -63,7 +63,7 @@ public class RetryingReactiveProxyFactoryTest {
     @Mock
     private Appender<ILoggingEvent> appender;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         meterRegistry = new SimpleMeterRegistry();
@@ -72,7 +72,7 @@ public class RetryingReactiveProxyFactoryTest {
         callLogger.addAppender(appender);
     }
 
-    @AfterMethod
+    @AfterEach
     public void clearContext() {
         callLogger.detachAppender(appender);
         MoltenMetrics.setDimensionalMetricsEnabled(false);

@@ -25,13 +25,13 @@ import java.time.Duration;
 
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
@@ -48,7 +48,7 @@ import com.hotels.molten.trace.test.AbstractTracingTest;
  * Unit test for {@link ReactiveRemoteRedisCache}.
  */
 @Slf4j
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class ReactiveRemoteRedisCacheTest extends AbstractTracingTest {
     private static final String KEY = "key";
     private static final String CACHE_NAME = "cacheName";
@@ -62,14 +62,14 @@ public class ReactiveRemoteRedisCacheTest extends AbstractTracingTest {
     private RetryingRedisConnectionProvider redisConnectionProvider;
     private VirtualTimeScheduler scheduler;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         MoltenMDC.initialize();
         scheduler = VirtualTimeScheduler.create();
         VirtualTimeScheduler.set(scheduler);
     }
 
-    @AfterMethod
+    @AfterEach
     public void tearDown() {
         VirtualTimeScheduler.reset();
         MoltenMDC.uninitialize();

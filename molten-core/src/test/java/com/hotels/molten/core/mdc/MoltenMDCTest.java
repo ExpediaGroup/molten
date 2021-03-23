@@ -20,12 +20,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.MDC;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -42,32 +43,32 @@ public class MoltenMDCTest {
     private static final String OTHER_VALUE = "othervalue";
     private static final String YET_ANOTHER_VALUE = "yet_another_value";
 
-    @BeforeClass
-    public void initClassContext() {
+    @BeforeAll
+    static void initClassContext() {
         Hooks.enableContextLossTracking();
         MoltenCore.initialize();
     }
 
-    @AfterClass
-    public void clearClassContext() {
+    @AfterAll
+    static void clearClassContext() {
         Hooks.disableContextLossTracking();
     }
 
-    @AfterMethod
-    public void clearContext() {
+    @AfterEach
+    void clearContext() {
         MoltenMDC.uninitialize();
     }
 
-    @DataProvider(name = "onEachOperatorEnabled")
-    public Object[][] getOnEachOperatorEnabled() {
-        return new Object[][] {
-            new Object[] {true},
-            new Object[] {false}
+    static Object[][] onEachOperatorEnabled() {
+        return new Object[][]{
+            new Object[]{true},
+            new Object[]{false}
         };
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_MDC_when_subscribed_on_elastic(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_MDC_when_subscribed_on_elastic(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -81,8 +82,9 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_MDC_when_subscribed_on_parallel(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_MDC_when_subscribed_on_parallel(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -96,8 +98,9 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_MDC_when_publishing_on_elastic(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_MDC_when_publishing_on_elastic(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -111,8 +114,9 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_MDC_when_publishing_on_parallel(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_MDC_when_publishing_on_parallel(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -126,8 +130,9 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_MDC_when_subscribed_on_single(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_MDC_when_subscribed_on_single(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -141,8 +146,9 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_MDC_when_subscribed_on_immediate(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_MDC_when_subscribed_on_immediate(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -156,8 +162,9 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_MDC_when_switching_schedulers(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_MDC_when_switching_schedulers(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -176,7 +183,7 @@ public class MoltenMDCTest {
     }
 
     @Test
-    public void should_propagate_MDC_with_non_reactive_callback_with_transform() {
+    void should_propagate_MDC_with_non_reactive_callback_with_transform() {
         MoltenMDC.initialize(false);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -205,7 +212,7 @@ public class MoltenMDCTest {
     }
 
     @Test
-    public void should_maintain_assembly_time_MDC_value_with_non_reactive_callback_with_oneach_hook() {
+    void should_maintain_assembly_time_MDC_value_with_non_reactive_callback_with_oneach_hook() {
         MoltenMDC.initialize(true);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
@@ -231,8 +238,9 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_keep_original_MDC_value_even_on_immediate_scheduler(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_keep_original_MDC_value_even_on_immediate_scheduler(boolean onEachOperatorEnabled) {
         MoltenMDC.initialize(onEachOperatorEnabled);
         MDC.put(KEY, VALUE);
         StepVerifier.create(

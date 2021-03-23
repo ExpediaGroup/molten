@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-base</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.3-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -31,7 +31,7 @@
     <surefire.fork.timeout.in.seconds>300</surefire.fork.timeout.in.seconds>
     <fail.for.duplicates>true</fail.for.duplicates>
     <skip.platform.banned.dependency.check>true</skip.platform.banned.dependency.check>
-    <checkstyle.version>8.40</checkstyle.version>
+    <checkstyle.version>8.41</checkstyle.version>
     <checkstyle.skip>false</checkstyle.skip>
     <checkstyle.rules.directory>build</checkstyle.rules.directory>
     <checkstyle.config.location>${checkstyle.rules.directory}/checkstyle_rules.xml</checkstyle.config.location>
@@ -55,12 +55,12 @@
     <logstash.logback.encoder.version>6.6</logstash.logback.encoder.version>
     <guava.version>30.1-jre</guava.version>
     <testng.version>7.3.0</testng.version>
-    <assertj.version>3.18.1</assertj.version>
+    <assertj.version>3.19.0</assertj.version>
     <hamcrest.version>2.0.0.0</hamcrest.version>
     <mockito.version>3.8.0</mockito.version>
-    <mockito-testng.version>0.2.5</mockito-testng.version>
-    <byte-buddy.version>1.10.19</byte-buddy.version>
-    <janino.version>3.1.2</janino.version>
+    <mockito-testng.version>0.2.10</mockito-testng.version>
+    <byte-buddy.version>1.10.22</byte-buddy.version>
+    <janino.version>3.1.3</janino.version>
     <junit.jupiter.version>5.7.1</junit.jupiter.version>
     <junit.platform.version>1.7.1</junit.platform.version>
     <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
@@ -548,6 +548,9 @@
           <forkedProcessExitTimeoutInSeconds>30</forkedProcessExitTimeoutInSeconds>
           <forkCount>1</forkCount>
           <reuseForks>true</reuseForks>
+          <argLine>
+            -Djunit.jupiter.displayname.generator.default=org.junit.jupiter.api.DisplayNameGenerator$ReplaceUnderscores
+          </argLine>
         </configuration>
         <dependencies>
           <dependency>

@@ -29,16 +29,16 @@ import com.google.common.collect.ImmutableMultimap;
 import okhttp3.Call;
 import okhttp3.Connection;
 import okhttp3.HttpUrl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test for {@link CollectingDelegatingEventsListener}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class CollectingDelegatingEventsListenerTest {
 
     @Mock
@@ -54,7 +54,7 @@ public class CollectingDelegatingEventsListenerTest {
     @Mock
     private Clock clock;
 
-    @BeforeMethod
+    @BeforeEach
     public void init() {
         AtomicLong now = new AtomicLong();
         when(clock.millis()).thenAnswer(ie -> now.getAndAdd(100L));

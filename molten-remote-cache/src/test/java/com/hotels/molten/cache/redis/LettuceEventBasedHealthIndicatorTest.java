@@ -27,11 +27,11 @@ import io.lettuce.core.event.connection.ConnectedEvent;
 import io.lettuce.core.event.connection.DisconnectedEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -44,7 +44,7 @@ import com.hotels.molten.test.AssertSubscriber;
  * Unit test for {@link LettuceEventBasedHealthIndicator}.
  */
 @Slf4j
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class LettuceEventBasedHealthIndicatorTest {
 
     private static final InetSocketAddress LOCAL = new InetSocketAddress("local", 1111);
@@ -55,7 +55,7 @@ public class LettuceEventBasedHealthIndicatorTest {
     private EventBus eventBus;
     private EmitterProcessor<Event> events;
 
-    @BeforeMethod
+    @BeforeEach
     public void setUp() {
         events = EmitterProcessor.create();
         when(eventBus.get()).thenReturn(events);

@@ -21,18 +21,18 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link ReactiveGuavaCache}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class ReactiveGuavaCacheTest {
     private static final String VALUE = "one";
     private static final int KEY = 1;
@@ -42,7 +42,7 @@ public class ReactiveGuavaCacheTest {
     private ReactiveGuavaCache<Integer, String> reactiveCache;
 
     @Test
-    public void shouldDelegateGetLazily() {
+    public void should_delegate_get_lazily() {
         when(cache.getIfPresent(KEY)).thenReturn(VALUE);
         Mono<String> get = reactiveCache.get(KEY);
         verifyNoInteractions(cache);
@@ -55,7 +55,7 @@ public class ReactiveGuavaCacheTest {
     }
 
     @Test
-    public void shouldDelegatePutLazily() {
+    public void should_delegate_put_lazily() {
         Mono<Void> put = reactiveCache.put(KEY, VALUE);
         verifyNoInteractions(cache);
         StepVerifier.create(put)

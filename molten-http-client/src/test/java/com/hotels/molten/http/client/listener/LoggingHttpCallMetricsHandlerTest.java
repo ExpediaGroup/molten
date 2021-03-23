@@ -17,7 +17,6 @@
 package com.hotels.molten.http.client.listener;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,26 +26,25 @@ import java.net.URI;
 import ch.qos.logback.classic.Logger;
 import com.google.common.collect.ImmutableMultimap;
 import okhttp3.HttpUrl;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test for {@link LoggingHttpCallMetricsHandler}.
  */
+@ExtendWith(MockitoExtension.class)
 public class LoggingHttpCallMetricsHandlerTest {
 
+    @Mock
     private HttpUrl requestUrl;
+    @Mock
     private Logger logger;
 
-    @BeforeTest
-    public void init() {
-        this.requestUrl = mock(HttpUrl.class);
-        this.logger = mock(Logger.class);
-    }
-
     @Test
-    public void shouldCreateProperEventLog() {
+    public void should_create_proper_event_log() {
         // Given
         var events = ImmutableMultimap.<HttpEvent, Long>builder()
             .put(HttpEvent.CALL_START, 0L)

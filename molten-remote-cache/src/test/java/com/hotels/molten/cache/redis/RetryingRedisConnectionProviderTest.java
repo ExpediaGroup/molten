@@ -26,41 +26,41 @@ import java.util.function.Supplier;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.scheduler.VirtualTimeScheduler;
+
+import com.hotels.molten.cache.NamedCacheKey;
 
 /**
  * Unit test for {@link RetryingRedisConnectionProvider}.
  */
 @Slf4j
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class RetryingRedisConnectionProviderTest {
 
     @Mock
-    private Supplier<StatefulRedisClusterConnection<Object, Object>> connectionSupplier;
+    private Supplier<StatefulRedisClusterConnection<NamedCacheKey<Object>, Object>> connectionSupplier;
     @Mock
-    private StatefulRedisClusterConnection<Object, Object> connection;
+    private StatefulRedisClusterConnection<NamedCacheKey<Object>, Object> connection;
     @Mock
-    private RedisAdvancedClusterReactiveCommands<Object, Object> reactiveCommands;
-    private RetryingRedisConnectionProvider connectionProvider;
-    private VirtualTimeScheduler scheduler;
+    private RedisAdvancedClusterReactiveCommands<NamedCacheKey<Object>, Object> reactiveCommands;
+    @InjectMocks
+    private RetryingRedisConnectionProvider<Object, Object> connectionProvider;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
-        scheduler = VirtualTimeScheduler.create();
-        VirtualTimeScheduler.set(scheduler);
-        connectionProvider = new RetryingRedisConnectionProvider(connectionSupplier);
         when(reactiveCommands.clusterNodes()).thenReturn(Mono.empty());
     }
 
-    @AfterMethod
+    @AfterEach
     public void tearDown() {
         VirtualTimeScheduler.reset();
     }

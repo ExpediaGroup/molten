@@ -26,16 +26,21 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import brave.Tracing;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -45,40 +50,52 @@ import zipkin2.Span;
 import com.hotels.molten.core.MoltenCore;
 import com.hotels.molten.core.mdc.MoltenMDC;
 import com.hotels.molten.trace.Tracer.TraceSpan;
-import com.hotels.molten.trace.test.AbstractTracingTest;
 import com.hotels.molten.trace.test.TracingTestSupport;
 
 /**
  * Unit test for {@link MoltenTrace}.
  */
 @Slf4j
-public class MoltenTraceTest extends AbstractTracingTest {
+public class MoltenTraceTest {
 
-    @BeforeClass
-    public void initClassContext() {
+    @BeforeAll
+    static void init() {
         Hooks.enableContextLossTracking();
     }
 
-    @AfterClass
-    public void clearClassContext() {
+    @AfterAll
+    static void clear() {
         Hooks.disableContextLossTracking();
     }
 
-    @AfterMethod
-    public void clearContext() {
+    @BeforeEach
+    void initContext() {
+        MoltenCore.initialize();
+        TracingTestSupport.initialize(false);
+        MoltenTrace.initialize();
+    }
+
+    @AfterEach
+    void clearContext() {
+        MoltenCore.uninitialize();
+        MoltenTrace.uninitialize();
         MoltenMDC.uninitialize();
+        TracingTestSupport.resetCapturedSpans();
+        Tracing current = Tracing.current();
+        if (current != null) {
+            current.currentTraceContext().maybeScope(null);
+            current.setNoop(false);
+        }
+        TracingTestSupport.cleanUp();
     }
 
-    @DataProvider(name = "onEachOperatorEnabled")
-    public Object[][] getOnEachOperatorEnabled() {
-        return new Object[][] {
-            new Object[] {true},
-            new Object[] {false}
-        };
+    static Stream<Boolean> onEachOperatorEnabled() {
+        return Stream.of(true, false);
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_support_nesting(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_support_nesting(boolean onEachOperatorEnabled) {
         MoltenTrace.initialize(onEachOperatorEnabled);
         try (TraceSpan outer = Tracer.span("outer").start()) {
             StepVerifier.create(
@@ -92,8 +109,9 @@ public class MoltenTraceTest extends AbstractTracingTest {
     }
 
     @SneakyThrows
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_support_fully_reactive_nesting(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_support_fully_reactive_nesting(boolean onEachOperatorEnabled) {
         MoltenTrace.initialize(onEachOperatorEnabled);
         CountDownLatch latch = new CountDownLatch(1);
         StepVerifier.create(
@@ -128,8 +146,9 @@ public class MoltenTraceTest extends AbstractTracingTest {
             });
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_when_switching_schedulers(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_when_switching_schedulers(boolean onEachOperatorEnabled) {
         MoltenTrace.initialize(onEachOperatorEnabled);
         try (TraceSpan outer = Tracer.span("outer").start()) {
             StepVerifier.create(
@@ -144,8 +163,9 @@ public class MoltenTraceTest extends AbstractTracingTest {
         assertThat(capturedSpans(), contains(spanWithName("inner"), rootSpanWithName("outer")));
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled")
-    public void should_propagate_when_switching_schedulers_for_subscribe(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_when_switching_schedulers_for_subscribe(boolean onEachOperatorEnabled) {
         MoltenTrace.initialize(onEachOperatorEnabled);
         try (Tracer.TraceSpan outer = Tracer.span("outer").start()) {
             StepVerifier.create(
@@ -160,8 +180,10 @@ public class MoltenTraceTest extends AbstractTracingTest {
         assertThat(capturedSpans(), contains(spanWithName("inner"), rootSpanWithName("outer")));
     }
 
-    @Test(dataProvider = "onEachOperatorEnabled", timeOut = 5000)
-    public void should_propagate_trace_context_in_indirect_flow(boolean onEachOperatorEnabled) {
+    @ParameterizedTest
+    @Timeout(value = 5, unit = TimeUnit.SECONDS)
+    @MethodSource("onEachOperatorEnabled")
+    void should_propagate_trace_context_in_indirect_flow(boolean onEachOperatorEnabled) {
         MoltenTrace.initialize(onEachOperatorEnabled);
         try (Tracer.TraceSpan outer = Tracer.span("outer").start()) {
             var outerSpan = Optional.ofNullable(Tracing.currentTracer()).map(brave.Tracer::currentSpan).orElse(null);
@@ -191,7 +213,7 @@ public class MoltenTraceTest extends AbstractTracingTest {
     }
 
     @Test
-    public void should_work_with_disabled_tracing() {
+    void should_work_with_disabled_tracing() {
         MoltenTrace.uninitialize();
         TracingTestSupport.cleanUp();
         StepVerifier.create(

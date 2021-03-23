@@ -36,7 +36,7 @@ public interface ReactiveCacheContract {
     <T> ReactiveCache<Integer, T> createCacheForContractTest();
 
     @Test
-    default void shouldCacheValueViaOperator() {
+    default void should_cache_value_via_operator() {
         ReactiveCache<Integer, String> reactiveCache = spy(createCacheForContractTest());
         Mono.just(VALUE)
             .as(reactiveCache.cachingWith(KEY))
@@ -58,7 +58,7 @@ public interface ReactiveCacheContract {
     }
 
     @Test
-    default void shouldConvertValueViaOperator() {
+    default void should_convert_value_via_operator() {
         ReactiveCache<Integer, String> reactiveCache = spy(createCacheForContractTest());
         Mono.just(VALUE)
             .as(reactiveCache.cachingWith(KEY, String::toUpperCase, String::toLowerCase))
@@ -72,7 +72,7 @@ public interface ReactiveCacheContract {
     }
 
     @Test
-    default void shouldNotFailIfThereAreNoEmittedItems() {
+    default void should_not_fail_if_there_are_no_emitted_items() {
         ReactiveCache<Integer, String> reactiveCache = createCacheForContractTest();
         Mono.<String>empty()
             .as(reactiveCache.cachingWith(KEY))
@@ -83,7 +83,7 @@ public interface ReactiveCacheContract {
     }
 
     @Test
-    default void shouldWorkAsNegativeCacheViaOperator() {
+    default void should_work_as_negative_cache_via_operator() {
         ReactiveCache<Integer, StringWrapper> reactiveNegativeCache = spy(createCacheForContractTest());
         Mono.<String>empty()
             .as(reactiveNegativeCache.cachingWith(KEY, StringWrapper::new, StringWrapper::getValue))

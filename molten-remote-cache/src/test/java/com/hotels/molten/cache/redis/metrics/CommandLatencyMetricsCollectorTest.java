@@ -27,18 +27,18 @@ import java.util.concurrent.TimeUnit;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
 /**
  * Unit test for {@link CommandLatencyMetricsCollector}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class CommandLatencyMetricsCollectorTest {
     private static final String QUALIFIER = "qualifier";
     private static final String REMOTE_HOST = "remote.host";
@@ -52,7 +52,7 @@ public class CommandLatencyMetricsCollectorTest {
     @Mock
     private ProtocolKeyword commandType;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         meterRegistry = new SimpleMeterRegistry();
     }

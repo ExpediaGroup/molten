@@ -31,9 +31,9 @@ import java.util.function.Supplier;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.assertj.core.api.Assertions;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
@@ -45,42 +45,42 @@ public class InstrumentTest {
     private InstrumentTestFixture fixture;
     private Instrument.Builder instrumentBuilder;
 
-    @BeforeMethod
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         fixture = new InstrumentTestFixture();
         instrumentBuilder = Instrument.builder(fixture.getMeterRegistry()).withQualifier("test");
     }
 
-    @AfterMethod
-    public void clearContext() {
+    @AfterEach
+    void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }
 
     @Test
-    public void shouldReturnSupplierResultIfSuccess() {
+    void should_return_supplier_result_if_success() {
         final String result = "result";
         fixture
-                .when(() -> instrumentBuilder.build().supplier(() -> result).get())
-                .expectResult(result);
+            .when(() -> instrumentBuilder.build().supplier(() -> result).get())
+            .expectResult(result);
     }
 
     @Test
-    public void shouldReturnFunctionResultIfSuccess() {
+    void should_return_function_result_if_success() {
         Function<Integer, Integer> increment = num -> num + 1;
         fixture.when(() -> instrumentBuilder.build().function(increment).apply(1))
-                .expectResult(2);
+            .expectResult(2);
     }
 
     @Test
-    public void shouldReturnCallableResultIfSuccess() {
+    void should_return_callable_result_if_success() {
         final String result = "result";
         fixture.when(() -> instrumentBuilder.build().callable(() -> result).call())
-                .expectResult(result);
+            .expectResult(result);
     }
 
     @Test
-    public void shouldReturnConsumerResultIfSuccess() {
+    void should_return_consumer_result_if_success() {
         List<Integer> list = new ArrayList<>();
         IntConsumer c = list::add;
         Consumer<Integer> consumer = instrumentBuilder.build().consumer(c::accept);
@@ -89,12 +89,12 @@ public class InstrumentTest {
             consumer.accept(2);
             return null;
         })
-                .expectResult(null);
+            .expectResult(null);
         assertThat(list, is(List.of(2)));
     }
 
     @Test
-    public void shouldRunRunnable() {
+    void should_run_runnable() {
         AtomicBoolean called = new AtomicBoolean(false);
         Runnable runnable = instrumentBuilder.build().runnable(() -> called.set(true));
 
@@ -102,12 +102,12 @@ public class InstrumentTest {
             runnable.run();
             return null;
         })
-                .expectResult(null);
+            .expectResult(null);
         assertThat(called.get(), is(true));
     }
 
     @Test
-    public void shouldThrowOriginalExceptionFromRunnable() {
+    void should_throw_original_exception_from_runnable() {
         RuntimeException expectedException = new RuntimeException();
         Runnable runnable = () -> {
             throw expectedException;
@@ -116,42 +116,42 @@ public class InstrumentTest {
             instrumentBuilder.build().runnable(runnable).run();
             return null;
         })
-                .expectThrowNonBusinessException(expectedException);
+            .expectThrowNonBusinessException(expectedException);
     }
 
     @Test
-    public void shouldThrowOriginalExceptionFromFunction() {
+    void should_throw_original_exception_from_function() {
         RuntimeException expectedException = new RuntimeException();
         Function<Integer, Integer> function = num -> {
             throw expectedException;
         };
         fixture
-                .when(() -> instrumentBuilder.build().function(function).apply(1))
-                .expectThrowNonBusinessException(expectedException);
+            .when(() -> instrumentBuilder.build().function(function).apply(1))
+            .expectThrowNonBusinessException(expectedException);
     }
 
     @Test
-    public void shouldThrowOriginalExceptionFromSupplier() {
+    void should_throw_original_exception_from_supplier() {
         RuntimeException expectedException = new RuntimeException();
         Supplier<Integer> supplier = () -> {
             throw expectedException;
         };
         fixture.when(() -> instrumentBuilder.build().supplier(supplier).get())
-                .expectThrowNonBusinessException(expectedException);
+            .expectThrowNonBusinessException(expectedException);
     }
 
     @Test
-    public void shouldThrowOriginalExceptionFromCallable() {
+    void should_throw_original_exception_from_callable() {
         RuntimeException expectedException = new RuntimeException();
         Callable<Integer> callable = () -> {
             throw expectedException;
         };
         fixture.when(() -> instrumentBuilder.build().callable(callable).call())
-                .expectThrowNonBusinessException(expectedException);
+            .expectThrowNonBusinessException(expectedException);
     }
 
     @Test
-    public void shouldThrowOriginalExceptionFromConsumer() {
+    void should_throw_original_exception_from_consumer() {
         RuntimeException expectedException = new RuntimeException();
         Consumer<Integer> consumer = instrumentBuilder.build().consumer(integer -> {
             throw expectedException;
@@ -161,41 +161,41 @@ public class InstrumentTest {
             consumer.accept(2);
             return null;
         })
-                .expectThrowNonBusinessException(expectedException);
+            .expectThrowNonBusinessException(expectedException);
     }
 
     @Test
-    public void shouldFunctionThrowBusinessException() {
+    void should_function_throw_business_exception() {
         RuntimeException expectedException = new RuntimeException();
         Function<Integer, Integer> function = num -> {
             throw expectedException;
         };
         fixture.when(() -> instrumentBuilder.withBusinessExceptionDecisionMaker(e -> true).build().function(function).apply(1))
-                .expectThrowBusinessException(expectedException);
+            .expectThrowBusinessException(expectedException);
     }
 
     @Test
-    public void shouldSupplierThrowBusinessException() {
+    void should_supplier_throw_business_exception() {
         RuntimeException expectedException = new RuntimeException();
         Supplier<Integer> supplier = () -> {
             throw expectedException;
         };
         fixture.when(() -> instrumentBuilder.withBusinessExceptionDecisionMaker(e -> true).build().supplier(supplier).get())
-                .expectThrowBusinessException(expectedException);
+            .expectThrowBusinessException(expectedException);
     }
 
     @Test
-    public void shouldCallableThrowBusinessException() {
+    void should_callable_throw_business_exception() {
         RuntimeException expectedException = new RuntimeException();
         Callable<Integer> callable = () -> {
             throw expectedException;
         };
         fixture.when(() -> instrumentBuilder.withBusinessExceptionDecisionMaker(e -> true).build().callable(callable).call())
-                .expectThrowBusinessException(expectedException);
+            .expectThrowBusinessException(expectedException);
     }
 
     @Test
-    public void shouldConsumerThrowBusinessException() {
+    void should_consumer_throw_business_exception() {
         RuntimeException expectedException = new RuntimeException();
         Consumer<Integer> consumer = instrumentBuilder.withBusinessExceptionDecisionMaker(e -> true).build().consumer(integer -> {
             throw expectedException;
@@ -205,11 +205,11 @@ public class InstrumentTest {
             consumer.accept(2);
             return null;
         })
-                .expectThrowBusinessException(expectedException);
+            .expectThrowBusinessException(expectedException);
     }
 
     @Test
-    public void shouldRunnableThrowBusinessException() {
+    void should_runnable_throw_business_exception() {
         RuntimeException expectedException = new RuntimeException();
         Runnable runnable = instrumentBuilder.withBusinessExceptionDecisionMaker(e -> true).build().runnable(() -> {
             throw expectedException;
@@ -219,11 +219,11 @@ public class InstrumentTest {
             runnable.run();
             return null;
         })
-                .expectThrowBusinessException(expectedException);
+            .expectThrowBusinessException(expectedException);
     }
 
     @Test
-    public void dimensional_metrics_enabled_should_register_labels_for_status() throws Exception {
+    void dimensional_metrics_enabled_should_register_labels_for_status() throws Exception {
         // Given
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(true);

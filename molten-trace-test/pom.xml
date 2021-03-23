@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-root</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.3-SNAPSHOT</version>
     <relativePath>../molten-root/pom.xml</relativePath>
   </parent>
   <artifactId>molten-trace-test</artifactId>
@@ -78,6 +78,11 @@
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

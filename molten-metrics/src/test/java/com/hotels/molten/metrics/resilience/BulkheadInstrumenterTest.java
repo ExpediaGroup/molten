@@ -28,9 +28,9 @@ import io.github.resilience4j.reactor.bulkhead.operator.BulkheadOperator;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.scheduler.VirtualTimeScheduler;
@@ -50,19 +50,18 @@ public class BulkheadInstrumenterTest {
     private static final String OPERATION_TAG_VALUE = "op-value";
     private MeterRegistry meterRegistry;
 
-    @BeforeMethod
-    public void initContext() {
+    @BeforeEach
+    void initContext() {
         meterRegistry = new SimpleMeterRegistry();
     }
 
-    @AfterMethod
-    public void clearContext() {
+    @AfterEach
+    void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void should_instrument_bulkhead_with_hierarchical_metrics() {
+    void should_instrument_bulkhead_with_hierarchical_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         var instrumenter = BulkheadInstrumenter.builder()
             .meterRegistry(meterRegistry)
@@ -106,9 +105,8 @@ public class BulkheadInstrumenterTest {
         assertThat(rejectedGauge.value()).isEqualTo(1);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void should_instrument_bulkhead_with_dimensional_metrics() {
+    void should_instrument_bulkhead_with_dimensional_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(true);
         var instrumenter = BulkheadInstrumenter.builder()

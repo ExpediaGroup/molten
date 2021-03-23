@@ -19,12 +19,14 @@ package com.hotels.molten.http.client;
 import static com.hotels.molten.http.client.LogMatcher.matchesLogEvent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.SocketException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -42,6 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -78,7 +81,7 @@ public class CallLoggingReactiveProxyFactoryTest {
     }
 
     @Test
-    public void shouldLogSuccessfulCall() throws InterruptedException {
+    public void should_log_successful_call() {
         when(service.get(200)).thenReturn(Mono.just(OK));
 
         StepVerifier.create(wrappedService.get(200))
@@ -91,33 +94,33 @@ public class CallLoggingReactiveProxyFactoryTest {
             argThat(matchesLogEvent(Level.DEBUG, matchesPattern("target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=SUCCESS"))));
     }
 
-    public static Object[][] getErrorCases() {
-        return new Object[][]{
-            new Object[]{new NullPointerException(), "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL "
-                    + "shortCircuited=false rejected=false timedOut=false retry=0 error=java.lang.NullPointerException null"},
-            new Object[]{new TemporaryServiceInvocationException("doh", Camoo.class,
-                BulkheadFullException.createBulkheadFullException(Bulkhead.of("full", BulkheadConfig.ofDefaults()))),
+    public static Stream<Arguments> errorCases() {
+        return Stream.of(
+            arguments(new NullPointerException(), "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL "
+                + "shortCircuited=false rejected=false timedOut=false retry=0 error=java.lang.NullPointerException null"),
+            arguments(new TemporaryServiceInvocationException("doh", Camoo.class,
+                    BulkheadFullException.createBulkheadFullException(Bulkhead.of("full", BulkheadConfig.ofDefaults()))),
                 "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=true timedOut=false retry=0 "
-                    + "error=io.github.resilience4j.bulkhead.BulkheadFullException Bulkhead 'full' is full and does not permit further calls"},
-            new Object[]{new TemporaryServiceInvocationException("doh", Camoo.class, new TimeoutException("timedout")), "target=com.hotels.molten.http.client.Camoo#get "
-                    + "circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=false timedOut=true retry=0 error=java.util.concurrent.TimeoutException"
-                    + " timedout"},
-            new Object[]{new TemporaryServiceInvocationException("doh", Camoo.class, CallNotPermittedException.createCallNotPermittedException(CircuitBreaker.ofDefaults("cb"))),
+                    + "error=io.github.resilience4j.bulkhead.BulkheadFullException Bulkhead 'full' is full and does not permit further calls"),
+            arguments(new TemporaryServiceInvocationException("doh", Camoo.class, new TimeoutException("timedout")), "target=com.hotels.molten.http.client.Camoo#get "
+                + "circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=false timedOut=true retry=0 error=java.util.concurrent.TimeoutException"
+                + " timedout"),
+            arguments(new TemporaryServiceInvocationException("doh", Camoo.class, CallNotPermittedException.createCallNotPermittedException(CircuitBreaker.ofDefaults("cb"))),
                 "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL shortCircuited=true rejected=false timedOut=false retry=0 "
-                    + "error=io.github.resilience4j.circuitbreaker.CallNotPermittedException CircuitBreaker 'cb' is CLOSED and does not permit further calls"},
-            new Object[]{new PermanentServiceInvocationException("doh", Camoo.class, new SocketException("connection reset")), "target=com.hotels.molten.http.client.Camoo#get "
-                    + "circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=false timedOut=false retry=0 error=java.net.SocketException"
-                    + " connection reset"},
-            new Object[]{new PermanentServiceInvocationException("doh", Camoo.class,
+                    + "error=io.github.resilience4j.circuitbreaker.CallNotPermittedException CircuitBreaker 'cb' is CLOSED and does not permit further calls"),
+            arguments(new PermanentServiceInvocationException("doh", Camoo.class, new SocketException("connection reset")), "target=com.hotels.molten.http.client.Camoo#get "
+                + "circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=false timedOut=false retry=0 error=java.net.SocketException"
+                + " connection reset"),
+            arguments(new PermanentServiceInvocationException("doh", Camoo.class,
                     new HttpException(new retrofit2.HttpException(Response.error(400, ResponseBody.create("this is bad", MediaType.parse("text/plain")))))),
-                         "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=false timedOut=false retry=0 "
-                    + "error=com.hotels.molten.http.client.HttpException http_status=400 error_message=Response.error\\(\\) error_body=this is bad"}
-        };
+                "target=com.hotels.molten.http.client.Camoo#get circuit=grpid duration=\\d+ result=FAIL shortCircuited=false rejected=false timedOut=false retry=0 "
+                    + "error=com.hotels.molten.http.client.HttpException http_status=400 error_message=Response.error\\(\\) error_body=this is bad")
+        );
     }
 
     @ParameterizedTest
-    @MethodSource("getErrorCases")
-    public void shouldLogFailedCallWithCause(Exception error, String logPattern) throws InterruptedException {
+    @MethodSource("errorCases")
+    public void shouldLogFailedCallWithCause(Exception error, String logPattern) {
         when(service.get(200)).thenReturn(Mono.error(error));
 
         StepVerifier.create(wrappedService.get(200))

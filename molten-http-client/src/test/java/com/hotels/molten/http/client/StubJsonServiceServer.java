@@ -112,6 +112,15 @@ public class StubJsonServiceServer {
                 rc.response().setStatusCode(code).end(toJson("error"));
             }
         });
+        //Check http protocols, if not match with the request respond with 500
+        router.route("/checkProtocol/:http").handler(rc -> {
+            var version = rc.request().version().name();
+            if (version.equals(rc.pathParam("http"))) {
+                rc.response().setStatusCode(200).end(toJson(SUCCESS));
+            } else {
+                rc.response().setStatusCode(500).end(toJson("error"));
+            }
+        });
         // responds with success delayed with ms milliseconds
         router.route("/delay/:ms").handler(rc -> {
             int timeout = Optional.ofNullable(rc.pathParam("ms")).map(Ints::tryParse).orElse(0);

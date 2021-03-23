@@ -35,7 +35,7 @@ import brave.Tracing;
 import brave.propagation.TraceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.MatcherAssert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
 import com.hotels.molten.trace.Tracer.CheckedRunnable;
 import com.hotels.molten.trace.Tracer.CheckedSupplier;
@@ -51,7 +51,7 @@ import com.hotels.molten.trace.test.SpanMatcher;
 public class TracerTest extends AbstractTracingTest {
 
     @Test
-    public void shouldWrapCallToSpan() {
+    public void should_wrap_call_to_span() {
         try (TraceSpan s = Tracer.span("trace").start()) {
             LOG.info("some task");
         }
@@ -60,7 +60,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldMarkWithError() {
+    public void should_mark_with_error() {
         TraceSpan span = Tracer.span("trace").start();
         try {
             throw new IllegalStateException("not good");
@@ -74,7 +74,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldNotPutSpanInScopeIfNoop() {
+    public void should_not_put_span_in_scope_if_noop() {
         Tracing.current().setNoop(true);
         try (TraceSpan s = Tracer.span("trace").start()) {
             LOG.info("some task");
@@ -85,7 +85,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldNotPutSpanInScopeIfDebugOnlyAndDebugIsDisabled() {
+    public void should_not_put_span_in_scope_if_debug_only_and_debug_is_disabled() {
         TraceContext rootContext = TraceContext.newBuilder().traceId(1).spanId(1).debug(false).build();
         Tracing.current().currentTraceContext().maybeScope(rootContext);
         assertThat(Tracing.current().currentTraceContext().get(), is(rootContext));
@@ -98,7 +98,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldPutSpanInScopeIfDebugOnlyAndDebugIsEnabled() {
+    public void should_put_span_in_scope_if_debug_only_and_debug_is_enabled() {
         TraceContext rootContext = TraceContext.newBuilder().traceId(1).spanId(1).debug(true).build();
         Tracing.current().currentTraceContext().maybeScope(rootContext);
         assertThat(Tracing.current().currentTraceContext().get(), is(rootContext));
@@ -111,14 +111,14 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldWrapSupplierExecution() {
+    public void should_wrap_supplier_execution() {
         MatcherAssert.assertThat(Tracer.span("trace").wrap(() -> "result"), is("result"));
         assertThat(recordedSpans(), hasItem(rootSpanWithName("trace")));
         assertThat(Tracing.current().currentTraceContext().get(), is(nullValue()));
     }
 
     @Test
-    public void shouldPropagateSupplierRuntimeException() {
+    public void should_propagate_supplier_runtime_exception() {
         assertThatExceptionOfType(IllegalStateException.class)
             .isThrownBy(() -> Tracer.span("trace").wrap((Supplier<String>) () -> {
                 throw new IllegalStateException("not good");
@@ -128,7 +128,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldWrapRunnableExecution() {
+    public void should_wrap_runnable_execution() {
         Runnable runnable = mock(Runnable.class);
         Tracer.span("trace").wrap(runnable);
         verify(runnable).run();
@@ -137,7 +137,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldPropagateRunnableRuntimeException() {
+    public void should_propagate_runnable_runtime_exception() {
         assertThatExceptionOfType(IllegalStateException.class)
             .isThrownBy(() -> Tracer.span("trace").wrap((Runnable) () -> {
                 throw new IllegalStateException("not good");
@@ -147,7 +147,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldNotYieldAnyErrorIfTracingIsNotInitialized() {
+    public void should_not_yield_any_error_if_tracing_is_not_initialized() {
         try {
             tearDownTraceContext();
             Runnable runnable = mock(Runnable.class);
@@ -159,7 +159,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldPropagateSupplierException() {
+    public void should_propagate_supplier_exception() {
         assertThatExceptionOfType(Exception.class)
             .isThrownBy(() -> Tracer.span("trace").wrapChecked((CheckedSupplier<String, Exception>) () -> {
                 throw new Exception("not good");
@@ -169,7 +169,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldPropagateSupplierWithTwoExceptions() {
+    public void should_propagate_supplier_with_two_exceptions() {
         assertThatExceptionOfType(Exception.class)
             .isThrownBy(() -> Tracer.span("trace").wrapChecked((CheckedSupplier2<String, IOException, Exception>) () -> {
                 throw new Exception("not good");
@@ -179,7 +179,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldPropagateRunnableException() {
+    public void should_propagate_runnable_exception() {
         assertThatExceptionOfType(Exception.class)
             .isThrownBy(() -> Tracer.span("trace").wrapChecked((CheckedRunnable<Exception>) () -> {
                 throw new Exception("not good");
@@ -189,7 +189,7 @@ public class TracerTest extends AbstractTracingTest {
     }
 
     @Test
-    public void shouldPropagateRunnableWithTwoExceptions() {
+    public void should_propagate_runnable_with_two_exceptions() {
         assertThatExceptionOfType(Exception.class)
             .isThrownBy(() -> Tracer.span("trace").wrapChecked((Tracer.CheckedRunnable2<Exception, IOException>) () -> {
                 throw new Exception("not good");

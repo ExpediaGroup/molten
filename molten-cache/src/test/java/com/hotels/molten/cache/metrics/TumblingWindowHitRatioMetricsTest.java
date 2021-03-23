@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.hotels.molten.test.TestClock;
 
@@ -32,13 +32,13 @@ public class TumblingWindowHitRatioMetricsTest {
     private TumblingWindowHitRatioMetrics metrics;
     private TestClock clock = TestClock.get();
 
-    @BeforeMethod
-    public void initContext() {
+    @BeforeEach
+    void initContext() {
         metrics = new TumblingWindowHitRatioMetrics(clock);
     }
 
     @Test
-    public void shouldCalculateRatioAsExpected() {
+    void should_calculate_ratio_as_expected() {
         metrics.registerHit();
         assertThat(metrics.hitRatio()).isEqualTo(1D);
         metrics.registerMiss();
@@ -48,7 +48,7 @@ public class TumblingWindowHitRatioMetricsTest {
     }
 
     @Test
-    public void shouldCalculateRatioAsExpectedWhenTimeChanges() {
+    void should_calculate_ratio_as_expected_when_time_changes() {
         metrics.registerHit();
         metrics.registerHit();
         metrics.registerMiss();

@@ -23,18 +23,18 @@ import static org.mockito.Mockito.when;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.Dispatcher;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
 /**
  * Unit test for {@link DispatcherInstrumenter}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class DispatcherInstrumenterTest {
     private static final String CLIENT_ID = "clientId";
     private DispatcherInstrumenter instrumenter;
@@ -42,7 +42,7 @@ public class DispatcherInstrumenterTest {
     @Mock
     private Dispatcher dispatcher;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         meterRegistry = new SimpleMeterRegistry();
         instrumenter = new DispatcherInstrumenter(meterRegistry, CLIENT_ID);

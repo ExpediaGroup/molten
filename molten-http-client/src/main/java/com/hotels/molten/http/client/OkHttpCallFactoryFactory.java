@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -81,6 +82,9 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
                 }
             });
         }
+        if (configuration.getHttpProtocols() != null) {
+            clientBuilder.protocols(createProtocols(configuration.getHttpProtocols()));
+        }
         if (configuration.getHttpTracing() != null) {
             clientBuilder.addNetworkInterceptor(TracingInterceptor.create(configuration.getHttpTracing()));
         }
@@ -140,5 +144,12 @@ class OkHttpCallFactoryFactory implements CallFactoryFactory {
         if (!eventListenerFactories.isEmpty()) {
             clientBuilder.eventListenerFactory(DelegatingEventListener.delegatedFactory(eventListenerFactories)::apply);
         }
+    }
+
+    private List<okhttp3.Protocol> createProtocols(List<HttpProtocol> protocol) {
+        return protocol.stream()
+            .map(HttpProtocol::getOkhttpProtocol)
+            .distinct()
+            .collect(Collectors.toList());
     }
 }

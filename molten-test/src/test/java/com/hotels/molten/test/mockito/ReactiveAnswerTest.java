@@ -16,9 +16,10 @@
 
 package com.hotels.molten.test.mockito;
 
-import static com.hotels.molten.test.mockito.ReactiveAnswer.reactiveMock;
+import static org.mockito.Mockito.mock;
 
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -28,14 +29,25 @@ import reactor.test.StepVerifier;
  */
 public class ReactiveAnswerTest {
 
-    @Test
-    public void shouldSupportMono() {
-        StepVerifier.create(reactiveMock(ReactiveApi.class).getMono()).expectSubscription().expectComplete().verify();
+    private ReactiveApi mock;
+
+    @BeforeEach
+    void initMock() {
+        mock = mock(ReactiveApi.class, new ReactiveAnswer(invocation -> null));
     }
 
     @Test
-    public void shouldSupportFlux() {
-        StepVerifier.create(reactiveMock(ReactiveApi.class).getFlux()).expectSubscription().expectComplete().verify();
+    void should_support_mono() {
+        StepVerifier.create(mock.getMono())
+            .expectSubscription()
+            .verifyComplete();
+    }
+
+    @Test
+    void should_support_flux() {
+        StepVerifier.create(mock.getFlux())
+            .expectSubscription()
+            .verifyComplete();
     }
 
     private interface ReactiveApi {

@@ -21,10 +21,10 @@ import static org.hamcrest.Matchers.is;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import com.hotels.molten.http.client.tracking.RequestTracking.TrackingHeader;
 
@@ -34,27 +34,28 @@ import com.hotels.molten.http.client.tracking.RequestTracking.TrackingHeader;
 public class MdcBasedSessionIdTrackingHeaderSupplierTest {
     private static final String HEADER_NAME = "header name";
     private static final String ID = "id";
+
     private MdcBasedSessionIdTrackingHeaderSupplier provider;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         provider = new MdcBasedSessionIdTrackingHeaderSupplier(HEADER_NAME);
     }
 
-    @AfterMethod
+    @AfterEach
     public void tearDownContext() {
         MDC.clear();
     }
 
     @Test
-    public void shouldProvideMessageGroupIdFromMDC() {
+    public void should_provide_message_group_id_from_mdc() {
         MDC.put("sessionId", ID);
 
         assertThat(provider.get(), is(Optional.of(new TrackingHeader(HEADER_NAME, ID))));
     }
 
     @Test
-    public void shouldProvideEmptyIfSessionIdIsNotAvailable() {
+    public void should_provide_empty_if_session_id_is_not_available() {
         assertThat(provider.get(), is(Optional.empty()));
     }
 }

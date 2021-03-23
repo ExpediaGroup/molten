@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit test for {@link TlsSocketFactoryConfigFactory}.
@@ -31,19 +31,19 @@ public class TlsSocketFactoryConfigFactoryTest {
     private static final String VALID_PASS = "password";
 
     @Test
-    public void shouldProvideAssembledConfigFromFactories() {
+    void should_provide_assembled_config_from_factories() {
         assertThat(TlsSocketFactoryConfigFactory.createConfig(KEY_STORE_FILE, VALID_PASS)).hasNoNullFieldsOrProperties();
     }
 
     @Test
-    public void shouldThrowExceptionIfCouldNotFindKeyStore() {
+    void should_throw_exception_if_could_not_find_key_store() {
         assertThatThrownBy(() -> TlsSocketFactoryConfigFactory.createConfig("invalidKeyStoreFilePath", VALID_PASS))
             .isExactlyInstanceOf(IllegalStateException.class)
             .hasCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    public void shouldPropagateExceptionOccursDuringSslSocketFactoryConfigInstantiation() {
+    void should_propagate_exception_occurs_during_ssl_socket_factory_config_instantiation() {
         assertThatThrownBy(() -> TlsSocketFactoryConfigFactory.createConfig(KEY_STORE_FILE, "invalidPass"))
             .isExactlyInstanceOf(IllegalStateException.class)
             .hasCauseInstanceOf(IOException.class);

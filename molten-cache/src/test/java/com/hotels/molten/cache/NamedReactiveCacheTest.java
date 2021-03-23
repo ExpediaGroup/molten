@@ -22,18 +22,18 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
  * Unit test for {@link NamedReactiveCache}.
  */
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class NamedReactiveCacheTest {
     private static final int KEY = 1;
     private static final String VALUE = "one";
@@ -44,13 +44,13 @@ public class NamedReactiveCacheTest {
     private ReactiveCache<NamedCacheKey<Integer>, CachedValue<String>> cache;
     private NamedReactiveCache<Integer, String> namedReactiveCache;
 
-    @BeforeMethod
+    @BeforeEach
     public void initContext() {
         namedReactiveCache = new NamedReactiveCache<>(cache, CACHENAME, TTL);
     }
 
     @Test
-    public void shouldDelegateGetWithNamedKeyLazily() {
+    public void should_delegate_get_with_named_key_lazily() {
         when(cache.get(NAMED_CACHE_KEY_FACTORY.apply(KEY))).thenReturn(Mono.just(CachedValue.just(VALUE)));
         StepVerifier.create(namedReactiveCache.get(KEY))
             .expectSubscription()
@@ -60,7 +60,7 @@ public class NamedReactiveCacheTest {
     }
 
     @Test
-    public void shouldDelegatePutWithNamedKeyAndValueWithTTLLazily() {
+    public void should_delegate_put_with_named_key_and_value_with_ttllazily() {
         when(cache.put(NAMED_CACHE_KEY_FACTORY.apply(KEY), CachedValue.of(VALUE, TTL))).thenReturn(Mono.empty());
         StepVerifier.create(namedReactiveCache.put(KEY, VALUE))
             .expectSubscription()

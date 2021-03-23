@@ -23,6 +23,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -354,6 +355,16 @@ public final class RetrofitServiceClientBuilder<API> {
      */
     public RetrofitServiceClientBuilder<API> reportHttpEvents() {
         this.configuration.setReportHttpEvents(true);
+        return this;
+    }
+    /**
+     * Sets the HTTP protocol(s) to be solely supported by the client. If not set, the client defaults will be used.
+     *
+     * @param httpProtocols the {@link HttpProtocol} to set.
+     * @return this builder
+     */
+    public RetrofitServiceClientBuilder<API> useProtocols(HttpProtocol... httpProtocols) {
+        this.configuration.setProtocols(List.of(httpProtocols));
         return this;
     }
 

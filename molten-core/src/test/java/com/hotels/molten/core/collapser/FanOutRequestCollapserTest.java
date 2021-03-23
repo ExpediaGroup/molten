@@ -50,14 +50,14 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.testng.MockitoTestNGListener;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Ignore;
-import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -74,7 +74,7 @@ import com.hotels.molten.test.AssertSubscriber;
  */
 @SuppressWarnings("unchecked")
 @Slf4j
-@Listeners(MockitoTestNGListener.class)
+@ExtendWith(MockitoExtension.class)
 public class FanOutRequestCollapserTest {
     private static final int CONTEXT_A = 1;
     private static final String RESULT_A = "1";
@@ -100,8 +100,8 @@ public class FanOutRequestCollapserTest {
     private DistributionSummary batchSizeHistogram;
     private MockClock clock;
 
-    @BeforeMethod
-    public void initContext() {
+    @BeforeEach
+    void initContext() {
         MoltenCore.initialize();
         MoltenMDC.initialize();
         MDC.clear();
@@ -127,15 +127,15 @@ public class FanOutRequestCollapserTest {
             .build();
     }
 
-    @AfterMethod
-    public void clearContext() {
+    @AfterEach
+    void clearContext() {
         collapsedProvider.cancel();
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         MDC.clear();
     }
 
     @Test
-    public void should_collapse_requests_to_batches() {
+    void should_collapse_requests_to_batches() {
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenAnswer(ie -> {
                 LOG.info("bulk with {}", ie.getArguments());
@@ -162,7 +162,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_handle_hierarchical_metrics() {
+    void should_handle_hierarchical_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         pendingHistogram = hierarchicalMetric("item.pending").summary();
         batchSizeHistogram = hierarchicalMetric("batch.size").summary();
@@ -220,7 +220,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_handle_dimensional_metrics() {
+    void should_handle_dimensional_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(false);
         collapsedProvider = createCollapser(); // we need to recreate the collapser here to have the above settings take effect
@@ -281,7 +281,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_wait_only_maximum_time_for_calls_before_delegating() {
+    void should_wait_only_maximum_time_for_calls_before_delegating() {
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -296,7 +296,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_ignore_empty_batch() {
+    void should_ignore_empty_batch() {
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -316,7 +316,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_propagate_bulk_load_error_to_each_value() {
+    void should_propagate_bulk_load_error_to_each_value() {
         // 2 contexts, bulk error => 2 onError
         IllegalStateException exception = new IllegalStateException("expected error");
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
@@ -335,7 +335,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_continue_collapsing_after_load_error() {
+    void should_continue_collapsing_after_load_error() {
         IllegalStateException exception = new IllegalStateException("expected error");
         when(bulkProvider.apply((List<Integer>) argThat(containsInAnyOrder(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.error(exception))
@@ -366,7 +366,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_be_thread_safe() {
+    void should_be_thread_safe() {
         int batchSize = 7;
         int maxConcurrency = 8;
         int maxWaitTimeForBatch = 50;
@@ -428,7 +428,7 @@ public class FanOutRequestCollapserTest {
         });
     }
     @Test
-    public void should_complete_for_not_matched_contexts() {
+    void should_complete_for_not_matched_contexts() {
         // 2 contexts, 1 value => 1 onSuccess, 1 onComplete
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.delay(Duration.ofMillis(50), delayScheduler).map(i -> List.of(RESULT_B)));
@@ -452,7 +452,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_complete_for_values_where_match_failed() {
+    void should_complete_for_values_where_match_failed() {
         // 2 contexts, 2 values, 1 match fails => 1 onSuccess, 1 onComplete + log
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.delay(Duration.ofMillis(50), delayScheduler).map(i -> List.of(RESULT_B, "a")));
@@ -474,7 +474,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_be_able_to_shutdown_gracefully() {
+    void should_be_able_to_shutdown_gracefully() {
         lenient().when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -493,8 +493,8 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    @Ignore
-    public void should_not_execute_more_things_in_parallel() throws InterruptedException {
+    @Disabled
+    void should_not_execute_more_things_in_parallel() throws InterruptedException {
         collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
             .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
             .withScheduler(Schedulers.parallel())
@@ -521,8 +521,8 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    @Ignore
-    public void should_not_execute_more_things_in_parallel_with_delay() throws InterruptedException {
+    @Disabled
+    void should_not_execute_more_things_in_parallel_with_delay() throws InterruptedException {
         collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
             .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
             .withScheduler(Schedulers.parallel())
@@ -551,7 +551,7 @@ public class FanOutRequestCollapserTest {
      * The collapser must handle if the provider returns {@link Mono#empty()}.
      */
     @Test
-    public void should_complete_if_contract_is_not_followed() {
+    void should_complete_if_contract_is_not_followed() {
         doReturn(Mono.empty()).when(bulkProvider).apply(any());
         collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
             .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
@@ -572,7 +572,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    public void should_maintain_expected_MDC_values() {
+    void should_maintain_expected_MDC_values() {
         //Given
         collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
             .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))

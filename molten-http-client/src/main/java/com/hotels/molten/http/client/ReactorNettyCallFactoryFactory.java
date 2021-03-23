@@ -62,6 +62,9 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
                 })
             );
 
+        if (configuration.getHttpProtocols() != null) {
+            httpClient = httpClient.protocol(createProtocols(configuration.getHttpProtocols()));
+        }
         var sslContextConfiguration = configuration.getSslContextConfiguration();
         if (sslContextConfiguration != null) {
             httpClient = httpClient.secure(spec -> {
@@ -113,5 +116,12 @@ class ReactorNettyCallFactoryFactory implements CallFactoryFactory {
             client = client.metrics(true, () -> new DelegatingHttpClientMetricsReporter(recorders));
         }
         return client;
+    }
+
+    private reactor.netty.http.HttpProtocol[] createProtocols(List<HttpProtocol> protocol) {
+        return protocol.stream()
+            .map(HttpProtocol::getNettyProtocol)
+            .distinct()
+            .toArray(reactor.netty.http.HttpProtocol[]::new);
     }
 }

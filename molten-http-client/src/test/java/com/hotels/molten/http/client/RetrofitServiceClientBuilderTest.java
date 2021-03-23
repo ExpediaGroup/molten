@@ -43,6 +43,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.vertx.core.http.HttpVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.testng.annotations.AfterClass;
@@ -139,6 +140,28 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
         StepVerifier.create(client.getData("test"))
             .thenAwait()
             .expectNext(response("test", 1))
+            .verifyComplete();
+    }
+
+    @Test(dataProvider = "common")
+    public void should_get_response_when_called_with_HTTP_1_1(String clientType) {
+        ServiceEndpoint client = defaultClientBuilder(clientType)
+            .useProtocols(HttpProtocol.HTTP_1_1)
+            .buildClient();
+        StepVerifier.create(client.checkProtocol(HttpVersion.HTTP_1_1))
+            .thenAwait()
+            .expectNextCount(1L)
+            .verifyComplete();
+    }
+
+    @Test(dataProvider = "common")
+    public void should_get_response_when_called_with_HTTP_2C(String clientType) {
+        ServiceEndpoint client = defaultClientBuilder(clientType)
+            .useProtocols(HttpProtocol.HTTP_2C)
+            .buildClient();
+        StepVerifier.create(client.checkProtocol(HttpVersion.HTTP_2))
+            .thenAwait()
+            .expectNextCount(1L)
             .verifyComplete();
     }
 
