@@ -73,6 +73,13 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>com.expediagroup.molten</groupId>
+      <artifactId>molten-cache</artifactId>
+      <classifier>test-contract</classifier>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
       <version>${testcontainers.version}</version>

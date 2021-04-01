@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
@@ -35,18 +36,24 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import com.hotels.molten.cache.ReactiveCache;
+import com.hotels.molten.cache.ReactiveCacheTestContract;
 import com.hotels.molten.cache.ReactiveMapCache;
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
 /**
  * Unit test for {@link InstrumentedReactiveCache}.
  */
-public class InstrumentedReactiveCacheTest {
+public class InstrumentedReactiveCacheTest implements ReactiveCacheTestContract {
     private static final String QUALIFIER = "qualifier";
     private static final String CACHE_NAME = "cache_name";
     private static final String REACTIVE_CACHE = "reactive-cache";
     private ReactiveCache<String, String> cache;
     private MeterRegistry meterRegistry;
+
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        return new InstrumentedReactiveCache<>(new ReactiveMapCache<>(new ConcurrentHashMap<>()), meterRegistry, CACHE_NAME, QUALIFIER);
+    }
 
     @BeforeEach
     public void initContext() {

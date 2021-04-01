@@ -63,4 +63,29 @@
       <artifactId>molten-test</artifactId>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>package-contract</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration>
+              <classifier>test-contract</classifier>
+              <includes>
+                <!-- only contracts and their inner classes -->
+                <include>**/*TestContract.class</include>
+                <include>**/*TestContract$*.class</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

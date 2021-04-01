@@ -35,7 +35,7 @@ import reactor.test.StepVerifier;
  * Unit test for {@link ReactiveMapCache}.
  */
 @ExtendWith(MockitoExtension.class)
-class ReactiveMapCacheTest implements ReactiveCacheContract {
+class ReactiveMapCacheTest implements ReactiveCacheTestContract {
     private static final String VALUE = "one";
     private static final int KEY = 1;
     @Mock

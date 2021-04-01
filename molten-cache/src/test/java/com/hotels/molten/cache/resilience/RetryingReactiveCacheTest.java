@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -38,15 +39,16 @@ import reactor.test.scheduler.VirtualTimeScheduler;
 import reactor.util.retry.Retry;
 
 import com.hotels.molten.cache.ReactiveCache;
+import com.hotels.molten.cache.ReactiveCacheTestContract;
+import com.hotels.molten.cache.ReactiveMapCache;
 import com.hotels.molten.core.metrics.MoltenMetrics;
-import com.hotels.molten.test.AssertSubscriber;
 import com.hotels.molten.test.UnstableMono;
 
 /**
  * Unit test for {@link RetryingReactiveCache}.
  */
 @ExtendWith(MockitoExtension.class)
-public class RetryingReactiveCacheTest {
+public class RetryingReactiveCacheTest implements ReactiveCacheTestContract {
     private static final String KEY = "key";
     private static final String VALUE = "value";
     private static final String CACHE_NAME = "cacheName";
@@ -57,13 +59,15 @@ public class RetryingReactiveCacheTest {
     private MeterRegistry meterRegistry;
     private VirtualTimeScheduler scheduler;
 
-    @SuppressWarnings("unchecked")
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        return new RetryingReactiveCache<>(new ReactiveMapCache<>(new ConcurrentHashMap<>()), Retry.fixedDelay(2, RETRY_DELAY), meterRegistry, CACHE_NAME);
+    }
+
     @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         meterRegistry = new SimpleMeterRegistry();
-        scheduler = VirtualTimeScheduler.create();
-        VirtualTimeScheduler.set(scheduler);
         retryingReactiveCache = new RetryingReactiveCache<>(cache, Retry.fixedDelay(2, RETRY_DELAY), meterRegistry, CACHE_NAME);
     }
 
@@ -87,29 +91,27 @@ public class RetryingReactiveCacheTest {
         UnstableMono<String> unstableMono = UnstableMono.<String>builder().thenError(new IllegalStateException()).thenElement(VALUE).create();
         when(cache.get(KEY)).thenReturn(unstableMono.mono());
 
-        AssertSubscriber<String> test = AssertSubscriber.create();
-        retryingReactiveCache.get(KEY).subscribe(test);
-        test.assertNoValues();
-        scheduler.advanceTimeBy(RETRY_DELAY);
-        test.assertResult(VALUE);
+        StepVerifier.withVirtualTime(() -> retryingReactiveCache.get(KEY))
+            .expectSubscription()
+            .expectNoEvent(RETRY_DELAY)
+            .expectNext(VALUE)
+            .verifyComplete();
         assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2);
         assertThat(meterRegistry.get(name("reactive-cache", CACHE_NAME, "get", "retries", "retry1")).counter().count()).isEqualTo(1D);
     }
 
     @Test
     public void should_register_dimensional_metrics_when_enabled() {
-        //Given
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(true);
-        //When
         UnstableMono<String> unstableMono = UnstableMono.<String>builder().thenError(new IllegalStateException()).thenElement(VALUE).create();
         when(cache.get(KEY)).thenReturn(unstableMono.mono());
-        AssertSubscriber<String> test = AssertSubscriber.create();
-        retryingReactiveCache.get(KEY).subscribe(test);
-        //Then
-        test.assertNoValues();
-        scheduler.advanceTimeBy(RETRY_DELAY);
-        test.assertResult(VALUE);
+
+        StepVerifier.withVirtualTime(() -> retryingReactiveCache.get(KEY))
+            .expectSubscription()
+            .expectNoEvent(RETRY_DELAY)
+            .expectNext(VALUE)
+            .verifyComplete();
         assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2);
         assertThat(meterRegistry.get("cache_request_retries")
             .tag("name", CACHE_NAME)
@@ -122,16 +124,16 @@ public class RetryingReactiveCacheTest {
 
     @Test
     public void should_give_up_failed_get_calls_after_max_retries_and_propagate_last_error() {
-        when(cache.get(KEY)).thenReturn(Mono.error(new IllegalStateException()));
+        when(cache.get(KEY)).thenReturn(UnstableMono.<String>builder()
+            .thenError(new IllegalStateException())
+            .thenError(new IllegalStateException())
+            .thenError(new IllegalArgumentException())
+            .create().mono());
 
-        AssertSubscriber<String> test = AssertSubscriber.create();
-        retryingReactiveCache.get(KEY).subscribe(test);
-        scheduler.advanceTimeBy(RETRY_DELAY);
-        test.assertNoValues();
-        scheduler.advanceTimeBy(RETRY_DELAY);
-        test.assertNoValues();
-        scheduler.advanceTimeBy(RETRY_DELAY);
-        test.assertError(IllegalStateException.class);
+        StepVerifier.withVirtualTime(() -> retryingReactiveCache.get(KEY))
+            .expectSubscription()
+            .expectNoEvent(RETRY_DELAY.multipliedBy(2L))
+            .verifyError(IllegalArgumentException.class);
     }
 
     @Test
@@ -139,23 +141,26 @@ public class RetryingReactiveCacheTest {
         UnstableMono<String> unstableMono = UnstableMono.<String>builder().thenError(new IllegalStateException()).thenElement(VALUE).create();
         when(cache.get(KEY)).thenReturn(unstableMono.mono());
 
-        AssertSubscriber<String> test = AssertSubscriber.create();
-        retryingReactiveCache.get(KEY).subscribe(test);
-        scheduler.advanceTimeBy(RETRY_DELAY.minusMillis(10));
-        assertThat(unstableMono.getSubscriptionCount()).isEqualTo(1);
-        scheduler.advanceTimeBy(Duration.ofMillis(20));
-        assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2);
-        test.assertResult(VALUE);
+        StepVerifier.withVirtualTime(() -> retryingReactiveCache.get(KEY))
+            .expectSubscription()
+            .expectNoEvent(RETRY_DELAY.minusMillis(10))
+            .then(() -> assertThat(unstableMono.getSubscriptionCount()).isEqualTo(1))
+            .expectNoEvent(Duration.ofMillis(10))
+            .then(() -> assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2))
+            .expectNext(VALUE)
+            .verifyComplete();
     }
 
     @Test
     public void should_retry_get_immediately_if_no_delay() {
+        retryingReactiveCache = new RetryingReactiveCache<>(cache, Retry.fixedDelay(2, Duration.ZERO), meterRegistry, CACHE_NAME);
         UnstableMono<String> unstableMono = UnstableMono.<String>builder().thenError(new IllegalStateException()).thenElement(VALUE).create();
         when(cache.get(KEY)).thenReturn(unstableMono.mono());
 
-        RetryingReactiveCache<String, String> retryingCache = new RetryingReactiveCache<>(cache, Retry.fixedDelay(2, Duration.ZERO), meterRegistry, CACHE_NAME);
-        StepVerifier.create(retryingCache.get(KEY)).expectNext(VALUE).verifyComplete();
-        assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2);
+        StepVerifier.create(retryingReactiveCache.get(KEY))
+            .expectNext(VALUE)
+            .then(() -> assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2))
+            .verifyComplete();
     }
 
     @Test
@@ -173,46 +178,50 @@ public class RetryingReactiveCacheTest {
         when(cache.put(KEY, VALUE)).thenReturn(unstableMono.mono());
 
 
-        AssertSubscriber<Void> test = AssertSubscriber.create();
-        retryingReactiveCache.put(KEY, VALUE).subscribe(test);
-        scheduler.advanceTimeBy(Duration.ofMillis(50));
-        test.assertComplete();
+        StepVerifier.withVirtualTime(() -> retryingReactiveCache.put(KEY, VALUE))
+            .expectSubscription()
+            .expectNoEvent(RETRY_DELAY)
+            .verifyComplete();
         assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2);
     }
 
     @Test
     public void should_give_up_failed_put_calls_after_max_retries_and_propagate_last_error() {
-        when(cache.put(KEY, VALUE)).thenReturn(Mono.error(new IllegalStateException()));
+        when(cache.put(KEY, VALUE)).thenReturn(UnstableMono.<Void>builder()
+            .thenError(new IllegalStateException())
+            .thenError(new IllegalStateException())
+            .thenError(new IllegalArgumentException())
+            .create().mono());
 
-        AssertSubscriber<Void> test = AssertSubscriber.create();
-        retryingReactiveCache.put(KEY, VALUE).subscribe(test);
-        scheduler.advanceTimeBy(Duration.ofMillis(100));
-        test.assertError(IllegalStateException.class);
+        StepVerifier.withVirtualTime(() -> retryingReactiveCache.put(KEY, VALUE))
+            .expectSubscription()
+            .expectNoEvent(RETRY_DELAY.multipliedBy(2L))
+            .verifyError(IllegalArgumentException.class);
     }
 
     @Test
     public void should_not_retry_put_before_delay() {
-        UnstableMono<Void> unstableCompletable = UnstableMono.<Void>builder().thenError(new IllegalStateException()).thenEmpty().create();
-        when(cache.put(KEY, VALUE)).thenReturn(unstableCompletable.mono());
+        UnstableMono<Void> unstableMono = UnstableMono.<Void>builder().thenError(new IllegalStateException()).thenEmpty().create();
+        when(cache.put(KEY, VALUE)).thenReturn(unstableMono.mono());
 
-        AssertSubscriber<Void> test = AssertSubscriber.create();
-        retryingReactiveCache.put(KEY, VALUE).subscribe(test);
-        scheduler.advanceTimeBy(Duration.ofMillis(40));
-        assertThat(unstableCompletable.getSubscriptionCount()).isEqualTo(1);
-        scheduler.advanceTimeBy(Duration.ofMillis(20));
-        test.assertComplete();
-        assertThat(unstableCompletable.getSubscriptionCount()).isEqualTo(2);
+        StepVerifier.withVirtualTime(() -> retryingReactiveCache.put(KEY, VALUE))
+            .expectSubscription()
+            .expectNoEvent(RETRY_DELAY.minusMillis(10))
+            .then(() -> assertThat(unstableMono.getSubscriptionCount()).isEqualTo(1))
+            .expectNoEvent(Duration.ofMillis(10))
+            .then(() -> assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2))
+            .verifyComplete();
     }
 
     @Test
     public void should_retry_put_immediately_if_no_delay() {
-        UnstableMono<Void> unstableCompletable = UnstableMono.<Void>builder().thenError(new IllegalStateException()).thenEmpty().create();
-        when(cache.put(KEY, VALUE)).thenReturn(unstableCompletable.mono());
+        retryingReactiveCache = new RetryingReactiveCache<>(cache, Retry.fixedDelay(2, Duration.ZERO), meterRegistry, CACHE_NAME);
+        UnstableMono<Void> unstableMono = UnstableMono.<Void>builder().thenError(new IllegalStateException()).thenEmpty().create();
+        when(cache.put(KEY, VALUE)).thenReturn(unstableMono.mono());
 
-        RetryingReactiveCache<String, String> retryingCache = new RetryingReactiveCache<>(cache, Retry.fixedDelay(2, Duration.ZERO), meterRegistry, CACHE_NAME);
-        AssertSubscriber<Void> test = AssertSubscriber.create();
-        retryingCache.put(KEY, VALUE).subscribe(test);
-        test.assertComplete();
-        assertThat(unstableCompletable.getSubscriptionCount()).isEqualTo(2);
+        StepVerifier.create(retryingReactiveCache.put(KEY, VALUE))
+            .expectSubscription()
+            .then(() -> assertThat(unstableMono.getSubscriptionCount()).isEqualTo(2))
+            .verifyComplete();
     }
 }

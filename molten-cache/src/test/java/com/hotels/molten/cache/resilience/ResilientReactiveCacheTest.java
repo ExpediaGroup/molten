@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,6 +44,8 @@ import reactor.test.StepVerifier;
 import reactor.test.scheduler.VirtualTimeScheduler;
 
 import com.hotels.molten.cache.ReactiveCache;
+import com.hotels.molten.cache.ReactiveCacheTestContract;
+import com.hotels.molten.cache.ReactiveMapCache;
 import com.hotels.molten.core.metrics.MoltenMetrics;
 import com.hotels.molten.test.AssertSubscriber;
 
@@ -50,16 +53,22 @@ import com.hotels.molten.test.AssertSubscriber;
  * Unit test for {@link ResilientReactiveCache}.
  */
 @ExtendWith(MockitoExtension.class)
-public class ResilientReactiveCacheTest {
+public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
     private static final Long KEY = 1L;
     private static final String VALUE = "value";
     private static final String CACHE_NAME = "cacheName";
+    private static final Duration TIMEOUT = Duration.ofMillis(10);
     private static final AtomicInteger IDX = new AtomicInteger();
     @Mock
     private ReactiveCache<Long, String> cache;
     private MeterRegistry meterRegistry;
     private VirtualTimeScheduler scheduler;
     private String cacheName;
+
+    @Override
+    public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
+        return getResilientCache(new ReactiveMapCache<>(new ConcurrentHashMap<>()), CircuitBreakerConfig.ofDefaults());
+    }
 
     @BeforeEach
     public void initContext() {
@@ -80,18 +89,17 @@ public class ResilientReactiveCacheTest {
     public void should_delegate_get_call() {
         when(cache.get(KEY)).thenReturn(Mono.just(VALUE));
 
-        StepVerifier.create(getResilientCache(cacheName, 10, CircuitBreakerConfig.ofDefaults()).get(KEY))
+        StepVerifier.create(getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).get(KEY))
             .expectNext(VALUE)
             .verifyComplete();
     }
 
     @Test
     public void should_timeout_get_call() {
-        //When
         when(cache.get(KEY)).thenReturn(Mono.defer(() -> Mono.delay(Duration.ofMillis(15))).map(i -> VALUE));
+
         AssertSubscriber<String> test = AssertSubscriber.create();
-        getResilientCache(cacheName, 10, CircuitBreakerConfig.ofDefaults()).get(KEY).subscribe(test);
-        //Then
+        getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).get(KEY).subscribe(test);
         scheduler.advanceTimeBy(Duration.ofMillis(20));
         test.assertError(TimeoutException.class);
         Assertions.assertThat(meterRegistry.get(name("reactive-cache", cacheName, "get", "timeout")).gauge().value()).isEqualTo(1);
@@ -99,14 +107,12 @@ public class ResilientReactiveCacheTest {
 
     @Test
     public void should_register_dimensional_metric_for_timeout() {
-        //Given
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(true);
-        //When
         when(cache.get(KEY)).thenReturn(Mono.defer(() -> Mono.delay(Duration.ofMillis(15))).map(i -> VALUE));
+
         AssertSubscriber<String> test = AssertSubscriber.create();
-        getResilientCache(cacheName, 10, CircuitBreakerConfig.ofDefaults()).get(KEY).subscribe(test);
-        //Then
+        getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).get(KEY).subscribe(test);
         scheduler.advanceTimeBy(Duration.ofMillis(20));
         test.assertError(TimeoutException.class);
         Assertions.assertThat(meterRegistry.get("cache_request_timeouts")
@@ -124,9 +130,12 @@ public class ResilientReactiveCacheTest {
             e.error(new IllegalStateException());
         }));
 
-        CircuitBreakerConfig cb = CircuitBreakerConfig.custom().failureRateThreshold(0.5F)
-            .slidingWindow(2, 2, CircuitBreakerConfig.SlidingWindowType.COUNT_BASED).permittedNumberOfCallsInHalfOpenState(2).build();
-        ResilientReactiveCache<Long, String> resilientCache = getResilientCache(cacheName, 10, cb);
+        var circuitBreakerConfig = CircuitBreakerConfig.custom()
+            .failureRateThreshold(0.5F)
+            .slidingWindow(2, 2, CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+            .permittedNumberOfCallsInHalfOpenState(2)
+            .build();
+        ResilientReactiveCache<Long, String> resilientCache = getResilientCache(cache, circuitBreakerConfig);
 
         AssertSubscriber<String> test = AssertSubscriber.create();
         resilientCache.get(KEY).subscribe(test);
@@ -148,18 +157,17 @@ public class ResilientReactiveCacheTest {
     public void should_delegate_put_call() {
         when(cache.put(KEY, VALUE)).thenReturn(Mono.empty());
 
-        StepVerifier.create(getResilientCache(cacheName, 10, CircuitBreakerConfig.ofDefaults()).put(KEY, VALUE)).verifyComplete();
+        StepVerifier.create(getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).put(KEY, VALUE)).verifyComplete();
 
         verify(cache).put(KEY, VALUE);
     }
 
     @Test
     public void should_timeout_put_call() {
-        //When
         when(cache.put(KEY, VALUE)).thenReturn(Mono.defer(() -> Mono.delay(Duration.ofMillis(15))).then());
-        //Then
+
         AssertSubscriber<Void> test = AssertSubscriber.create();
-        getResilientCache(cacheName, 10, CircuitBreakerConfig.ofDefaults()).put(KEY, VALUE).subscribe(test);
+        getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).put(KEY, VALUE).subscribe(test);
         scheduler.advanceTimeBy(Duration.ofMillis(20));
         test.assertError(TimeoutException.class);
         Assertions.assertThat(meterRegistry.get(name("reactive-cache", cacheName, "put", "timeout")).gauge().value()).isEqualTo(1);
@@ -172,10 +180,12 @@ public class ResilientReactiveCacheTest {
             subscriptionCount.incrementAndGet();
             e.error(new IllegalStateException());
         }));
-
-        CircuitBreakerConfig cb = CircuitBreakerConfig.custom().failureRateThreshold(0.5F)
-            .slidingWindow(2, 2, CircuitBreakerConfig.SlidingWindowType.COUNT_BASED).permittedNumberOfCallsInHalfOpenState(2).build();
-        ResilientReactiveCache<Long, String> resilientCache = getResilientCache(cacheName, 10, cb);
+        var circuitBreakerConfig = CircuitBreakerConfig.custom()
+            .failureRateThreshold(0.5F)
+            .slidingWindow(2, 2, CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+            .permittedNumberOfCallsInHalfOpenState(2)
+            .build();
+        ResilientReactiveCache<Long, String> resilientCache = getResilientCache(cache, circuitBreakerConfig);
 
         AssertSubscriber<Void> test = AssertSubscriber.create();
         resilientCache.put(KEY, VALUE).subscribe(test);
@@ -195,13 +205,15 @@ public class ResilientReactiveCacheTest {
 
     @Test
     public void should_have_common_circuit_for_get_and_put() {
-        // When
         when(cache.put(KEY, VALUE)).thenReturn(Mono.error(new IllegalStateException()));
         when(cache.get(KEY)).thenReturn(Mono.just(VALUE));
-        CircuitBreakerConfig cb = CircuitBreakerConfig.custom().failureRateThreshold(0.5F)
-            .slidingWindow(2, 2, CircuitBreakerConfig.SlidingWindowType.COUNT_BASED).permittedNumberOfCallsInHalfOpenState(2).build();
-        ResilientReactiveCache<Long, String> resilientCache = getResilientCache(cacheName, 10, cb);
-        // Then
+        var circuitBreakerConfig = CircuitBreakerConfig.custom()
+            .failureRateThreshold(0.5F)
+            .slidingWindow(2, 2, CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+            .permittedNumberOfCallsInHalfOpenState(2)
+            .build();
+        ResilientReactiveCache<Long, String> resilientCache = getResilientCache(cache, circuitBreakerConfig);
+
         AssertSubscriber<Void> test = AssertSubscriber.create();
         resilientCache.put(KEY, VALUE).subscribe(test);
         test.assertError(IllegalStateException.class);
@@ -223,7 +235,7 @@ public class ResilientReactiveCacheTest {
         return CACHE_NAME + IDX.incrementAndGet();
     }
 
-    private ResilientReactiveCache<Long, String> getResilientCache(String cacheName, int timeoutInMs, CircuitBreakerConfig circuitBreakerConfig) {
-        return new ResilientReactiveCache<>(this.cache, cacheName, Duration.ofMillis(timeoutInMs), circuitBreakerConfig, meterRegistry);
+    private <K, V> ResilientReactiveCache<K, V> getResilientCache(ReactiveCache<K, V> reactiveCache, CircuitBreakerConfig circuitBreakerConfig) {
+        return new ResilientReactiveCache<>(reactiveCache, cacheName, TIMEOUT, circuitBreakerConfig, meterRegistry);
     }
 }

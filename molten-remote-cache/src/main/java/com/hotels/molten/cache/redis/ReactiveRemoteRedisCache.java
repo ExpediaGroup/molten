@@ -35,7 +35,6 @@ import com.hotels.molten.core.MoltenCore;
  * @param <K> the type of key
  * @param <V> the type of value
  */
-@SuppressWarnings("unchecked")
 @Slf4j
 public class ReactiveRemoteRedisCache<K, V> implements ReactiveCache<NamedCacheKey<K>, CachedValue<V>> {
     private volatile Mono<RedisAdvancedClusterReactiveCommands<NamedCacheKey<K>, V>> reactive = Mono.error(new IllegalStateException("Couldn't acquire a connection yet."));
