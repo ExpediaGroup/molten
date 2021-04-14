@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3]
+### Changed
+- Migrated most of the unit tests to JUnit 5.
+- Extended testing of ReactiveCache implementations.
+
 ## [1.1.2]
 ### Added
 - Added `ReactiveCache#cachingWith` to use as a caching operator in a reactive chain.
