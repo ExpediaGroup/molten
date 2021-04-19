@@ -22,7 +22,7 @@
     <lettuce-core.version>6.0.3.RELEASE</lettuce-core.version>
     <logback.version>1.2.3</logback.version>
     <lombok.version>1.18.20</lombok.version>
-    <micrometer.version>1.6.5</micrometer.version>
+    <micrometer.version>1.6.6</micrometer.version>
     <zipkin-brave.version>5.13.3</zipkin-brave.version>
     <zipkin-reporter.version>2.16.3</zipkin-reporter.version>
     <kryo.version>4.0.2</kryo.version>
