@@ -507,6 +507,7 @@ public class FanOutRequestCollapserTest {
             .withBatchScheduler(Schedulers.parallel())
             .withBatchMaxConcurrency(2)
             .withEmitScheduler(Schedulers.immediate())
+            .withGroupId("test-collapser")
             .build();
         //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
 
@@ -525,7 +526,7 @@ public class FanOutRequestCollapserTest {
             .as(StepVerifier::create)
             .verifyErrorSatisfies(e -> assertThat(e)
                 .isInstanceOf(BulkheadFullException.class)
-                .hasMessageContaining("Bulkhead 'fan out bulkhead' is full"));
+                .hasMessageContaining("Bulkhead 'test-collapser' is full"));
     }
 
     @Test
@@ -567,6 +568,7 @@ public class FanOutRequestCollapserTest {
             .withBatchScheduler(Schedulers.parallel())
             .withBatchMaxConcurrency(2)
             .withEmitScheduler(Schedulers.immediate())
+            .withGroupId("test-collapser")
             .build();
         //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
 
@@ -585,7 +587,7 @@ public class FanOutRequestCollapserTest {
             .as(StepVerifier::create)
             .verifyErrorSatisfies(e -> assertThat(e)
                 .isInstanceOf(BulkheadFullException.class)
-                .hasMessageContaining("Bulkhead 'fan out bulkhead' is full"));
+                .hasMessageContaining("Bulkhead 'test-collapser' is full"));
     }
 
     @Test

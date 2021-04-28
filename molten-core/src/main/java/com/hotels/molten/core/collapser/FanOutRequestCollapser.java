@@ -100,7 +100,8 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         this.contextValueMatcher = requireNonNull(builder.contextValueMatcher);
         registerMetrics(builder);
         batchSize = builder.batchSize;
-        var bulkhead = Bulkhead.of("fan out bulkhead", BulkheadConfig.custom()
+        var groupId = builder.groupId;
+        var bulkhead = Bulkhead.of(groupId, BulkheadConfig.custom()
             .maxConcurrentCalls(builder.maxConcurrency)
             .maxWaitDuration(Optional.ofNullable(builder.maxConcurrencyWaitTime).orElse(Duration.ZERO))
             .build());
@@ -110,22 +111,22 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
             .filter(batch -> !batch.isEmpty())
             .flatMap(contextsWithSubjects -> {
                 List<CONTEXT> contexts = toContexts(contextsWithSubjects);
-                LOG.debug("Executing batch with contexts={}", contexts);
+                LOG.debug("Executing batch with contexts={}, groupId={}", contexts, groupId);
                 updateMetrics(contextsWithSubjects);
                 return Mono.just(contexts)
                     .flatMap(builder.bulkProvider)
                     .subscribeOn(builder.batchScheduler)
                     .transform(BulkheadOperator.of(bulkhead))
                     .defaultIfEmpty(List.of())
-                    .doOnError(e -> LOG.error("Error while delegating call for contexts={}", contexts, e))
-                    .flatMapMany(values -> Flux.fromIterable(contextsWithSubjects).flatMap(context -> bindValueToContext(context, values)))
+                    .doOnError(e -> LOG.error("Error while delegating call for contexts={}, groupId={}", contexts, groupId, e))
+                    .flatMapMany(values -> Flux.fromIterable(contextsWithSubjects).flatMap(context -> bindValueToContext(context, values, groupId)))
                     .onErrorResume(throwable -> Flux.fromIterable(contextsWithSubjects).map(context -> ContextWithValue.error(context, throwable)));
             }, Integer.MAX_VALUE)
             .publishOn(builder.emitScheduler)
             .doOnNext(this::logEmission)
             .subscribe(element -> element.propagateToSubject(completionTimer),
-                e -> LOG.error("Error during call scheduling", e),
-                () -> LOG.info("Calls waiting stream has completed"));
+                e -> LOG.error("Error during call scheduling and the request collapser shut down. groupId={}", groupId, e),
+                () -> LOG.info("The request collapser has been shut down. groupId={}", groupId));
     }
 
     @Override
@@ -209,21 +210,21 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         return contextWithSubjects.stream().map(cs -> cs.context).collect(Collectors.toList());
     }
 
-    private Mono<ContextWithValue<CONTEXT, VALUE>> bindValueToContext(ContextWithSubject<CONTEXT, VALUE> contextWithSubject, List<VALUE> values) {
+    private Mono<ContextWithValue<CONTEXT, VALUE>> bindValueToContext(ContextWithSubject<CONTEXT, VALUE> contextWithSubject, List<VALUE> values, String groupId) {
         return Flux.fromIterable(values)
-            .filter(value -> matchContextByValue(contextWithSubject.context, value))
+            .filter(value -> matchContextByValue(contextWithSubject.context, value, groupId))
             .next()
             .map(value -> ContextWithValue.value(contextWithSubject, value))
             .onErrorResume(e -> Mono.just(ContextWithValue.error(contextWithSubject, e)))
             .defaultIfEmpty(ContextWithValue.empty(contextWithSubject));
     }
 
-    private boolean matchContextByValue(CONTEXT ctx, VALUE value) {
+    private boolean matchContextByValue(CONTEXT context, VALUE value, String groupId) {
         boolean matches;
         try {
-            matches = contextValueMatcher.apply(ctx, value);
+            matches = contextValueMatcher.apply(context, value);
         } catch (Exception e) {
-            LOG.warn("Failed to match value={} with context={} error={}", value, ctx, e.toString());
+            LOG.warn("Failed to match value={} with context={} by groupId={}, error={}", value, context, groupId, e.toString());
             matches = false;
         }
         return matches;
@@ -301,6 +302,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         private Duration maxConcurrencyWaitTime;
         private MeterRegistry meterRegistry;
         private MetricId metricId;
+        private String groupId = "unknown";
 
         public Builder(Function<List<C>, Mono<List<V>>> bulkProvider) {
             this.bulkProvider = requireNonNull(bulkProvider);
@@ -314,6 +316,19 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
          */
         public Builder<C, V> withContextValueMatcher(BiFunction<C, V, Boolean> contextValueMatcher) {
             this.contextValueMatcher = requireNonNull(contextValueMatcher);
+            return this;
+        }
+
+        /**
+         * Sets the request collapser's group id to be identified by in logs and bulkheads.<br>
+         * If not set, the events logged by the request collapser cannot be distinguished by the events logged by others.<br>
+         * Note that the uniqueness of the id is not forced out but strongly recommended.
+         *
+         * @param groupId the unique id of the request collapser
+         * @return this builder instance
+         */
+        public Builder<C, V> withGroupId(String groupId) {
+            this.groupId = requireNonNull(groupId);
             return this;
         }
 
