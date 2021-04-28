@@ -21,11 +21,15 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.github.resilience4j.bulkhead.Bulkhead;
+import io.github.resilience4j.bulkhead.BulkheadConfig;
+import io.github.resilience4j.reactor.bulkhead.operator.BulkheadOperator;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -96,6 +100,10 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         this.contextValueMatcher = requireNonNull(builder.contextValueMatcher);
         registerMetrics(builder);
         batchSize = builder.batchSize;
+        var bulkhead = Bulkhead.of("fan out bulkhead", BulkheadConfig.custom()
+            .maxConcurrentCalls(builder.maxConcurrency)
+            .maxWaitDuration(Optional.ofNullable(builder.maxConcurrencyWaitTime).orElse(Duration.ZERO))
+            .build());
         callsWaitingSubscription = callSink.asFlux()
             .publishOn(builder.scheduler)
             .bufferTimeout(batchSize, builder.maximumWaitTime, builder.scheduler)
@@ -104,13 +112,15 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
                 List<CONTEXT> contexts = toContexts(contextsWithSubjects);
                 LOG.debug("Executing batch with contexts={}", contexts);
                 updateMetrics(contextsWithSubjects);
-                return Mono.defer(() -> builder.bulkProvider.apply(contexts))
+                return Mono.just(contexts)
+                    .flatMap(builder.bulkProvider)
                     .subscribeOn(builder.batchScheduler)
+                    .transform(BulkheadOperator.of(bulkhead))
                     .defaultIfEmpty(List.of())
                     .doOnError(e -> LOG.error("Error while delegating call for contexts={}", contexts, e))
                     .flatMapMany(values -> Flux.fromIterable(contextsWithSubjects).flatMap(context -> bindValueToContext(context, values)))
                     .onErrorResume(throwable -> Flux.fromIterable(contextsWithSubjects).map(context -> ContextWithValue.error(context, throwable)));
-            }, builder.maxConcurrency)
+            }, Integer.MAX_VALUE)
             .publishOn(builder.emitScheduler)
             .doOnNext(this::logEmission)
             .subscribe(element -> element.propagateToSubject(completionTimer),
@@ -288,6 +298,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         private int batchSize = 10;
         private Scheduler batchScheduler = Schedulers.parallel();
         private Duration maximumWaitTime = Duration.ofMillis(200);
+        private Duration maxConcurrencyWaitTime;
         private MeterRegistry meterRegistry;
         private MetricId metricId;
 
@@ -390,6 +401,19 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         public Builder<C, V> withBatchMaxConcurrency(int maxConcurrency) {
             checkArgument(maxConcurrency > 0, "Max concurrency should be positive");
             this.maxConcurrency = maxConcurrency;
+            return this;
+        }
+
+        /**
+         * Sets the maximum time to wait for a prepared batch call if {@link #withBatchMaxConcurrency(int) max concurrency} is already fulfilled.
+         * By default it's zero.
+         *
+         * @param maximumWaitTime the maximum time to wait
+         * @return this builder instance
+         */
+        public Builder<C, V> withBatchMaxConcurrencyWaitTime(Duration maximumWaitTime) {
+            checkArgument(maximumWaitTime != null && maximumWaitTime.toMillis() >= 0L, "Maximum wait time must be positive or zero");
+            this.maxConcurrencyWaitTime = maximumWaitTime;
             return this;
         }
 
