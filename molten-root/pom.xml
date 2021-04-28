@@ -19,6 +19,8 @@
   <properties>
     <checkstyle.suppressions.location>build/suppressions.xml</checkstyle.suppressions.location>
     <skip.integration.tests>false</skip.integration.tests>
+    <!-- versions -->
+    <testcontainers.version>1.15.3</testcontainers.version>
   </properties>
 
   <modules>
@@ -48,6 +50,13 @@
         <groupId>com.expediagroup.molten</groupId>
         <artifactId>molten-dependencies</artifactId>
         <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
