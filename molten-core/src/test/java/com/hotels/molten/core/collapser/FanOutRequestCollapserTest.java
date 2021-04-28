@@ -430,6 +430,7 @@ public class FanOutRequestCollapserTest {
             }
         });
     }
+
     @Test
     void should_complete_for_not_matched_contexts() {
         collapsedProvider = createCollapserBase().build();
@@ -523,6 +524,7 @@ public class FanOutRequestCollapserTest {
             });
 
         Flux.range(1, 100).flatMap(i -> collapsedProvider.apply(i))
+            .ignoreElements() // doesn't matter is some elements are emitted successfully
             .as(StepVerifier::create)
             .verifyErrorSatisfies(e -> assertThat(e)
                 .isInstanceOf(BulkheadFullException.class)
@@ -537,7 +539,7 @@ public class FanOutRequestCollapserTest {
             .withBatchSize(5)
             .withBatchScheduler(Schedulers.parallel())
             .withBatchMaxConcurrency(2)
-            .withBatchMaxConcurrencyWaitTime(Duration.ofMillis(140))
+            .withBatchMaxConcurrencyWaitTime(Duration.ofMillis(160))
             .withEmitScheduler(Schedulers.immediate())
             .build();
         //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
@@ -584,6 +586,7 @@ public class FanOutRequestCollapserTest {
             });
 
         Flux.range(1, 100).flatMap(i -> collapsedProvider.apply(i))
+            .ignoreElements() // doesn't matter is some elements are emitted successfully
             .as(StepVerifier::create)
             .verifyErrorSatisfies(e -> assertThat(e)
                 .isInstanceOf(BulkheadFullException.class)
@@ -594,11 +597,10 @@ public class FanOutRequestCollapserTest {
     void should_not_execute_more_things_in_parallel_with_delay_but_wait_for_it() {
         collapsedProvider = createCollapserBase()
             .withScheduler(Schedulers.parallel())
-            .withMaximumWaitTime(Duration.ofMillis(200))
             .withBatchSize(5)
             .withBatchScheduler(Schedulers.parallel())
             .withBatchMaxConcurrency(2)
-            .withBatchMaxConcurrencyWaitTime(Duration.ofMillis(140))
+            .withBatchMaxConcurrencyWaitTime(Duration.ofMillis(160))
             .withEmitScheduler(Schedulers.immediate())
             .build();
         //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution

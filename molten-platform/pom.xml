@@ -550,6 +550,7 @@
           <reuseForks>true</reuseForks>
           <argLine>
             -Djunit.jupiter.displayname.generator.default=org.junit.jupiter.api.DisplayNameGenerator$ReplaceUnderscores
+            -Dreactor.schedulers.defaultPoolSize=8
           </argLine>
         </configuration>
         <dependencies>
