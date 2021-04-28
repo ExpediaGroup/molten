@@ -36,11 +36,8 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.FluxSink.OverflowStrategy;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ReplayProcessor;
-import reactor.core.publisher.UnicastProcessor;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
@@ -83,8 +80,7 @@ import com.hotels.molten.core.metrics.MetricId;
  */
 @Slf4j
 public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CONTEXT, Mono<VALUE>> {
-    private final UnicastProcessor<ContextWithSubject<CONTEXT, VALUE>> callsWaiting = UnicastProcessor.create();
-    private final FluxSink<ContextWithSubject<CONTEXT, VALUE>> callSink = callsWaiting.sink();
+    private final Sinks.Many<ContextWithSubject<CONTEXT, VALUE>> callSink = Sinks.many().unicast().onBackpressureBuffer();
     private final BiFunction<CONTEXT, VALUE, Boolean> contextValueMatcher;
     private final Disposable callsWaitingSubscription;
     private Timer delayTimer;
@@ -100,7 +96,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         this.contextValueMatcher = requireNonNull(builder.contextValueMatcher);
         registerMetrics(builder);
         batchSize = builder.batchSize;
-        callsWaitingSubscription = callsWaiting
+        callsWaitingSubscription = callSink.asFlux()
             .publishOn(builder.scheduler)
             .bufferTimeout(batchSize, builder.maximumWaitTime, builder.scheduler)
             .filter(batch -> !batch.isEmpty())
@@ -130,7 +126,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
                     pendingItemsHistogram.record(pendingItemCounter.incrementAndGet());
                 }
                 ContextWithSubject<CONTEXT, VALUE> contextWithSubject = new ContextWithSubject<>(context, meterRegistry);
-                callSink.next(contextWithSubject);
+                callSink.emitNext(contextWithSubject, Sinks.EmitFailureHandler.FAIL_FAST);
                 return contextWithSubject.subject.next();
             })
             .transform(MoltenCore.propagateContext());
@@ -190,8 +186,8 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
     /**
      * Creates a {@link FanOutRequestCollapser} builder over a bulk provider.
      *
-     * @param <C> the context type
-     * @param <V> the VALUE type
+     * @param <C>          the context type
+     * @param <V>          the VALUE type
      * @param bulkProvider the bulk provider to delegate calls to
      * @return the builder
      */
@@ -229,8 +225,8 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
     private static final class ContextWithSubject<C, V> {
         private final C context;
         private final Timer.Sample sample;
-        private final ReplayProcessor<V> subject = ReplayProcessor.create(1);
-        private final FluxSink<V> sink = subject.sink(OverflowStrategy.ERROR);
+        private final Sinks.Many<V> sink = Sinks.many().replay().limit(1);
+        private final Flux<V> subject = sink.asFlux();
 
         private ContextWithSubject(C context, MeterRegistry meterRegistry) {
             this.context = requireNonNull(context);
@@ -262,11 +258,11 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         private void propagateToSubject(Timer completionTimer) {
             recordCompletion(completionTimer);
             if (error != null) {
-                contextWithSubject.sink.error(error);
+                contextWithSubject.sink.emitError(error, Sinks.EmitFailureHandler.FAIL_FAST);
             } else if (value != null) {
-                contextWithSubject.sink.next(value);
+                contextWithSubject.sink.emitNext(value, Sinks.EmitFailureHandler.FAIL_FAST);
             } else {
-                contextWithSubject.sink.complete();
+                contextWithSubject.sink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
             }
         }
 
@@ -362,7 +358,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
          * Sets the meter registry and metric ID base to record statistics with.
          *
          * @param meterRegistry the registry to register metrics with
-         * @param metricId the metric id under which metrics should be registered
+         * @param metricId      the metric id under which metrics should be registered
          * @return this builder instance
          */
         public Builder<C, V> withMetrics(MeterRegistry meterRegistry, MetricId metricId) {
