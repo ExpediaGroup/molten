@@ -413,7 +413,7 @@ public class FanOutRequestCollapserTest {
             Flux.range(0, numberOfIdsPerThread)
                 .map(i -> rng.nextInt(highestId))
                 .doOnNext(idsRolled::add)
-                .flatMap(id -> requestCollapser.apply(id).doOnError(e -> LOG.error("id={} error={}", id, e.getMessage())).onErrorResume(e -> Mono.empty()))
+                .flatMap(id -> requestCollapser.apply(id).doOnError(e -> LOG.error("id={} error={}", id, e.toString())).onErrorResume(e -> Mono.empty()))
                 .collectList()
                 .doOnSuccess(idsFinished::addAll)
                 .subscribe(subscriber);
