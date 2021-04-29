@@ -178,7 +178,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
     private void logEmission(ContextWithValue<CONTEXT, VALUE> item) {
         if (LOG.isDebugEnabled()) {
             if (item.error != null) {
-                LOG.debug("Emitting error for context={} error={}", item.contextWithSubject.context, item.error.getMessage());
+                LOG.debug("Emitting error for context={} error={}", item.contextWithSubject.context, item.error.toString());
             } else if (item.value != null) {
                 LOG.debug("Emitting item for context={} item={}", item.contextWithSubject.context, item.value);
             } else {

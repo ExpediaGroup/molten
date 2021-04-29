@@ -15,10 +15,9 @@
   <packaging>jar</packaging>
 
   <properties>
-    <spring.version>5.3.5</spring.version>
-    <spring-boot.version>2.4.4</spring-boot.version>
+    <spring.version>5.3.6</spring.version>
+    <spring-boot.version>2.4.5</spring-boot.version>
     <spring-cloud.version>2020.0.2</spring-cloud.version>
-    <testcontainers.version>1.15.2</testcontainers.version>
   </properties>
 
   <dependencyManagement>
@@ -97,19 +96,16 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>mockserver</artifactId>
-      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
-      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

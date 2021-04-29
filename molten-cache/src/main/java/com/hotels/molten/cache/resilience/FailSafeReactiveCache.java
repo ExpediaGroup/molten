@@ -53,7 +53,7 @@ public class FailSafeReactiveCache<K, V> implements ReactiveCache<K, V> {
     private void logErrorForKey(String operation, K key, Throwable e) {
         switch (mode) {
         case LOGGING:
-            LOG.warn("Error invoking {} for key={} error-type={} error-message={}", operation, key, e.getClass().getName(), e.getMessage());
+            LOG.warn("Error invoking {} for key={} error={}", operation, key, e.toString());
             break;
         case VERBOSE:
             LOG.error("Error invoking {} for key={}", operation, key, e);
