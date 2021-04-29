@@ -159,7 +159,7 @@ public class ReactiveReloadingCache<CONTEXT, VALUE, CACHE_KEY, CACHED_VALUE> imp
                 LOG.debug("Storing item in cache for context={}", context);
                 put(context, value)
                     .subscribeOn(scheduler)
-                    .subscribe(v -> { }, ex -> LOG.warn("Error caching value for context={} cause={}", context, ex.getMessage()));
+                    .subscribe(v -> { }, ex -> LOG.warn("Error caching value for context={} cause={}", context, ex.toString()));
             })
             .doOnError(e -> loadExceptionCounter.increment())
             .onErrorResume(e -> failSafe ? Mono.empty() : Mono.error(e));
@@ -171,7 +171,7 @@ public class ReactiveReloadingCache<CONTEXT, VALUE, CACHE_KEY, CACHED_VALUE> imp
             .subscribeOn(scheduler)
             .subscribe(value -> { }, e -> {
                 asyncLoadExceptionCounter.increment();
-                LOG.warn("Couldn't reload expired value for context={} cause={}", context, e.getMessage());
+                LOG.warn("Couldn't reload expired value for context={} cause={}", context, e.toString());
             });
     }
 

@@ -70,7 +70,7 @@ public class RetryingReactiveCache<K, V> implements ReactiveCache<K, V> {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Retrying retry={} for method={} key={}", retryIndex, method, key, retry.failure());
                 } else if (LOG.isWarnEnabled()) {
-                    LOG.warn("Retrying retry={} for method={} key={} cause={}-{}", retryIndex, method, key, retry.failure().getClass().getName(), retry.failure().getMessage());
+                    LOG.warn("Retrying retry={} for method={} key={} cause={}-{}", retryIndex, method, key, retry.failure().getClass().getName(), retry.failure().toString());
                 }
                 MetricId.builder()
                     .name("cache_request_retries")
@@ -87,8 +87,7 @@ public class RetryingReactiveCache<K, V> implements ReactiveCache<K, V> {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Giving up retries after retry={} for method={} key={}", retry.totalRetries(), method, key, retry.failure());
                 } else if (LOG.isWarnEnabled()) {
-                    LOG.warn("Giving up retries after retry={} for method={} key={}, cause={}-{}", retry.totalRetries(), method, key, retry.failure().getClass().getName(),
-                        retry.failure().getMessage());
+                    LOG.warn("Giving up retries after retry={} for method={} key={}, cause={}", retry.totalRetries(), method, key, retry.failure().toString());
                 }
                 return retry.failure();
             });
