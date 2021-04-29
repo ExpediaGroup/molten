@@ -407,11 +407,13 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
 
 
         /**
-         * Sets the maximum concurrency to fire batch calls.
+         * Sets the maximum concurrency to fire batch calls.<br>
+         * If reached, new batch calls will fail with {@link io.github.resilience4j.bulkhead.BulkheadFullException}.
          * By default it is same as the number of available processors.
          *
          * @param maxConcurrency the maximum concurrency for batch calls
          * @return this builder instance
+         * @see #withBatchMaxConcurrencyWaitTime(Duration)
          */
         public Builder<C, V> withBatchMaxConcurrency(int maxConcurrency) {
             checkArgument(maxConcurrency > 0, "Max concurrency should be positive");
@@ -420,8 +422,9 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         }
 
         /**
-         * Sets the maximum time to wait for a prepared batch call if {@link #withBatchMaxConcurrency(int) max concurrency} is already fulfilled.
-         * By default it's zero.
+         * Sets the maximum time to wait for executing a prepared batch call if there are already {@link #withBatchMaxConcurrency(int) max concurrency} batches running.<br>
+         * If the wait time expires and the prepared batch call couldn't be started, {@link io.github.resilience4j.bulkhead.BulkheadFullException} is thrown.
+         * By default it's {@link Duration#ZERO}, failing fast if the {@link #withBatchMaxConcurrency(int) max concurrency} limit is reached.
          *
          * @param maximumWaitTime the maximum time to wait
          * @return this builder instance
