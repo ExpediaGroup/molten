@@ -138,7 +138,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
                 }
                 ContextWithSubject<CONTEXT, VALUE> contextWithSubject = new ContextWithSubject<>(context, meterRegistry);
                 callSink.emitNext(contextWithSubject, Sinks.EmitFailureHandler.FAIL_FAST);
-                return contextWithSubject.subject.next();
+                return contextWithSubject.subject;
             })
             .transform(MoltenCore.propagateContext());
     }
@@ -236,8 +236,8 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
     private static final class ContextWithSubject<C, V> {
         private final C context;
         private final Timer.Sample sample;
-        private final Sinks.Many<V> sink = Sinks.many().replay().limit(1);
-        private final Flux<V> subject = sink.asFlux();
+        private final Sinks.One<V> sink = Sinks.one();
+        private final Mono<V> subject = sink.asMono();
 
         private ContextWithSubject(C context, MeterRegistry meterRegistry) {
             this.context = requireNonNull(context);
@@ -271,9 +271,9 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
             if (error != null) {
                 contextWithSubject.sink.emitError(error, Sinks.EmitFailureHandler.FAIL_FAST);
             } else if (value != null) {
-                contextWithSubject.sink.emitNext(value, Sinks.EmitFailureHandler.FAIL_FAST);
+                contextWithSubject.sink.emitValue(value, Sinks.EmitFailureHandler.FAIL_FAST);
             } else {
-                contextWithSubject.sink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
+                contextWithSubject.sink.emitEmpty(Sinks.EmitFailureHandler.FAIL_FAST);
             }
         }
 
