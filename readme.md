@@ -37,8 +37,6 @@ Some libraries building on:
   - [Guava](https://github.com/google/guava)
   - [Slf4j](http://www.slf4j.org/)
   - [Logback](http://logback.qos.ch/)
-  - [Vert.x](https://vertx.io/)
-  - [AWS Java SDK](https://aws.amazon.com/sdk-for-java/)
 
 ## Requirements
 

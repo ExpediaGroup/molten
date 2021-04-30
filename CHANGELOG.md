@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made `FanOutRequestCollapser#maxConcurrency` limit forced by `Bulkhead` instead of the concurrency of `flatMap`,
   which killed the whole collapser instead of that single call over the limit.
 - Dropped support of reactor-core below 3.4.0, by using the new `Sinks` api.
+- Made [Vert.x](https://vertx.io/) internal dependency only. It means that vert.x version is no longer managed by `molten-dependencies`.
 ### Fixed
 - Fixed `ReactiveCache` implementations to log the `Throwable#toString()` instead of the message, which can be null.
 
