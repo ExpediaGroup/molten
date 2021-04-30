@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `FanOutRequestCollapser.Builder#withGroupId`, so two instance can be differentiated when observing the logs.
-- Added `FanOutRequestCollapser.Builder#withBatchMaxConcurrencyWaitTime` to set the max wait time for a full bulkhead to free up before making the next call failed.
+- Added `FanOutRequestCollapser.Builder#withBatchMaxConcurrencyWaitTime` to set the maximum time to wait for executing
+  a prepared batch call if there are already max concurrency batches running.
 ### Changed
 - Made `FanOutRequestCollapser#maxConcurrency` limit forced by `Bulkhead` instead of the concurrency of `flatMap`,
   which killed the whole collapser instead of that single call over the limit.
