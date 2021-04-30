@@ -21,6 +21,7 @@
     <skip.integration.tests>false</skip.integration.tests>
     <!-- versions -->
     <testcontainers.version>1.15.3</testcontainers.version>
+    <vertx.version>3.9.4</vertx.version>
   </properties>
 
   <modules>
@@ -59,6 +60,18 @@
         <version>${testcontainers.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-core</artifactId>
+        <version>${vertx.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-web</artifactId>
+        <version>${vertx.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
