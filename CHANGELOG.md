@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.2.0]
 ### Added
 - Added `FanOutRequestCollapser.Builder#withGroupId`, so two instance can be differentiated when observing the logs.
 - Added `FanOutRequestCollapser.Builder#withBatchMaxConcurrencyWaitTime` to set the maximum time to wait for executing

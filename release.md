@@ -18,4 +18,4 @@ Assuming the version on master is `1.0.0-SNAPSHOT` and the target release versio
 7. Click `Publish release` to kick off the release workflow.
     - Be sure to verify it has succeeded.
 8. Bump SNAPSHOT version on `master` to next patch version => `1.0.1-SNAPSHOT`
-    - `mvn org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=1.0.1-SNAPSHOT`
+    - `mvn org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DgenerateBackupPoms=false -DnewVersion=1.0.1-SNAPSHOT`

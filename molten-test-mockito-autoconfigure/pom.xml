@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.expediagroup.molten</groupId>
         <artifactId>molten-root</artifactId>
-        <version>1.1.4-SNAPSHOT</version>
+        <version>1.2.0-SNAPSHOT</version>
         <relativePath>../molten-root/pom.xml</relativePath>
     </parent>
     <artifactId>molten-test-mockito-autoconfigure</artifactId>
