@@ -20,6 +20,7 @@ jobs:
         with:
           java-version: 11
           java-package: jdk
+          distribution: adopt
           architecture: x64
       - name: Cache local Maven repository
         uses: actions/cache@v2.1.4
@@ -42,6 +43,7 @@ jobs:
         with:
           java-version: 11
           java-package: jdk
+          distribution: adopt
           architecture: x64
           server-id: oss-sonatype # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: SONATYPE_USERNAME # env variable for username in deploy
