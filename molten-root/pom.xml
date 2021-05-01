@@ -21,7 +21,7 @@
     <skip.integration.tests>false</skip.integration.tests>
     <!-- versions -->
     <testcontainers.version>1.15.3</testcontainers.version>
-    <vertx.version>3.9.4</vertx.version>
+    <vertx.version>4.0.3</vertx.version>
   </properties>
 
   <modules>
