@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -52,7 +53,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -61,6 +61,7 @@ import org.slf4j.MDC;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.test.StepVerifier;
 import reactor.test.scheduler.VirtualTimeScheduler;
 
 import com.hotels.molten.core.MoltenCore;
@@ -112,10 +113,9 @@ public class FanOutRequestCollapserTest {
         batchScheduler = VirtualTimeScheduler.create();
         delayScheduler = VirtualTimeScheduler.create();
         emitScheduler = VirtualTimeScheduler.create();
-        collapsedProvider = createCollapser();
     }
 
-    private FanOutRequestCollapser<Integer, String> createCollapser() {
+    private FanOutRequestCollapser.Builder<Integer, String> createCollapserBase() {
         return FanOutRequestCollapser.collapseCallsOver(bulkProvider)
             .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
             .withScheduler(scheduler)
@@ -123,8 +123,7 @@ public class FanOutRequestCollapserTest {
             .withMaximumWaitTime(Duration.ofMillis(100))
             .withBatchSize(2)
             .withBatchScheduler(batchScheduler)
-            .withMetrics(meterRegistry, MetricId.builder().name(METRICS_QUALIFIER).hierarchicalName(HIERARCHICAL_METRICS_QUALIFIER).tag(Tag.of(TAG_KEY, TAG_VALUE)).build())
-            .build();
+            .withMetrics(meterRegistry, MetricId.builder().name(METRICS_QUALIFIER).hierarchicalName(HIERARCHICAL_METRICS_QUALIFIER).tag(Tag.of(TAG_KEY, TAG_VALUE)).build());
     }
 
     @AfterEach
@@ -136,6 +135,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_collapse_requests_to_batches() {
+        collapsedProvider = createCollapserBase().build();
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenAnswer(ie -> {
                 LOG.info("bulk with {}", ie.getArguments());
@@ -164,6 +164,7 @@ public class FanOutRequestCollapserTest {
     @Test
     void should_handle_hierarchical_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
+        collapsedProvider = createCollapserBase().build();
         pendingHistogram = hierarchicalMetric("item.pending").summary();
         batchSizeHistogram = hierarchicalMetric("batch.size").summary();
         delayTimer = hierarchicalMetric("item.delay").timer();
@@ -223,7 +224,7 @@ public class FanOutRequestCollapserTest {
     void should_handle_dimensional_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(false);
-        collapsedProvider = createCollapser(); // we need to recreate the collapser here to have the above settings take effect
+        collapsedProvider = createCollapserBase().build();
         pendingHistogram = dimensionalMetric("pending").summary();
         batchSizeHistogram = dimensionalMetric("batch_size").summary();
         delayTimer = dimensionalMetric("item_delay").timer();
@@ -282,6 +283,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_wait_only_maximum_time_for_calls_before_delegating() {
+        collapsedProvider = createCollapserBase().build();
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -297,6 +299,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_ignore_empty_batch() {
+        collapsedProvider = createCollapserBase().build();
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -317,6 +320,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_propagate_bulk_load_error_to_each_value() {
+        collapsedProvider = createCollapserBase().build();
         // 2 contexts, bulk error => 2 onError
         IllegalStateException exception = new IllegalStateException("expected error");
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
@@ -336,6 +340,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_continue_collapsing_after_load_error() {
+        collapsedProvider = createCollapserBase().build();
         IllegalStateException exception = new IllegalStateException("expected error");
         when(bulkProvider.apply((List<Integer>) argThat(containsInAnyOrder(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.error(exception))
@@ -387,15 +392,13 @@ public class FanOutRequestCollapserTest {
             }
             return ret;
         });
-        collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
-            .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
+        collapsedProvider = createCollapserBase()
             .withMaximumWaitTime(Duration.ofMillis(maxWaitTimeForBatch))
             .withBatchSize(batchSize)
             .withScheduler(Schedulers.parallel())
             .withBatchScheduler(Schedulers.immediate())
             .withBatchMaxConcurrency(maxConcurrency)
             .withEmitScheduler(Schedulers.immediate())
-            .withMetrics(meterRegistry, MetricId.builder().name("metrics").hierarchicalName("metrics").build())
             .build();
         RequestCollapser<Integer, String> requestCollapser = RequestCollapser.builder(collapsedProvider)
             .withScheduler(Schedulers.immediate())
@@ -427,8 +430,10 @@ public class FanOutRequestCollapserTest {
             }
         });
     }
+
     @Test
     void should_complete_for_not_matched_contexts() {
+        collapsedProvider = createCollapserBase().build();
         // 2 contexts, 1 value => 1 onSuccess, 1 onComplete
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.delay(Duration.ofMillis(50), delayScheduler).map(i -> List.of(RESULT_B)));
@@ -453,6 +458,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_complete_for_values_where_match_failed() {
+        collapsedProvider = createCollapserBase().build();
         // 2 contexts, 2 values, 1 match fails => 1 onSuccess, 1 onComplete + log
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.delay(Duration.ofMillis(50), delayScheduler).map(i -> List.of(RESULT_B, "a")));
@@ -475,6 +481,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_be_able_to_shutdown_gracefully() {
+        collapsedProvider = createCollapserBase().build();
         lenient().when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -493,22 +500,21 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    @Disabled
-    void should_not_execute_more_things_in_parallel() throws InterruptedException {
-        collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
-            .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
+    void should_not_execute_more_things_in_parallel() {
+        collapsedProvider = createCollapserBase()
             .withScheduler(Schedulers.parallel())
             .withMaximumWaitTime(Duration.ofMillis(200))
             .withBatchSize(5)
             .withBatchScheduler(Schedulers.parallel())
             .withBatchMaxConcurrency(2)
-            .withMetrics(meterRegistry, MetricId.builder().name("metrics").build())
+            .withEmitScheduler(Schedulers.immediate())
+            .withGroupId("test-collapser")
             .build();
         //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
 
         when(bulkProvider.apply(anyList()))
-            .thenAnswer(ia -> {
-                List<Integer> params = (List<Integer>) ia.getArguments()[0];
+            .thenAnswer(invocation -> {
+                List<Integer> params = invocation.getArgument(0);
                 LOG.debug("Returning delayed batched items for {}", params);
                 Thread.sleep(1000);
                 return Flux.fromIterable(params)
@@ -517,19 +523,54 @@ public class FanOutRequestCollapserTest {
                     .doOnSuccess(b -> LOG.debug("Emitting batched items {}", b));
             });
 
-        Flux.range(1, 100).flatMap(i -> collapsedProvider.apply(i)).blockLast();
+        Flux.range(1, 100).flatMap(i -> collapsedProvider.apply(i))
+            .ignoreElements() // doesn't matter is some elements are emitted successfully
+            .as(StepVerifier::create)
+            .verifyErrorSatisfies(e -> assertThat(e)
+                .isInstanceOf(BulkheadFullException.class)
+                .hasMessageContaining("Bulkhead 'test-collapser' is full"));
     }
 
     @Test
-    @Disabled
-    void should_not_execute_more_things_in_parallel_with_delay() throws InterruptedException {
-        collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
-            .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
+    void should_not_execute_more_things_in_parallel_but_wait_for_it() {
+        collapsedProvider = createCollapserBase()
             .withScheduler(Schedulers.parallel())
             .withMaximumWaitTime(Duration.ofMillis(200))
             .withBatchSize(5)
             .withBatchScheduler(Schedulers.parallel())
-            .withMetrics(meterRegistry, MetricId.builder().name("metrics").build())
+            .withBatchMaxConcurrency(2)
+            .withBatchMaxConcurrencyWaitTime(Duration.ofMillis(160))
+            .withEmitScheduler(Schedulers.immediate())
+            .build();
+        //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
+
+        when(bulkProvider.apply(anyList()))
+            .thenAnswer(invocation -> {
+                List<Integer> params = invocation.getArgument(0);
+                LOG.debug("Returning delayed batched items for {}", params);
+                Thread.sleep(100);
+                return Flux.fromIterable(params)
+                    .map(Object::toString)
+                    .collectList()
+                    .doOnSuccess(b -> LOG.debug("Emitting batched items {}", b));
+            });
+
+        Flux.range(1, 20).flatMap(i -> collapsedProvider.apply(i))
+            .as(StepVerifier::create)
+            .expectNextCount(20)
+            .verifyComplete();
+    }
+
+    @Test
+    void should_not_execute_more_things_in_parallel_with_delay() {
+        collapsedProvider = createCollapserBase()
+            .withScheduler(Schedulers.parallel())
+            .withMaximumWaitTime(Duration.ofMillis(200))
+            .withBatchSize(5)
+            .withBatchScheduler(Schedulers.parallel())
+            .withBatchMaxConcurrency(2)
+            .withEmitScheduler(Schedulers.immediate())
+            .withGroupId("test-collapser")
             .build();
         //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
 
@@ -544,7 +585,41 @@ public class FanOutRequestCollapserTest {
                     .doOnSuccess(b -> LOG.debug("Emitting batched items {}", b));
             });
 
-        Flux.range(1, 100).flatMap(i -> collapsedProvider.apply(i)).blockLast();
+        Flux.range(1, 100).flatMap(i -> collapsedProvider.apply(i))
+            .ignoreElements() // doesn't matter is some elements are emitted successfully
+            .as(StepVerifier::create)
+            .verifyErrorSatisfies(e -> assertThat(e)
+                .isInstanceOf(BulkheadFullException.class)
+                .hasMessageContaining("Bulkhead 'test-collapser' is full"));
+    }
+
+    @Test
+    void should_not_execute_more_things_in_parallel_with_delay_but_wait_for_it() {
+        collapsedProvider = createCollapserBase()
+            .withScheduler(Schedulers.parallel())
+            .withBatchSize(5)
+            .withBatchScheduler(Schedulers.parallel())
+            .withBatchMaxConcurrency(2)
+            .withBatchMaxConcurrencyWaitTime(Duration.ofMillis(160))
+            .withEmitScheduler(Schedulers.immediate())
+            .build();
+        //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
+
+        when(bulkProvider.apply(anyList()))
+            .thenAnswer(ia -> {
+                List<Integer> params = (List<Integer>) ia.getArguments()[0];
+                LOG.debug("Returning delayed batched items for {}", params);
+                return Flux.fromIterable(params)
+                    .map(Object::toString)
+                    .collectList()
+                    .delayElement(Duration.ofMillis(100))
+                    .doOnSuccess(b -> LOG.debug("Emitting batched items {}", b));
+            });
+
+        Flux.range(1, 20).flatMap(i -> collapsedProvider.apply(i))
+            .as(StepVerifier::create)
+            .expectNextCount(20)
+            .verifyComplete();
     }
 
     /**
@@ -553,15 +628,7 @@ public class FanOutRequestCollapserTest {
     @Test
     void should_complete_if_contract_is_not_followed() {
         doReturn(Mono.empty()).when(bulkProvider).apply(any());
-        collapsedProvider = FanOutRequestCollapser.collapseCallsOver(bulkProvider)
-            .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
-            .withScheduler(scheduler)
-            .withEmitScheduler(emitScheduler)
-            .withMaximumWaitTime(Duration.ofMillis(100))
-            .withBatchSize(2)
-            .withBatchScheduler(batchScheduler)
-            .withMetrics(meterRegistry, MetricId.builder().name("metrics").hierarchicalName("metrics").build())
-            .build();
+        collapsedProvider = createCollapserBase().build();
 
         AssertSubscriber<String> subscriber1 = AssertSubscriber.create();
         collapsedProvider.apply(CONTEXT_A).subscribe(subscriber1);

@@ -5,7 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `FanOutRequestCollapser.Builder#withGroupId`, so two instance can be differentiated when observing the logs.
+- Added `FanOutRequestCollapser.Builder#withBatchMaxConcurrencyWaitTime` to set the maximum time to wait for executing
+  a prepared batch call if there are already max concurrency batches running.
 ### Changed
+- Made `FanOutRequestCollapser#maxConcurrency` limit forced by `Bulkhead` instead of the concurrency of `flatMap`,
+  which killed the whole collapser instead of that single call over the limit.
+- Dropped support of reactor-core below 3.4.0, by using the new `Sinks` api.
 - Made [Vert.x](https://vertx.io/) internal dependency only. It means that vert.x version is no longer managed by `molten-dependencies`.
 ### Fixed
 - Fixed `ReactiveCache` implementations to log the `Throwable#toString()` instead of the message, which can be null.
@@ -13,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.3]
 ### Changed
 - Migrated most of the unit tests to JUnit 5.
-- Extended testing of ReactiveCache implementations.
+- Extended testing of `ReactiveCache` implementations.
 
 ## [1.1.2]
 ### Added

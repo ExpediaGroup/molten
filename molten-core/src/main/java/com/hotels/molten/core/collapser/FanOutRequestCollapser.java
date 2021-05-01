@@ -21,11 +21,15 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.github.resilience4j.bulkhead.Bulkhead;
+import io.github.resilience4j.bulkhead.BulkheadConfig;
+import io.github.resilience4j.reactor.bulkhead.operator.BulkheadOperator;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -36,11 +40,8 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.FluxSink.OverflowStrategy;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ReplayProcessor;
-import reactor.core.publisher.UnicastProcessor;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
@@ -83,8 +84,7 @@ import com.hotels.molten.core.metrics.MetricId;
  */
 @Slf4j
 public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CONTEXT, Mono<VALUE>> {
-    private final UnicastProcessor<ContextWithSubject<CONTEXT, VALUE>> callsWaiting = UnicastProcessor.create();
-    private final FluxSink<ContextWithSubject<CONTEXT, VALUE>> callSink = callsWaiting.sink();
+    private final Sinks.Many<ContextWithSubject<CONTEXT, VALUE>> callSink = Sinks.many().unicast().onBackpressureBuffer();
     private final BiFunction<CONTEXT, VALUE, Boolean> contextValueMatcher;
     private final Disposable callsWaitingSubscription;
     private Timer delayTimer;
@@ -100,26 +100,33 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         this.contextValueMatcher = requireNonNull(builder.contextValueMatcher);
         registerMetrics(builder);
         batchSize = builder.batchSize;
-        callsWaitingSubscription = callsWaiting
+        var groupId = builder.groupId;
+        var bulkhead = Bulkhead.of(groupId, BulkheadConfig.custom()
+            .maxConcurrentCalls(builder.maxConcurrency)
+            .maxWaitDuration(Optional.ofNullable(builder.maxConcurrencyWaitTime).orElse(Duration.ZERO))
+            .build());
+        callsWaitingSubscription = callSink.asFlux()
             .publishOn(builder.scheduler)
             .bufferTimeout(batchSize, builder.maximumWaitTime, builder.scheduler)
             .filter(batch -> !batch.isEmpty())
             .flatMap(contextsWithSubjects -> {
                 List<CONTEXT> contexts = toContexts(contextsWithSubjects);
-                LOG.debug("Executing batch with contexts={}", contexts);
+                LOG.debug("Executing batch with contexts={}, groupId={}", contexts, groupId);
                 updateMetrics(contextsWithSubjects);
-                return Mono.defer(() -> builder.bulkProvider.apply(contexts))
+                return Mono.just(contexts)
+                    .flatMap(builder.bulkProvider)
                     .subscribeOn(builder.batchScheduler)
+                    .transform(BulkheadOperator.of(bulkhead))
                     .defaultIfEmpty(List.of())
-                    .doOnError(e -> LOG.error("Error while delegating call for contexts={}", contexts, e))
-                    .flatMapMany(values -> Flux.fromIterable(contextsWithSubjects).flatMap(context -> bindValueToContext(context, values)))
+                    .doOnError(e -> LOG.error("Error while delegating call for contexts={}, groupId={}", contexts, groupId, e))
+                    .flatMapMany(values -> Flux.fromIterable(contextsWithSubjects).flatMap(context -> bindValueToContext(context, values, groupId)))
                     .onErrorResume(throwable -> Flux.fromIterable(contextsWithSubjects).map(context -> ContextWithValue.error(context, throwable)));
-            }, builder.maxConcurrency)
+            }, Integer.MAX_VALUE)
             .publishOn(builder.emitScheduler)
             .doOnNext(this::logEmission)
             .subscribe(element -> element.propagateToSubject(completionTimer),
-                e -> LOG.error("Error during call scheduling", e),
-                () -> LOG.info("Calls waiting stream has completed"));
+                e -> LOG.error("Error during call scheduling and the request collapser shut down. groupId={}", groupId, e),
+                () -> LOG.info("The request collapser has been shut down. groupId={}", groupId));
     }
 
     @Override
@@ -130,8 +137,8 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
                     pendingItemsHistogram.record(pendingItemCounter.incrementAndGet());
                 }
                 ContextWithSubject<CONTEXT, VALUE> contextWithSubject = new ContextWithSubject<>(context, meterRegistry);
-                callSink.next(contextWithSubject);
-                return contextWithSubject.subject.next();
+                callSink.emitNext(contextWithSubject, Sinks.EmitFailureHandler.FAIL_FAST);
+                return contextWithSubject.subject;
             })
             .transform(MoltenCore.propagateContext());
     }
@@ -190,8 +197,8 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
     /**
      * Creates a {@link FanOutRequestCollapser} builder over a bulk provider.
      *
-     * @param <C> the context type
-     * @param <V> the VALUE type
+     * @param <C>          the context type
+     * @param <V>          the VALUE type
      * @param bulkProvider the bulk provider to delegate calls to
      * @return the builder
      */
@@ -203,21 +210,21 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         return contextWithSubjects.stream().map(cs -> cs.context).collect(Collectors.toList());
     }
 
-    private Mono<ContextWithValue<CONTEXT, VALUE>> bindValueToContext(ContextWithSubject<CONTEXT, VALUE> contextWithSubject, List<VALUE> values) {
+    private Mono<ContextWithValue<CONTEXT, VALUE>> bindValueToContext(ContextWithSubject<CONTEXT, VALUE> contextWithSubject, List<VALUE> values, String groupId) {
         return Flux.fromIterable(values)
-            .filter(value -> matchContextByValue(contextWithSubject.context, value))
+            .filter(value -> matchContextByValue(contextWithSubject.context, value, groupId))
             .next()
             .map(value -> ContextWithValue.value(contextWithSubject, value))
             .onErrorResume(e -> Mono.just(ContextWithValue.error(contextWithSubject, e)))
             .defaultIfEmpty(ContextWithValue.empty(contextWithSubject));
     }
 
-    private boolean matchContextByValue(CONTEXT ctx, VALUE value) {
+    private boolean matchContextByValue(CONTEXT context, VALUE value, String groupId) {
         boolean matches;
         try {
-            matches = contextValueMatcher.apply(ctx, value);
+            matches = contextValueMatcher.apply(context, value);
         } catch (Exception e) {
-            LOG.warn("Failed to match value={} with context={} error={}", value, ctx, e.toString());
+            LOG.warn("Failed to match value={} with context={} by groupId={}, error={}", value, context, groupId, e.toString());
             matches = false;
         }
         return matches;
@@ -229,8 +236,8 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
     private static final class ContextWithSubject<C, V> {
         private final C context;
         private final Timer.Sample sample;
-        private final ReplayProcessor<V> subject = ReplayProcessor.create(1);
-        private final FluxSink<V> sink = subject.sink(OverflowStrategy.ERROR);
+        private final Sinks.One<V> sink = Sinks.one();
+        private final Mono<V> subject = sink.asMono();
 
         private ContextWithSubject(C context, MeterRegistry meterRegistry) {
             this.context = requireNonNull(context);
@@ -262,11 +269,11 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         private void propagateToSubject(Timer completionTimer) {
             recordCompletion(completionTimer);
             if (error != null) {
-                contextWithSubject.sink.error(error);
+                contextWithSubject.sink.emitError(error, Sinks.EmitFailureHandler.FAIL_FAST);
             } else if (value != null) {
-                contextWithSubject.sink.next(value);
+                contextWithSubject.sink.emitValue(value, Sinks.EmitFailureHandler.FAIL_FAST);
             } else {
-                contextWithSubject.sink.complete();
+                contextWithSubject.sink.emitEmpty(Sinks.EmitFailureHandler.FAIL_FAST);
             }
         }
 
@@ -292,8 +299,10 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         private int batchSize = 10;
         private Scheduler batchScheduler = Schedulers.parallel();
         private Duration maximumWaitTime = Duration.ofMillis(200);
+        private Duration maxConcurrencyWaitTime;
         private MeterRegistry meterRegistry;
         private MetricId metricId;
+        private String groupId = "unknown";
 
         public Builder(Function<List<C>, Mono<List<V>>> bulkProvider) {
             this.bulkProvider = requireNonNull(bulkProvider);
@@ -307,6 +316,19 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
          */
         public Builder<C, V> withContextValueMatcher(BiFunction<C, V, Boolean> contextValueMatcher) {
             this.contextValueMatcher = requireNonNull(contextValueMatcher);
+            return this;
+        }
+
+        /**
+         * Sets the request collapser's group id to be identified by in logs and bulkheads.<br>
+         * If not set, the events logged by the request collapser cannot be distinguished by the events logged by others.<br>
+         * Note that the uniqueness of the id is not forced out but strongly recommended.
+         *
+         * @param groupId the unique id of the request collapser
+         * @return this builder instance
+         */
+        public Builder<C, V> withGroupId(String groupId) {
+            this.groupId = requireNonNull(groupId);
             return this;
         }
 
@@ -362,7 +384,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
          * Sets the meter registry and metric ID base to record statistics with.
          *
          * @param meterRegistry the registry to register metrics with
-         * @param metricId the metric id under which metrics should be registered
+         * @param metricId      the metric id under which metrics should be registered
          * @return this builder instance
          */
         public Builder<C, V> withMetrics(MeterRegistry meterRegistry, MetricId metricId) {
@@ -385,15 +407,31 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
 
 
         /**
-         * Sets the maximum concurrency to fire batch calls.
+         * Sets the maximum concurrency to fire batch calls.<br>
+         * If reached, new batch calls will fail with {@link io.github.resilience4j.bulkhead.BulkheadFullException}.
          * By default it is same as the number of available processors.
          *
          * @param maxConcurrency the maximum concurrency for batch calls
          * @return this builder instance
+         * @see #withBatchMaxConcurrencyWaitTime(Duration)
          */
         public Builder<C, V> withBatchMaxConcurrency(int maxConcurrency) {
             checkArgument(maxConcurrency > 0, "Max concurrency should be positive");
             this.maxConcurrency = maxConcurrency;
+            return this;
+        }
+
+        /**
+         * Sets the maximum time to wait for executing a prepared batch call if there are already {@link #withBatchMaxConcurrency(int) max concurrency} batches running.<br>
+         * If the wait time expires and the prepared batch call couldn't be started, {@link io.github.resilience4j.bulkhead.BulkheadFullException} is thrown.
+         * By default it's {@link Duration#ZERO}, failing fast if the {@link #withBatchMaxConcurrency(int) max concurrency} limit is reached.
+         *
+         * @param maximumWaitTime the maximum time to wait
+         * @return this builder instance
+         */
+        public Builder<C, V> withBatchMaxConcurrencyWaitTime(Duration maximumWaitTime) {
+            checkArgument(maximumWaitTime != null && maximumWaitTime.toMillis() >= 0L, "Maximum wait time must be positive or zero");
+            this.maxConcurrencyWaitTime = maximumWaitTime;
             return this;
         }
 
