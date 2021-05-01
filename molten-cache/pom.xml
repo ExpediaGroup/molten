@@ -5,7 +5,7 @@
   <parent>
 	<groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-root</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.2.1-SNAPSHOT</version>
     <relativePath>../molten-root/pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
