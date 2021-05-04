@@ -84,7 +84,7 @@ import com.hotels.molten.core.metrics.MetricId;
  */
 @Slf4j
 public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CONTEXT, Mono<VALUE>> {
-    private final Sinks.Many<ContextWithSubject<CONTEXT, VALUE>> callSink = Sinks.many().unicast().onBackpressureBuffer();
+    private final Sinks.Many<ContextWithSubject<CONTEXT, VALUE>> callSink = Sinks.unsafe().many().unicast().onBackpressureBuffer();
     private final BiFunction<CONTEXT, VALUE, Boolean> contextValueMatcher;
     private final Disposable callsWaitingSubscription;
     private Timer delayTimer;
@@ -137,7 +137,11 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
                     pendingItemsHistogram.record(pendingItemCounter.incrementAndGet());
                 }
                 ContextWithSubject<CONTEXT, VALUE> contextWithSubject = new ContextWithSubject<>(context, meterRegistry);
-                callSink.emitNext(contextWithSubject, Sinks.EmitFailureHandler.FAIL_FAST);
+                synchronized (callSink) {
+                    // since callSink is unsafe, we need to synchronize the requests by hand
+                    // emitNext is basically an offer to a queue, so not really blocking too much here
+                    callSink.emitNext(contextWithSubject, Sinks.EmitFailureHandler.FAIL_FAST);
+                }
                 return contextWithSubject.subject;
             })
             .transform(MoltenCore.propagateContext());
