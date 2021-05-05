@@ -384,7 +384,7 @@ public class FanOutRequestCollapserTest {
         when(bulkProvider.apply(anyList())).thenAnswer(ie -> {
             Mono<List<String>> ret;
             if (rng.nextInt(100) < errorRate) {
-                ret = Mono.error(new IllegalArgumentException("error from bulkProvider"));
+                ret = Mono.error(new IllegalArgumentException("test error from bulkProvider"));
             } else {
                 ret = Mono.delay(Duration.ofMillis(rng.nextInt(50) + 50))
                     .map(i -> ((List<Integer>) ie.getArgument(0)).stream().map(String::valueOf).collect(toList()))
@@ -413,7 +413,9 @@ public class FanOutRequestCollapserTest {
             Flux.range(0, numberOfIdsPerThread)
                 .map(i -> rng.nextInt(highestId))
                 .doOnNext(idsRolled::add)
-                .flatMap(id -> requestCollapser.apply(id).doOnError(e -> LOG.error("id={} error={}", id, e.toString())).onErrorResume(e -> Mono.empty()))
+                .flatMap(id -> requestCollapser.apply(id)
+                    .doOnError(e -> LOG.error("id={} error={}", id, e.toString()))
+                    .onErrorResume(IllegalArgumentException.class, e -> Mono.empty()))
                 .collectList()
                 .doOnSuccess(idsFinished::addAll)
                 .subscribe(subscriber);
@@ -426,7 +428,7 @@ public class FanOutRequestCollapserTest {
             try {
                 v.get(1, TimeUnit.SECONDS);
             } catch (Exception e) {
-                LOG.error("execution error", e);
+                throw new RuntimeException("Unexpected error occurred.", e);
             }
         });
     }
