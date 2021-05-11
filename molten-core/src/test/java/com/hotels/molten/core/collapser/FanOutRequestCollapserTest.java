@@ -711,7 +711,7 @@ public class FanOutRequestCollapserTest {
             });
 
         assertThat(countDown.getCount()).isNotZero();
-        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
     }
@@ -751,7 +751,7 @@ public class FanOutRequestCollapserTest {
             }, countDown::countDown);
 
         assertThat(countDown.getCount()).isNotZero();
-        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
     }
@@ -791,7 +791,7 @@ public class FanOutRequestCollapserTest {
             });
 
         assertThat(countDown.getCount()).isNotZero();
-        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
     }
@@ -832,7 +832,7 @@ public class FanOutRequestCollapserTest {
             });
 
         assertThat(countDown.getCount()).isNotZero();
-        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
     }
