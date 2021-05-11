@@ -19,14 +19,16 @@ package com.hotels.molten.core.collapser;
 import static com.hotels.molten.core.metrics.MetricsSupport.name;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.shouldHaveThrown;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
@@ -37,6 +39,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -55,6 +58,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
@@ -82,13 +87,16 @@ public class FanOutRequestCollapserTest {
     private static final int CONTEXT_B = 2;
     private static final String RESULT_B = "2";
     private static final int CONTEXT_C = 3;
+    private static final String RESULT_C = "3";
     private static final String HIERARCHICAL_METRICS_QUALIFIER = "metrics.hierarchical";
     private static final String METRICS_QUALIFIER = "metrics_dimensional";
     private static final String TAG_KEY = "tag-key";
     private static final String TAG_VALUE = "tag-value";
     private static final String MDC_KEY = "key";
-    @Mock
+    @Mock(answer = Answers.CALLS_REAL_METHODS)
     private Function<List<Integer>, Mono<List<String>>> bulkProvider;
+    @Mock
+    private Function<List<Integer>, Flux<String>> eagerBulkProvider;
     private FanOutRequestCollapser<Integer, String> collapsedProvider;
     private VirtualTimeScheduler scheduler;
     private VirtualTimeScheduler batchScheduler;
@@ -115,9 +123,9 @@ public class FanOutRequestCollapserTest {
         emitScheduler = VirtualTimeScheduler.create();
     }
 
-    private FanOutRequestCollapser.Builder<Integer, String> createCollapserBase() {
-        return FanOutRequestCollapser.collapseCallsOver(bulkProvider)
-            .withContextValueMatcher((ctx, value) -> ctx.equals(Integer.parseInt(value)))
+    private FanOutRequestCollapser.Builder<Integer, String> withBaseConfig(FanOutRequestCollapser.Builder<Integer, String> collapserBuilder) {
+        return collapserBuilder
+            .withContextValueMatcher((context, value) -> context.equals(Integer.parseInt(value)))
             .withScheduler(scheduler)
             .withEmitScheduler(emitScheduler)
             .withMaximumWaitTime(Duration.ofMillis(100))
@@ -135,7 +143,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_collapse_requests_to_batches() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenAnswer(ie -> {
                 LOG.info("bulk with {}", ie.getArguments());
@@ -144,7 +152,7 @@ public class FanOutRequestCollapserTest {
 
         AssertSubscriber<String> subscriber1 = AssertSubscriber.create();
         collapsedProvider.apply(CONTEXT_A).subscribe(subscriber1);
-        verifyNoMoreInteractions(bulkProvider);
+        verify(bulkProvider, never()).apply(anyList());
 
         AssertSubscriber<String> subscriber2 = AssertSubscriber.create();
         collapsedProvider.apply(CONTEXT_B).subscribe(subscriber2);
@@ -164,7 +172,7 @@ public class FanOutRequestCollapserTest {
     @Test
     void should_handle_hierarchical_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         pendingHistogram = hierarchicalMetric("item.pending").summary();
         batchSizeHistogram = hierarchicalMetric("batch.size").summary();
         delayTimer = hierarchicalMetric("item.delay").timer();
@@ -224,7 +232,7 @@ public class FanOutRequestCollapserTest {
     void should_handle_dimensional_metrics() {
         MoltenMetrics.setDimensionalMetricsEnabled(true);
         MoltenMetrics.setGraphiteIdMetricsLabelEnabled(false);
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         pendingHistogram = dimensionalMetric("pending").summary();
         batchSizeHistogram = dimensionalMetric("batch_size").summary();
         delayTimer = dimensionalMetric("item_delay").timer();
@@ -283,7 +291,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_wait_only_maximum_time_for_calls_before_delegating() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -299,7 +307,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_ignore_empty_batch() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -320,7 +328,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_propagate_bulk_load_error_to_each_value() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         // 2 contexts, bulk error => 2 onError
         IllegalStateException exception = new IllegalStateException("expected error");
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
@@ -340,7 +348,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_continue_collapsing_after_load_error() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         IllegalStateException exception = new IllegalStateException("expected error");
         when(bulkProvider.apply((List<Integer>) argThat(containsInAnyOrder(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.error(exception))
@@ -392,7 +400,7 @@ public class FanOutRequestCollapserTest {
             }
             return ret;
         });
-        collapsedProvider = createCollapserBase()
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withMaximumWaitTime(Duration.ofMillis(maxWaitTimeForBatch))
             .withBatchSize(batchSize)
             .withScheduler(Schedulers.parallel())
@@ -435,7 +443,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_complete_for_not_matched_contexts() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         // 2 contexts, 1 value => 1 onSuccess, 1 onComplete
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.delay(Duration.ofMillis(50), delayScheduler).map(i -> List.of(RESULT_B)));
@@ -460,7 +468,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_complete_for_values_where_match_failed() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         // 2 contexts, 2 values, 1 match fails => 1 onSuccess, 1 onComplete + log
         when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.delay(Duration.ofMillis(50), delayScheduler).map(i -> List.of(RESULT_B, "a")));
@@ -483,7 +491,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_be_able_to_shutdown_gracefully() {
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
         lenient().when(bulkProvider.apply((List<Integer>) argThat(contains(CONTEXT_A, CONTEXT_B))))
             .thenReturn(Mono.just(List.of(RESULT_A)));
 
@@ -495,7 +503,7 @@ public class FanOutRequestCollapserTest {
         collapsedProvider.apply(CONTEXT_B).subscribe(subscriber2);
 
         batchScheduler.advanceTime();
-        verifyNoMoreInteractions(bulkProvider);
+        verify(bulkProvider, never()).apply(anyList());
         emitScheduler.advanceTime();
         subscriber1.assertNoValues().assertNotTerminated();
         subscriber2.assertNoValues().assertNotTerminated();
@@ -503,7 +511,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_not_execute_more_things_in_parallel() {
-        collapsedProvider = createCollapserBase()
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
             .withMaximumWaitTime(Duration.ofMillis(200))
             .withBatchSize(5)
@@ -535,7 +543,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_not_execute_more_things_in_parallel_but_wait_for_it() {
-        collapsedProvider = createCollapserBase()
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
             .withMaximumWaitTime(Duration.ofMillis(200))
             .withBatchSize(5)
@@ -565,7 +573,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_not_execute_more_things_in_parallel_with_delay() {
-        collapsedProvider = createCollapserBase()
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
             .withMaximumWaitTime(Duration.ofMillis(200))
             .withBatchSize(5)
@@ -597,7 +605,7 @@ public class FanOutRequestCollapserTest {
 
     @Test
     void should_not_execute_more_things_in_parallel_with_delay_but_wait_for_it() {
-        collapsedProvider = createCollapserBase()
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
             .withBatchSize(5)
             .withBatchScheduler(Schedulers.parallel())
@@ -630,7 +638,7 @@ public class FanOutRequestCollapserTest {
     @Test
     void should_complete_if_contract_is_not_followed() {
         doReturn(Mono.empty()).when(bulkProvider).apply(any());
-        collapsedProvider = createCollapserBase().build();
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider)).build();
 
         AssertSubscriber<String> subscriber1 = AssertSubscriber.create();
         collapsedProvider.apply(CONTEXT_A).subscribe(subscriber1);
@@ -666,5 +674,166 @@ public class FanOutRequestCollapserTest {
         subscriber2.await();
         subscriber1.assertResult("a");
         subscriber2.assertResult("b");
+    }
+
+    @Test
+    void should_eagerly_emmit_already_completed_elements_in_eager_mode() throws InterruptedException {
+        ArgumentCaptor<List<Integer>> captor = ArgumentCaptor.forClass(List.class);
+        doReturn(Flux.just(RESULT_B, RESULT_A).concatWith(Flux.just(RESULT_C).delayElements(Duration.ofMillis(100))))
+            .when(eagerBulkProvider).apply(captor.capture());
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsEagerlyOver(eagerBulkProvider))
+            .withBatchSize(3)
+            .build();
+
+        var countDown = new CountDownLatch(3);
+        collapsedProvider.apply(CONTEXT_A)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-1.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_A);
+                scheduler.advanceTimeBy(Duration.ofMillis(75));
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_B)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-2.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_B);
+                scheduler.advanceTimeBy(Duration.ofMillis(75));
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_C)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-3.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_C);
+                countDown.countDown();
+            });
+
+        assertThat(countDown.getCount()).isNotZero();
+        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
+        verify(eagerBulkProvider, only()).apply(any());
+    }
+
+    @Test
+    void should_complete_call_unanswered_by_bulk_response_in_eager_mode() throws InterruptedException {
+        ArgumentCaptor<List<Integer>> captor = ArgumentCaptor.forClass(List.class);
+        doReturn(Flux.just(RESULT_B, RESULT_A)).when(eagerBulkProvider).apply(captor.capture());
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsEagerlyOver(eagerBulkProvider))
+            .withBatchSize(3)
+            .build();
+
+        var countDown = new CountDownLatch(3);
+        collapsedProvider.apply(CONTEXT_A)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-1.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_A);
+                scheduler.advanceTimeBy(Duration.ofMillis(75));
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_B)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-2.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_B);
+                scheduler.advanceTimeBy(Duration.ofMillis(75));
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_C)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-3.")
+            .subscribe(result -> {
+                throw new IllegalStateException("No value should be sent");
+            }, error -> {
+                throw new IllegalStateException("Unexpected error", error);
+            }, countDown::countDown);
+
+        assertThat(countDown.getCount()).isNotZero();
+        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
+        verify(eagerBulkProvider, only()).apply(any());
+    }
+
+    @Test
+    void should_delay_error_in_eager_mode() throws InterruptedException {
+        ArgumentCaptor<List<Integer>> captor = ArgumentCaptor.forClass(List.class);
+        var errorContainingFlux = Flux.just(RESULT_B, RESULT_C + "error", RESULT_A)
+            .flatMap(result -> result.endsWith("error") ? Mono.error(IllegalStateException::new) : Mono.just(result));
+        doReturn(errorContainingFlux).when(eagerBulkProvider).apply(captor.capture());
+        collapsedProvider = FanOutRequestCollapser.collapseCallsEagerlyOver(eagerBulkProvider)
+            .withContextValueMatcher((context, value) -> context.equals(Integer.parseInt(value.substring(0, 1))))
+            .withBatchSize(3)
+            .build();
+
+        var countDown = new CountDownLatch(3);
+        collapsedProvider.apply(CONTEXT_A)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-1.")
+            .subscribe(result -> shouldHaveThrown(IllegalStateException.class), error -> {
+                assertThat(error).isInstanceOf(IllegalStateException.class);
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_B)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-2.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_B);
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_C)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-3.")
+            .subscribe(result -> shouldHaveThrown(IllegalStateException.class), error -> {
+                assertThat(error).isInstanceOf(IllegalStateException.class);
+                countDown.countDown();
+            });
+
+        assertThat(countDown.getCount()).isNotZero();
+        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
+        verify(eagerBulkProvider, only()).apply(any());
+    }
+
+    @Test
+    void should_emmit_elements_if_error_comes_last_in_eager_mode() throws InterruptedException {
+        ArgumentCaptor<List<Integer>> captor = ArgumentCaptor.forClass(List.class);
+        var errorContainingFlux = Flux.just(RESULT_B, RESULT_C + "error", RESULT_A).flatMap(result -> result.endsWith("error")
+            ? Mono.error(IllegalStateException::new).delaySubscription(Duration.ofMillis(100L))
+            : Mono.just(result).delaySubscription(Duration.ofMillis(10L)));
+        doReturn(errorContainingFlux).when(eagerBulkProvider).apply(captor.capture());
+        collapsedProvider = FanOutRequestCollapser.collapseCallsEagerlyOver(eagerBulkProvider)
+            .withContextValueMatcher((context, value) -> context.equals(Integer.parseInt(value.substring(0, 1))))
+            .withBatchSize(3)
+            .build();
+
+        var countDown = new CountDownLatch(3);
+        collapsedProvider.apply(CONTEXT_C)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-3.")
+            .subscribe(result -> shouldHaveThrown(IllegalStateException.class), error -> {
+                assertThat(error).isInstanceOf(IllegalStateException.class);
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_B)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-2.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_B);
+                countDown.countDown();
+            });
+        collapsedProvider.apply(CONTEXT_A)
+            .subscribeOn(Schedulers.parallel())
+            .log("context-1.")
+            .subscribe(result -> {
+                assertThat(result).isEqualTo(RESULT_A);
+                countDown.countDown();
+            });
+
+        assertThat(countDown.getCount()).isNotZero();
+        assertThat(countDown.await(500, TimeUnit.MILLISECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
+        assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
+        verify(eagerBulkProvider, only()).apply(any());
     }
 }
