@@ -710,7 +710,6 @@ public class FanOutRequestCollapserTest {
                 countDown.countDown();
             });
 
-        assertThat(countDown.getCount()).isNotZero();
         assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
@@ -750,7 +749,6 @@ public class FanOutRequestCollapserTest {
                 throw new IllegalStateException("Unexpected error", error);
             }, countDown::countDown);
 
-        assertThat(countDown.getCount()).isNotZero();
         assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
@@ -790,7 +788,6 @@ public class FanOutRequestCollapserTest {
                 countDown.countDown();
             });
 
-        assertThat(countDown.getCount()).isNotZero();
         assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
@@ -831,7 +828,6 @@ public class FanOutRequestCollapserTest {
                 countDown.countDown();
             });
 
-        assertThat(countDown.getCount()).isNotZero();
         assertThat(countDown.await(1, TimeUnit.SECONDS)).describedAs("Couldn't finish calls successfully in time.").isTrue();
         assertThat(captor.getValue()).containsExactlyInAnyOrder(CONTEXT_A, CONTEXT_B, CONTEXT_C);
         verify(eagerBulkProvider, only()).apply(any());
