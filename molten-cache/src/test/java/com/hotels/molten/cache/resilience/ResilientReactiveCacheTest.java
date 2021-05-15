@@ -18,8 +18,7 @@ package com.hotels.molten.cache.resilience;
 
 import static com.hotels.molten.core.metrics.MetricsSupport.GRAPHITE_ID;
 import static com.hotels.molten.core.metrics.MetricsSupport.name;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +31,6 @@ import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,7 +55,6 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
     private static final Long KEY = 1L;
     private static final String VALUE = "value";
     private static final String CACHE_NAME = "cacheName";
-    private static final Duration TIMEOUT = Duration.ofMillis(10);
     private static final AtomicInteger IDX = new AtomicInteger();
     @Mock
     private ReactiveCache<Long, String> cache;
@@ -102,7 +99,21 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
         getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).get(KEY).subscribe(test);
         scheduler.advanceTimeBy(Duration.ofMillis(20));
         test.assertError(TimeoutException.class);
-        Assertions.assertThat(meterRegistry.get(name("reactive-cache", cacheName, "get", "timeout")).gauge().value()).isEqualTo(1);
+        assertThat(meterRegistry.get(name("reactive-cache", cacheName, "get", "timeout")).gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    public void should_not_timeout_get_call_with_put_only_timeout() {
+        when(cache.get(KEY)).thenReturn(Mono.defer(() -> Mono.delay(Duration.ofMillis(5))).map(i -> VALUE));
+
+        new ResilientReactiveCache<>(cache, cacheName, Duration.ofMillis(10), Duration.ofMillis(2), CircuitBreakerConfig.ofDefaults(), meterRegistry)
+            .get(KEY)
+            .as(StepVerifier::create)
+            .expectSubscription()
+            .then(() -> scheduler.advanceTimeBy(Duration.ofMillis(10)))
+            .expectNext(VALUE)
+            .verifyComplete();
+        assertThat(meterRegistry.get(name("reactive-cache", cacheName, "get", "timeout")).gauge().value()).isEqualTo(0);
     }
 
     @Test
@@ -115,7 +126,7 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
         getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).get(KEY).subscribe(test);
         scheduler.advanceTimeBy(Duration.ofMillis(20));
         test.assertError(TimeoutException.class);
-        Assertions.assertThat(meterRegistry.get("cache_request_timeouts")
+        assertThat(meterRegistry.get("cache_request_timeouts")
             .tag("name", cacheName)
             .tag("operation", "get")
             .tag(GRAPHITE_ID, name("reactive-cache", cacheName, "get", "timeout"))
@@ -150,7 +161,7 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
         resilientCache.get(KEY).subscribe(test);
         test.assertError(CallNotPermittedException.class);
 
-        assertThat(subscriptionCount.get(), is(2));
+        assertThat(subscriptionCount.get()).isEqualTo(2);
     }
 
     @Test
@@ -170,7 +181,34 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
         getResilientCache(cache, CircuitBreakerConfig.ofDefaults()).put(KEY, VALUE).subscribe(test);
         scheduler.advanceTimeBy(Duration.ofMillis(20));
         test.assertError(TimeoutException.class);
-        Assertions.assertThat(meterRegistry.get(name("reactive-cache", cacheName, "put", "timeout")).gauge().value()).isEqualTo(1);
+        assertThat(meterRegistry.get(name("reactive-cache", cacheName, "put", "timeout")).gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    public void should_timeout_put_call_with_put_only_timeout() {
+        when(cache.put(KEY, VALUE)).thenReturn(Mono.defer(() -> Mono.delay(Duration.ofMillis(25))).then());
+
+        AssertSubscriber<Void> test = AssertSubscriber.create();
+        new ResilientReactiveCache<>(cache, cacheName, Duration.ofMillis(10), Duration.ofMillis(20), CircuitBreakerConfig.ofDefaults(), meterRegistry)
+            .put(KEY, VALUE)
+            .subscribe(test);
+        scheduler.advanceTimeBy(Duration.ofMillis(30));
+        test.assertError(TimeoutException.class);
+        assertThat(meterRegistry.get(name("reactive-cache", cacheName, "put", "timeout")).gauge().value()).isEqualTo(1);
+    }
+
+    @Test
+    public void should_not_timeout_put_call_with_longer_call_then_get_only_timeout() {
+        when(cache.put(KEY, VALUE)).thenReturn(Mono.defer(() -> Mono.delay(Duration.ofMillis(15))).then());
+
+        new ResilientReactiveCache<>(cache, cacheName, Duration.ofMillis(10), Duration.ofMillis(20), CircuitBreakerConfig.ofDefaults(), meterRegistry)
+            .put(KEY, VALUE)
+            .as(StepVerifier::create)
+            .expectSubscription()
+            .then(() -> scheduler.advanceTimeBy(Duration.ofMillis(20)))
+            .verifyComplete();
+        verify(cache).put(KEY, VALUE);
+        assertThat(meterRegistry.get(name("reactive-cache", cacheName, "put", "timeout")).gauge().value()).isEqualTo(0);
     }
 
     @Test
@@ -200,7 +238,7 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
         resilientCache.put(KEY, VALUE).subscribe(test);
         test.assertError(CallNotPermittedException.class);
 
-        assertThat(subscriptionCount.get(), is(2));
+        assertThat(subscriptionCount.get()).isEqualTo(2);
     }
 
     @Test
@@ -226,9 +264,9 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
         AssertSubscriber<String> test2 = AssertSubscriber.create();
         resilientCache.get(KEY).subscribe(test2);
         test.assertError(CallNotPermittedException.class);
-        Assertions.assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "successful").gauge().value()).isEqualTo(0D);
-        Assertions.assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "failed").gauge().value()).isEqualTo(2D);
-        Assertions.assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "rejected").gauge().value()).isEqualTo(2D);
+        assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "successful").gauge().value()).isEqualTo(0D);
+        assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "failed").gauge().value()).isEqualTo(2D);
+        assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "rejected").gauge().value()).isEqualTo(2D);
     }
 
     private String nextCacheName() {
@@ -236,6 +274,6 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
     }
 
     private <K, V> ResilientReactiveCache<K, V> getResilientCache(ReactiveCache<K, V> reactiveCache, CircuitBreakerConfig circuitBreakerConfig) {
-        return new ResilientReactiveCache<>(reactiveCache, cacheName, TIMEOUT, circuitBreakerConfig, meterRegistry);
+        return new ResilientReactiveCache<>(reactiveCache, cacheName, Duration.ofMillis(10), circuitBreakerConfig, meterRegistry);
     }
 }

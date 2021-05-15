@@ -48,6 +48,8 @@ import org.testcontainers.utility.MountableFile;
 import reactor.test.StepVerifier;
 import reactor.util.retry.Retry;
 
+import com.hotels.molten.cache.CachedValue;
+import com.hotels.molten.cache.NamedCacheKey;
 import com.hotels.molten.cache.ReactiveCache;
 import com.hotels.molten.cache.redis.codec.FlatStringKeyCodec;
 import com.hotels.molten.cache.redis.codec.KryoRedisCodec;
@@ -89,7 +91,8 @@ public class RemoteRedisCacheIntegrationTest {
     }
 
     private ReactiveCache<ComplexKey, ComplexValue> reactiveCache() {
-        return ResilientReactiveCacheBuilder.<ComplexKey, ComplexValue>builder().over(sharedRemoteCache())
+        return ResilientReactiveCacheBuilder.<ComplexKey, ComplexValue>builder()
+            .over(sharedRemoteCache())
             .withCacheName("myCache")
             .withTimeout(Duration.ofMillis(1000))
             .withRetry(Retry.fixedDelay(10, Duration.ofSeconds(1)))
@@ -105,8 +108,8 @@ public class RemoteRedisCacheIntegrationTest {
             .createCache();
     }
 
-    private ReactiveCache sharedRemoteCache() {
-        return ResilientSharedReactiveRedisCacheBuilder.builder()
+    private <K, V> ReactiveCache<NamedCacheKey<K>, CachedValue<V>> sharedRemoteCache() {
+        return ResilientSharedReactiveRedisCacheBuilder.<K, V>builder()
             .withRedisConnection(() -> redisConnectionBuilder().createConnection())
             .withSharedCacheName("sharedRemoteCache")
             .withMaxConcurrency(2)
