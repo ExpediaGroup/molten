@@ -19,6 +19,7 @@ package com.hotels.molten.cache.resilience;
 import static com.hotels.molten.core.metrics.MetricsSupport.GRAPHITE_ID;
 import static com.hotels.molten.core.metrics.MetricsSupport.name;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -267,6 +268,14 @@ public class ResilientReactiveCacheTest implements ReactiveCacheTestContract {
         assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "successful").gauge().value()).isEqualTo(0D);
         assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "failed").gauge().value()).isEqualTo(2D);
         assertThat(meterRegistry.get("reactive-cache." + cacheName + ".circuit." + "rejected").gauge().value()).isEqualTo(2D);
+    }
+
+    @Test
+    public void should_not_reuse_cache_name() {
+        getResilientCache(cache, CircuitBreakerConfig.ofDefaults());
+        assertThatThrownBy(() -> getResilientCache(cache, CircuitBreakerConfig.ofDefaults()))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("The cache name=" + cacheName + " cannot be reused.");
     }
 
     private String nextCacheName() {

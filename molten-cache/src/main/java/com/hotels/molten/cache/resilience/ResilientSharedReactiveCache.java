@@ -21,7 +21,7 @@ import static com.hotels.molten.core.metrics.MetricsSupport.name;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.resilience4j.bulkhead.Bulkhead;
@@ -45,7 +45,7 @@ import com.hotels.molten.metrics.resilience.BulkheadInstrumenter;
  */
 public class ResilientSharedReactiveCache<K, V> implements ReactiveCache<K, V> {
     private static final String HIERARCHICAL_METRICS_PREFIX = "reactive-cache";
-    private static final Map<String, String> USED_CACHE_NAMES = new ConcurrentHashMap<>();
+    private static final Set<String> USED_CACHE_NAMES = ConcurrentHashMap.newKeySet();
     private final ReactiveCache<K, V> sharedCache;
     private final Bulkhead getBulkhead;
     private final Bulkhead putBulkhead;
@@ -53,7 +53,7 @@ public class ResilientSharedReactiveCache<K, V> implements ReactiveCache<K, V> {
     public ResilientSharedReactiveCache(ReactiveCache<K, V> sharedCache, String cacheName, int maxConcurrency, MeterRegistry meterRegistry) {
         this.sharedCache = requireNonNull(sharedCache);
         requireNonNull(cacheName);
-        checkState(USED_CACHE_NAMES.putIfAbsent(cacheName, cacheName) == null, "The cache name [" + cacheName + "] cannot be reused.");
+        checkState(USED_CACHE_NAMES.add(cacheName), "The cache name=" + cacheName + " cannot be reused.");
         checkState(maxConcurrency > 0, "max concurrency must be positive");
 
         BulkheadConfig bulkheadConfig = BulkheadConfig.custom()

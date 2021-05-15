@@ -21,8 +21,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -54,7 +52,6 @@ import com.hotels.molten.cache.metrics.InstrumentedReactiveCache;
  * @see ResilientReactiveCache
  */
 public class ResilientReactiveCacheBuilder<K, V> {
-    private static final Map<String, String> CACHES = new ConcurrentHashMap<>();
     private ReactiveCache<NamedCacheKey<K>, CachedValue<V>> sharedResilientCache;
     private String cacheName;
     private Duration ttl = Duration.ofHours(1);
@@ -90,7 +87,6 @@ public class ResilientReactiveCacheBuilder<K, V> {
      */
     public ReactiveCache<K, V> createCache() {
         checkArgument(!isNullOrEmpty(cacheName), "Cache name must have value");
-        checkArgument(CACHES.putIfAbsent(cacheName, cacheName) == null, "The cache name=" + cacheName + " has been already used");
         requireNonNull(meterRegistry);
         ReactiveCache<K, V> cache = new NamedReactiveCache<>(sharedResilientCache, cacheName, ttl);
         cache = new ResilientReactiveCache<>(cache, cacheName, timeout, putTimeout, circuitBreakerConfig, meterRegistry);

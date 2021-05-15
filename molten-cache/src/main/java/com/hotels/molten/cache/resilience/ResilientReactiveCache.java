@@ -76,8 +76,8 @@ public class ResilientReactiveCache<K, V> implements ReactiveCache<K, V> {
         @NonNull CircuitBreakerConfig circuitBreakerConfig,
         @NonNull MeterRegistry meterRegistry
     ) {
-        this.reactiveCache = reactiveCache;
         checkState(USED_CACHE_NAMES.add(cacheName), "The cache name=" + cacheName + " cannot be reused.");
+        this.reactiveCache = reactiveCache;
         this.getTimeout = validateTimeout(timeout);
         this.putTimeout = Optional.ofNullable(putTimeout).map(this::validateTimeout).orElse(timeout);
         CircuitBreakerConfig finalCircuitBreakerConfig = CircuitBreakerConfig.from(circuitBreakerConfig)

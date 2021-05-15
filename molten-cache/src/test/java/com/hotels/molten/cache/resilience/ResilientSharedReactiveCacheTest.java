@@ -16,6 +16,7 @@
 
 package com.hotels.molten.cache.resilience;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +53,7 @@ public class ResilientSharedReactiveCacheTest implements ReactiveCacheTestContra
     @Mock
     private ReactiveCache<Long, String> cache;
     private MeterRegistry meterRegistry;
+    private String cacheName;
 
     @Override
     public <T> ReactiveCache<Integer, T> createCacheForContractTest() {
@@ -61,6 +63,7 @@ public class ResilientSharedReactiveCacheTest implements ReactiveCacheTestContra
     @BeforeEach
     public void initContext() {
         meterRegistry = new SimpleMeterRegistry();
+        cacheName = nextCacheName();
     }
 
     @Test
@@ -122,7 +125,19 @@ public class ResilientSharedReactiveCacheTest implements ReactiveCacheTestContra
         test2.await().assertComplete();
     }
 
+    @Test
+    public void should_not_reuse_cache_name() {
+        getResilientCache(cache, 2);
+        assertThatThrownBy(() -> getResilientCache(cache, 2))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("The cache name=" + cacheName + " cannot be reused.");
+    }
+
     private <K, V> ResilientSharedReactiveCache<K, V> getResilientCache(ReactiveCache<K, V> reactiveCache, int maxConcurrency) {
-        return new ResilientSharedReactiveCache<>(reactiveCache, CACHE_NAME + IDX.incrementAndGet(), maxConcurrency, meterRegistry);
+        return new ResilientSharedReactiveCache<>(reactiveCache, cacheName, maxConcurrency, meterRegistry);
+    }
+
+    private String nextCacheName() {
+        return CACHE_NAME + IDX.incrementAndGet();
     }
 }
