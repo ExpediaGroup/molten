@@ -57,6 +57,18 @@ public final class MoltenTrace {
     }
 
     /**
+     * Initializes tracing in Reactor.
+     *
+     * @param unused unused parameter
+     * @deprecated use {@link #initialize()}
+     */
+    @Deprecated
+    public static void initialize(boolean unused) {
+        initialize();
+    }
+
+
+    /**
      * Reset all Molten Trace - Reactor integration.
      */
     public static void uninitialize() {

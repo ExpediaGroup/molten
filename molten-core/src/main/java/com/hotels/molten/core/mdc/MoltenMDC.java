@@ -58,6 +58,17 @@ public final class MoltenMDC {
     }
 
     /**
+     * Initializes MDC propagation in Reactor.
+     *
+     * @param unused unused parameter
+     * @deprecated use {@link #initialize()}
+     */
+    @Deprecated
+    public static void initialize(boolean unused) {
+        initialize();
+    }
+
+    /**
      * Reset all Molten MDC - Reactor integration.
      */
     public static void uninitialize() {
