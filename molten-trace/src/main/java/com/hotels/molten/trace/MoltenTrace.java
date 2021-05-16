@@ -18,6 +18,7 @@ package com.hotels.molten.trace;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Queue;
 import java.util.function.Function;
 
 import brave.Tracing;
@@ -38,33 +39,21 @@ public final class MoltenTrace {
         //utility class
     }
 
-    /**
-     * Initializes tracing in Reactor.
-     * Ensures tracing context is propagated when switching scheduler threads.
-     */
-    public static void initialize() {
-        initialize(false);
-    }
 
     /**
      * Initializes tracing in Reactor.
-     * Ensures tracing context is propagated when switching scheduler threads.
      *
-     * @param onEachOperator whether to also decorate all operator to propagate trace context or not.
-     *                       Enabling this is not recommended for performance considerations.
-     *                       When disabled explicitly propagate context using {@link MoltenCore#propagateContext()} where necessary.
+     * Ensures tracing context is propagated when switching scheduler threads or when queueing and retrieving tasks in Reactor.
      */
-    public static void initialize(boolean onEachOperator) {
+    @SuppressWarnings("unchecked")
+    public static void initialize() {
         uninitialize();
-        LOG.info("Integrating tracing with Molten onEachOperator={}", onEachOperator);
+        LOG.info("Integrating tracing with Molten");
         var currentTracing = Tracing.current();
         requireNonNull(currentTracing, "Tracing must be already initialized");
         Schedulers.onScheduleHook(HOOK_KEY, runnable -> new TraceContextPropagatingRunnable(runnable, currentTracing.currentTraceContext()));
-        if (onEachOperator) {
-            Hooks.onEachOperator(HOOK_KEY, propagate());
-        } else {
-            MoltenCore.registerContextPropagator(HOOK_KEY, MoltenTrace.propagate()::apply);
-        }
+        Hooks.addQueueWrapper(HOOK_KEY, q -> new TraceContextPropagatorQueue((Queue<Object>) q, currentTracing.currentTraceContext()));
+        MoltenCore.registerContextPropagator(HOOK_KEY, MoltenTrace.propagate()::apply);
     }
 
     /**
@@ -72,7 +61,7 @@ public final class MoltenTrace {
      */
     public static void uninitialize() {
         MoltenCore.resetContextPropagator(HOOK_KEY);
-        Hooks.resetOnEachOperator(HOOK_KEY);
+        Hooks.removeQueueWrapper(HOOK_KEY);
         Schedulers.resetOnScheduleHook(HOOK_KEY);
     }
 

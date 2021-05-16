@@ -23,9 +23,8 @@ import java.time.Duration;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.MDC;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
@@ -47,29 +46,24 @@ public class MoltenMDCTest {
     static void initClassContext() {
         Hooks.enableContextLossTracking();
         MoltenCore.initialize();
+        MoltenMDC.initialize();
     }
 
     @AfterAll
     static void clearClassContext() {
         Hooks.disableContextLossTracking();
+        MoltenMDC.uninitialize();
+        MoltenCore.uninitialize();
     }
 
+    @BeforeEach
     @AfterEach
     void clearContext() {
-        MoltenMDC.uninitialize();
+        MDC.clear();
     }
 
-    static Object[][] onEachOperatorEnabled() {
-        return new Object[][]{
-            new Object[]{true},
-            new Object[]{false}
-        };
-    }
-
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_MDC_when_subscribed_on_elastic(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_MDC_when_subscribed_on_elastic() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.defer(() -> Mono.justOrEmpty(MDC.get(KEY)))
@@ -82,10 +76,8 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_MDC_when_subscribed_on_parallel(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_MDC_when_subscribed_on_parallel() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.defer(() -> Mono.justOrEmpty(MDC.get(KEY)))
@@ -98,10 +90,8 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_MDC_when_publishing_on_elastic(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_MDC_when_publishing_on_elastic() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.justOrEmpty(MDC.get(KEY))
@@ -114,10 +104,8 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_MDC_when_publishing_on_parallel(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_MDC_when_publishing_on_parallel() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.justOrEmpty(MDC.get(KEY))
@@ -130,10 +118,8 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_MDC_when_subscribed_on_single(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_MDC_when_subscribed_on_single() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.defer(() -> Mono.justOrEmpty(MDC.get(KEY)))
@@ -146,10 +132,8 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_MDC_when_subscribed_on_immediate(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_MDC_when_subscribed_on_immediate() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.defer(() -> Mono.justOrEmpty(MDC.get(KEY)))
@@ -162,10 +146,8 @@ public class MoltenMDCTest {
         assertThat(MDC.get(KEY)).isEqualTo(VALUE);
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_MDC_when_switching_schedulers(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_MDC_when_switching_schedulers() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.defer(() -> Mono.justOrEmpty(MDC.get(KEY)))
@@ -184,7 +166,6 @@ public class MoltenMDCTest {
 
     @Test
     void should_propagate_MDC_with_non_reactive_callback_with_transform() {
-        MoltenMDC.initialize(false);
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.defer(() -> Mono.justOrEmpty(VALUE))
@@ -212,36 +193,7 @@ public class MoltenMDCTest {
     }
 
     @Test
-    void should_maintain_assembly_time_MDC_value_with_non_reactive_callback_with_oneach_hook() {
-        MoltenMDC.initialize(true);
-        MDC.put(KEY, VALUE);
-        StepVerifier.create(
-            Mono.defer(() -> Mono.justOrEmpty(VALUE))
-                .doOnNext(i -> assertThat(MDC.get(KEY)).describedAs("before").isEqualTo(VALUE))
-                .doOnNext(i -> MDC.put(KEY, OTHER_VALUE))
-                .flatMap(i -> Mono.create(sink -> new Thread(() -> {
-                    assertThat(MDC.get(KEY)).describedAs("non-reactive").isNull();
-                    MDC.put(KEY, YET_ANOTHER_VALUE);
-                    sink.success(i);
-                }).start())
-                    .doOnNext(k -> assertThat(MDC.get(KEY)).describedAs("inner-after").isEqualTo(VALUE))
-                )
-                .doOnNext(i -> assertThat(MDC.get(KEY)).describedAs("after").isEqualTo(VALUE))
-                .publishOn(Schedulers.parallel())
-                .doOnNext(i -> assertThat(MDC.get(KEY)).describedAs("after-publish").isEqualTo(VALUE))
-                .flatMap(i -> Mono.justOrEmpty(MDC.get(KEY)))
-        )
-            .thenAwait(Duration.ofSeconds(3))
-            .expectNext(VALUE)
-            .expectComplete()
-            .verify();
-        assertThat(MDC.get(KEY)).isEqualTo(VALUE);
-    }
-
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_keep_original_MDC_value_even_on_immediate_scheduler(boolean onEachOperatorEnabled) {
-        MoltenMDC.initialize(onEachOperatorEnabled);
+    void should_keep_original_MDC_value_even_on_immediate_scheduler() {
         MDC.put(KEY, VALUE);
         StepVerifier.create(
             Mono.defer(() -> Mono.justOrEmpty(MDC.get(KEY)))
