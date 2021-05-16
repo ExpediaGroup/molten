@@ -33,12 +33,15 @@ import reactor.util.Loggers;
 /**
  * Initializer for Molten. Does the followings:
  * <ul>
- * <li>Initializes SLF4J logging</li>
- * <li>Can enable {@link reactor.core.scheduler.Scheduler} metrics (requires Micrometer).</li>
+ *   <li>Initializes SLF4J logging</li>
+ *   <li>Can enable {@link reactor.core.scheduler.Scheduler} metrics (requires Micrometer).</li>
  * </ul>
  *
- * For specific context propagation see the associated integration. e.g. {@link com.hotels.molten.core.mdc.MoltenMDC}.
- * Certain threading scenarios require explicit propagation solutions.
+ * Molten also provides a convenient and efficient way to manually propagate context at:
+ * <ul>
+ *   <li>Reactor boundaries (thread switching scenarios outside of Reactor's control)</li>
+ *   <li>when the current context needs to be restored (e.g. request collapsing).</li>
+ * </ul>
  * Context propagators can be registered with {@link MoltenCore#registerContextPropagator(String, Function)} and used with {@link MoltenCore#propagateContext()}.
  */
 @Slf4j
@@ -75,6 +78,7 @@ public final class MoltenCore {
         if (INITIALIZED.get()) {
             CONTEXT_PROPAGATORS.clear();
             Hooks.resetOnEachOperator();
+            Hooks.removeQueueWrappers();
             Schedulers.resetOnScheduleHooks();
             INITIALIZED.set(false);
         }
