@@ -21,8 +21,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -54,11 +52,11 @@ import com.hotels.molten.cache.metrics.InstrumentedReactiveCache;
  * @see ResilientReactiveCache
  */
 public class ResilientReactiveCacheBuilder<K, V> {
-    private static final Map<String, String> CACHES = new ConcurrentHashMap<>();
     private ReactiveCache<NamedCacheKey<K>, CachedValue<V>> sharedResilientCache;
     private String cacheName;
     private Duration ttl = Duration.ofHours(1);
     private Duration timeout = Duration.ofMillis(50);
+    private Duration putTimeout;
     private FailSafeMode failsafe = FailSafeMode.VERBOSE;
     private RetryBackoffSpec retry;
     private int retries;
@@ -74,7 +72,7 @@ public class ResilientReactiveCacheBuilder<K, V> {
     /**
      * Creates a resilient cache builder.
      *
-     * @param <KEY> the key type
+     * @param <KEY>   the key type
      * @param <VALUE> the value type
      * @return the builder
      */
@@ -89,10 +87,9 @@ public class ResilientReactiveCacheBuilder<K, V> {
      */
     public ReactiveCache<K, V> createCache() {
         checkArgument(!isNullOrEmpty(cacheName), "Cache name must have value");
-        checkArgument(CACHES.putIfAbsent(cacheName, cacheName) == null, "The cache name=" + cacheName + " has been already used");
         requireNonNull(meterRegistry);
         ReactiveCache<K, V> cache = new NamedReactiveCache<>(sharedResilientCache, cacheName, ttl);
-        cache = new ResilientReactiveCache<>(cache, cacheName, timeout, circuitBreakerConfig, meterRegistry);
+        cache = new ResilientReactiveCache<>(cache, cacheName, timeout, putTimeout, circuitBreakerConfig, meterRegistry);
         cache = new InstrumentedReactiveCache<>(cache, meterRegistry, cacheName, "single");
         if (retry != null) {
             cache = new RetryingReactiveCache<>(cache, retry, meterRegistry, cacheName);
@@ -109,47 +106,60 @@ public class ResilientReactiveCacheBuilder<K, V> {
     /**
      * Sets the cache to delegate calls to. Usually a shared (remote) cache instance.
      *
-     * @param val the cache to wrap
+     * @param reactiveCache the cache to wrap
      * @return this builder instance
      */
-    public ResilientReactiveCacheBuilder<K, V> over(ReactiveCache<NamedCacheKey<K>, CachedValue<V>> val) {
-        sharedResilientCache = requireNonNull(val);
+    public ResilientReactiveCacheBuilder<K, V> over(ReactiveCache<NamedCacheKey<K>, CachedValue<V>> reactiveCache) {
+        sharedResilientCache = requireNonNull(reactiveCache);
         return this;
     }
 
     /**
      * Sets the name of the cache.
      *
-     * @param val the cache name
+     * @param cacheName the cache name
      * @return this builder instance
      */
-    public ResilientReactiveCacheBuilder<K, V> withCacheName(String val) {
-        checkArgument(!isNullOrEmpty(val), "Cache name must have value");
-        cacheName = val;
+    public ResilientReactiveCacheBuilder<K, V> withCacheName(String cacheName) {
+        checkArgument(!isNullOrEmpty(cacheName), "Cache name must have value");
+        this.cacheName = cacheName;
         return this;
     }
 
     /**
      * Sets the TTL of the entries.
      *
-     * @param val the cache name
+     * @param ttl the cache name
      * @return this builder instance
      */
-    public ResilientReactiveCacheBuilder<K, V> withTTL(Duration val) {
-        checkArgument(val != null && !val.isNegative(), "TTL must be positive but was " + val);
-        ttl = val;
+    public ResilientReactiveCacheBuilder<K, V> withTTL(Duration ttl) {
+        checkArgument(ttl != null && !ttl.isNegative(), "TTL must be positive but was " + ttl);
+        this.ttl = ttl;
         return this;
     }
 
     /**
      * Sets the timeout for the cache calls.
+     * If {@link #withPutTimeout putTimeout} is set, it's for 'get' calls only.
      *
-     * @param val the timeout
+     * @param timeout the timeout
      * @return this builder instance
      */
-    public ResilientReactiveCacheBuilder<K, V> withTimeout(Duration val) {
-        checkArgument(val != null && !val.isNegative(), "Timeout must be positive but was " + val);
-        timeout = val;
+    public ResilientReactiveCacheBuilder<K, V> withTimeout(Duration timeout) {
+        checkArgument(timeout != null && !timeout.isNegative(), "Timeout must be positive but was " + timeout);
+        this.timeout = timeout;
+        return this;
+    }
+
+    /**
+     * Sets the timeout for the cache 'put' calls only.
+     *
+     * @param putTimeout the timeout
+     * @return this builder instance
+     */
+    public ResilientReactiveCacheBuilder<K, V> withPutTimeout(Duration putTimeout) {
+        checkArgument(putTimeout != null && !putTimeout.isNegative(), "Timeout must be positive but was " + putTimeout);
+        this.putTimeout = putTimeout;
         return this;
     }
 
@@ -207,21 +217,26 @@ public class ResilientReactiveCacheBuilder<K, V> {
     }
 
     /**
-     * The configuration of the circuitbreaker over cache calls.
+     * Sets the configuration of the circuitbreaker over cache calls.
      *
-     * @param val the circuitbreaker configuration
+     * @param circuitBreakerConfig the circuitbreaker configuration
      * @return this builder instance
      */
-    public ResilientReactiveCacheBuilder<K, V> withCircuitBreakerConfig(CircuitBreakerConfig val) {
-        checkArgument(val != null, "Circuit breaker config must be non-null");
-        circuitBreakerConfig = val;
+    public ResilientReactiveCacheBuilder<K, V> withCircuitBreakerConfig(CircuitBreakerConfig circuitBreakerConfig) {
+        checkArgument(circuitBreakerConfig != null, "Circuit breaker config must be non-null");
+        this.circuitBreakerConfig = circuitBreakerConfig;
         return this;
     }
 
-
-    public ResilientReactiveCacheBuilder<K, V> withMeterRegistry(MeterRegistry val) {
-        checkArgument(val != null, "Metric registry must be non-null");
-        meterRegistry = val;
+    /**
+     * Sets the meter registry to register the meters of the resilient cache calls to.
+     *
+     * @param meterRegistry the meter registry
+     * @return the builder instance
+     */
+    public ResilientReactiveCacheBuilder<K, V> withMeterRegistry(MeterRegistry meterRegistry) {
+        checkArgument(meterRegistry != null, "Metric registry must be non-null");
+        this.meterRegistry = meterRegistry;
         return this;
     }
 }
