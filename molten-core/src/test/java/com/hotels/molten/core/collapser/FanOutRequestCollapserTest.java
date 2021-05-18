@@ -510,14 +510,13 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    void should_not_execute_more_things_in_parallel() {
+    void should_limit_bulk_calls_concurrency() {
         collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
-            .withMaximumWaitTime(Duration.ofMillis(200))
-            .withBatchSize(5)
             .withBatchScheduler(Schedulers.parallel())
-            .withBatchMaxConcurrency(2)
             .withEmitScheduler(Schedulers.immediate())
+            .withBatchSize(5)
+            .withBatchMaxConcurrency(2)
             .withGroupId("test-collapser")
             .build();
         //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
@@ -533,7 +532,7 @@ public class FanOutRequestCollapserTest {
                     .doOnSuccess(b -> LOG.debug("Emitting batched items {}", b));
             });
 
-        Flux.range(1, 100).flatMap(i -> collapsedProvider.apply(i))
+        Flux.range(1, 15).flatMap(i -> collapsedProvider.apply(i))
             .ignoreElements() // doesn't matter is some elements are emitted successfully
             .as(StepVerifier::create)
             .verifyErrorSatisfies(e -> assertThat(e)
@@ -542,7 +541,36 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    void should_not_execute_more_things_in_parallel_but_wait_for_it() {
+    void should_not_limit_emitted_items_count_by_max_concurrency() {
+        collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
+            .withScheduler(Schedulers.parallel())
+            .withBatchScheduler(Schedulers.parallel())
+            .withEmitScheduler(Schedulers.immediate())
+            .withBatchSize(5)
+            .withBatchMaxConcurrency(2)
+            .withGroupId("test-collapser")
+            .build();
+        //the throughput will be 10 ids per seconds (batch of 5 * parallelism 2) at 1 sec delayed execution
+
+        when(bulkProvider.apply(anyList()))
+            .thenAnswer(invocation -> {
+                List<Integer> params = invocation.getArgument(0);
+                LOG.debug("Returning delayed batched items for {}", params);
+                Thread.sleep(1000);
+                return Flux.fromIterable(params)
+                    .map(Object::toString)
+                    .collectList()
+                    .doOnSuccess(b -> LOG.debug("Emitting batched items {}", b));
+            });
+
+        Flux.range(1, 5).flatMap(i -> collapsedProvider.apply(i))
+            .as(StepVerifier::create)
+            .expectNextCount(5)
+            .verifyComplete();
+    }
+
+    @Test
+    void should_not_execute_more_bulk_calls_in_parallel_but_wait_for_it() {
         collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
             .withMaximumWaitTime(Duration.ofMillis(200))
@@ -572,7 +600,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    void should_not_execute_more_things_in_parallel_with_delay() {
+    void should_not_execute_more_bulk_calls_in_parallel_with_delay() {
         collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
             .withMaximumWaitTime(Duration.ofMillis(200))
@@ -604,7 +632,7 @@ public class FanOutRequestCollapserTest {
     }
 
     @Test
-    void should_not_execute_more_things_in_parallel_with_delay_but_wait_for_it() {
+    void should_not_execute_more_bulk_calls_in_parallel_with_delay_but_wait_for_it() {
         collapsedProvider = withBaseConfig(FanOutRequestCollapser.collapseCallsOver(bulkProvider))
             .withScheduler(Schedulers.parallel())
             .withBatchSize(5)
