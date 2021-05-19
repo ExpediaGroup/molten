@@ -88,18 +88,6 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
         totalLoadTime.add(loadTime);
     }
 
-    @Deprecated
-    @Override
-    public void recordEviction() {
-    }
-
-    @Deprecated
-    @Override
-    public void recordEviction(int weight) {
-        evictionCount.increment();
-        totalEvictedWeight.add(weight);
-    }
-
     @Override
     public void recordEviction(int weight, RemovalCause cause) {
         evictionCount.increment();
@@ -109,7 +97,7 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
     @Nonnull
     @Override
     public CacheStats snapshot() {
-        return new CacheStats(Double.valueOf(hitCount.count()).longValue(), Double.valueOf(missCount.count()).longValue(), loadSuccess.count(), loadFailure.count(),
+        return CacheStats.of(Double.valueOf(hitCount.count()).longValue(), Double.valueOf(missCount.count()).longValue(), loadSuccess.count(), loadFailure.count(),
             totalLoadTime.longValue(), Double.valueOf(evictionCount.count()).longValue(), totalEvictedWeight.longValue());
     }
 

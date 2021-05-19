@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
@@ -96,7 +97,7 @@ public class CaffeineCacheStatsInstrumenterTest {
 
     @Test
     public void should_record_evictions() {
-        instrumenter.recordEviction(2);
+        instrumenter.recordEviction(2, RemovalCause.SIZE);
         assertThat(meterRegistry.get("pre.fix.eviction-count").counter().count()).isEqualTo(1D);
         assertThat(instrumenter.snapshot().evictionWeight()).isEqualTo(2L);
     }
