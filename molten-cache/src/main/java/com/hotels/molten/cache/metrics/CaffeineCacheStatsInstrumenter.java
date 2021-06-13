@@ -103,6 +103,26 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
         totalLoadTime.add(loadTime);
     }
 
+    /**
+     * Deprecated variant of {@link #recordEviction(int, RemovalCause)}.
+     *
+     * @deprecated to keep this instrumenter compatible with the 2.x.x caffeine versions.
+     */
+    @Deprecated
+    public void recordEviction() {
+    }
+
+    /**
+     * Deprecated variant of {@link #recordEviction(int, RemovalCause)}.
+     *
+     * @deprecated to keep this instrumenter compatible with the 2.x.x caffeine versions.
+     */
+    @Deprecated
+    public void recordEviction(int weight) {
+        evictionCount.increment();
+        totalEvictedWeight.add(weight);
+    }
+
     @Override
     public void recordEviction(int weight, RemovalCause cause) {
         evictionCount.increment();
