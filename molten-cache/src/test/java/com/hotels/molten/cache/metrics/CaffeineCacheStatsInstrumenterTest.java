@@ -18,10 +18,17 @@ package com.hotels.molten.cache.metrics;
 
 import static com.hotels.molten.core.metrics.MetricsSupport.GRAPHITE_ID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.TimeUnit;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
@@ -34,8 +41,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import com.hotels.molten.core.metrics.MoltenMetrics;
 
@@ -44,21 +53,26 @@ import com.hotels.molten.core.metrics.MoltenMetrics;
  */
 @ExtendWith(MockitoExtension.class)
 public class CaffeineCacheStatsInstrumenterTest {
-    private CaffeineCacheStatsInstrumenter instrumenter;
-    private MeterRegistry meterRegistry;
+    private static final Logger LOG = (Logger) LoggerFactory.getLogger(CaffeineCacheStatsInstrumenter.class);
+    @Mock
+    private Appender<ILoggingEvent> appender;
     @Mock
     private Cache cache;
+    private CaffeineCacheStatsInstrumenter instrumenter;
+    private MeterRegistry meterRegistry;
 
     @BeforeEach
     public void initContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
         meterRegistry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         instrumenter = new CaffeineCacheStatsInstrumenter(meterRegistry, "pre.fix");
+        LOG.addAppender(appender);
     }
 
     @AfterEach
     public void clearContext() {
         MoltenMetrics.setDimensionalMetricsEnabled(false);
+        LOG.detachAppender(appender);
     }
 
     @Test
@@ -126,5 +140,26 @@ public class CaffeineCacheStatsInstrumenterTest {
         instrumenter.recordHits(1);
         // Then
         assertThat(meterRegistry.get("cache_hit_count").tag("name", "cache-name").tag(GRAPHITE_ID, "cache-name.hit-count").counter().count()).isEqualTo(1);
+    }
+
+    @Test
+    void should_not_log_registered_instrumenter() {
+        instrumenter.registerCache(cache);
+        instrumenter.recordMisses(2);
+        verifyNoInteractions(appender);
+
+    }
+
+    @Test
+    void should_log_unregistered_instrumenter_once() {
+        instrumenter.recordMisses(2);
+        var captor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        verify(appender).doAppend(captor.capture());
+        assertThat(captor.getValue()).isNotNull();
+        assertThat(captor.getValue().getLevel()).isEqualTo(Level.WARN);
+        assertThat(captor.getValue().getFormattedMessage()).isEqualTo("Unregistered cache found with metricsQualifier=pre.fix. Estimated size metrics won't be available!");
+        instrumenter.recordHits(1);
+        instrumenter.recordMisses(3);
+        verifyNoMoreInteractions(appender);
     }
 }

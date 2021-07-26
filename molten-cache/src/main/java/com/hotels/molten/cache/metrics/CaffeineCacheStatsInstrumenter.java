@@ -50,6 +50,7 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
     private final MeterRegistry meterRegistry;
     private final MetricId metricId;
     private volatile boolean registered;
+    private volatile boolean reportedUnregistered;
 
     public CaffeineCacheStatsInstrumenter(MeterRegistry meterRegistry, String metricsQualifier) {
         this.meterRegistry = requireNonNull(meterRegistry);
@@ -137,8 +138,9 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
     }
 
     private void warnIfUnregistered() {
-        if (!registered) {
+        if (!registered && !reportedUnregistered) {
             LOG.warn("Unregistered cache found with metricsQualifier={}. Estimated size metrics won't be available!", metricId.getHierarchicalName());
+            reportedUnregistered = true;
         }
     }
 }
