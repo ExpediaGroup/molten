@@ -18,6 +18,7 @@ package com.hotels.molten.core.collapser;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.time.Duration;
 import java.util.LinkedList;
@@ -26,7 +27,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
@@ -228,23 +228,24 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
     }
 
     private List<CONTEXT> toContexts(List<ContextWithSubject<CONTEXT, VALUE>> contextWithSubjects) {
-        return contextWithSubjects.stream().map(cs -> cs.context).collect(Collectors.toList());
+        return contextWithSubjects.stream().map(ContextWithSubject::getContext).collect(toUnmodifiableList());
     }
 
     private Mono<ContextWithValue<CONTEXT, VALUE>> bindValueToContext(List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjects, VALUE value, String groupId) {
         synchronized (contextsWithSubjects) {
-            ContextWithSubject<CONTEXT, VALUE> firstMatch = null;
-            for (var contextWithSubject : contextsWithSubjects) {
-                if (matchContextByValue(contextWithSubject.context, value, groupId)) {
-                    firstMatch = contextWithSubject;
-                }
-            }
-            if (firstMatch != null) {
-                contextsWithSubjects.remove(firstMatch);
-            }
-            return Mono.justOrEmpty(firstMatch)
+            return Mono.justOrEmpty(getFirstMatch(contextsWithSubjects, value, groupId))
                 .map(contextWithSubject -> ContextWithValue.value(contextWithSubject, value));
         }
+    }
+
+    private Optional<ContextWithSubject<CONTEXT, VALUE>> getFirstMatch(List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjects, VALUE value, String groupId) {
+        return contextsWithSubjects.stream()
+            .filter(contextWithSubject -> matchContextByValue(contextWithSubject.context, value, groupId))
+            .findFirst()
+            .map(firstMatch -> {
+                contextsWithSubjects.remove(firstMatch);
+                return firstMatch;
+            });
     }
 
     private Flux<ContextWithValue<CONTEXT, VALUE>> bindEmptyToRemaining(List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjects) {
