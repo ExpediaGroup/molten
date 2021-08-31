@@ -20,7 +20,7 @@
     <checkstyle.suppressions.location>build/suppressions.xml</checkstyle.suppressions.location>
     <skip.integration.tests>false</skip.integration.tests>
     <!-- versions -->
-    <testcontainers.version>1.15.3</testcontainers.version>
+    <testcontainers.version>1.16.0</testcontainers.version>
     <vertx.version>3.9.4</vertx.version>
   </properties>
 
