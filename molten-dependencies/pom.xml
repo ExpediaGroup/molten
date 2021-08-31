@@ -16,7 +16,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <caffeine.version>3.0.2</caffeine.version>
+    <caffeine.version>3.0.3</caffeine.version>
     <jackson.version>2.12.3</jackson.version>
     <guava.version>30.1.1-jre</guava.version>
     <lettuce-core.version>6.1.2.RELEASE</lettuce-core.version>
