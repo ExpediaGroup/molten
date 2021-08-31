@@ -60,7 +60,7 @@
     <mockito.version>3.12.4</mockito.version>
     <mockito-testng.version>0.4.4</mockito-testng.version>
     <byte-buddy.version>1.11.2</byte-buddy.version>
-    <janino.version>3.1.4</janino.version>
+    <janino.version>3.1.6</janino.version>
     <junit.jupiter.version>5.7.2</junit.jupiter.version>
     <junit.platform.version>1.7.2</junit.platform.version>
     <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
