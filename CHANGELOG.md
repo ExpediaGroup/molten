@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3]
+- Only dependency version updates.
+
 ## [1.2.2]
 ### Added
 - Added `ResilientReactiveCacheBuilder#withPutTimeout` to set a different timeout only for put operations.

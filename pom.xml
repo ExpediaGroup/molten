@@ -6,7 +6,7 @@
 
   <groupId>com.expediagroup.molten</groupId>
   <artifactId>molten-base</artifactId>
-  <version>1.2.3-SNAPSHOT</version>
+  <version>1.2.4-SNAPSHOT</version>
   <name>Molten - base</name>
   <description>Molten - a reactive toolbox for integration</description>
   <packaging>pom</packaging>
@@ -154,7 +154,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
+            <version>3.0.1</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>

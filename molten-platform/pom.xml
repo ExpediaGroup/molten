@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-base</artifactId>
-    <version>1.2.3-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -31,7 +31,7 @@
     <surefire.fork.timeout.in.seconds>300</surefire.fork.timeout.in.seconds>
     <fail.for.duplicates>true</fail.for.duplicates>
     <skip.platform.banned.dependency.check>true</skip.platform.banned.dependency.check>
-    <checkstyle.version>8.43</checkstyle.version>
+    <checkstyle.version>9.0</checkstyle.version>
     <checkstyle.skip>false</checkstyle.skip>
     <checkstyle.rules.directory>build</checkstyle.rules.directory>
     <checkstyle.config.location>${checkstyle.rules.directory}/checkstyle_rules.xml</checkstyle.config.location>
@@ -49,18 +49,18 @@
     <jacoco.lineRatio>0.80</jacoco.lineRatio>
     <jacoco.methodRatio>0.80</jacoco.methodRatio>
     <!-- versions -->
-    <slf4j.version>1.7.30</slf4j.version>
-    <logback.version>1.2.3</logback.version>
+    <slf4j.version>1.7.32</slf4j.version>
+    <logback.version>1.2.5</logback.version>
     <logback.json.version>0.1.5</logback.json.version>
     <logstash.logback.encoder.version>6.6</logstash.logback.encoder.version>
     <guava.version>30.1.1-jre</guava.version>
     <testng.version>7.4.0</testng.version>
-    <assertj.version>3.19.0</assertj.version>
+    <assertj.version>3.20.2</assertj.version>
     <hamcrest.version>2.0.0.0</hamcrest.version>
-    <mockito.version>3.11.0</mockito.version>
-    <mockito-testng.version>0.4.4</mockito-testng.version>
-    <byte-buddy.version>1.11.1</byte-buddy.version>
-    <janino.version>3.1.4</janino.version>
+    <mockito.version>3.12.4</mockito.version>
+    <mockito-testng.version>0.4.13</mockito-testng.version>
+    <byte-buddy.version>1.11.14</byte-buddy.version>
+    <janino.version>3.1.6</janino.version>
     <junit.jupiter.version>5.7.2</junit.jupiter.version>
     <junit.platform.version>1.7.2</junit.platform.version>
     <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
@@ -466,7 +466,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.0.0-M3</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -500,7 +500,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.1.2</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -681,7 +681,7 @@
           <dependency>
             <groupId>org.apache.maven.doxia</groupId>
             <artifactId>doxia-module-markdown</artifactId>
-            <version>1.9.1</version>
+            <version>1.10</version>
           </dependency>
         </dependencies>
         <configuration>
