@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-root</artifactId>
-    <version>1.2.2-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT</version>
     <relativePath>../molten-root/pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -15,9 +15,9 @@
   <packaging>jar</packaging>
 
   <properties>
-    <spring.version>5.3.6</spring.version>
-    <spring-boot.version>2.4.5</spring-boot.version>
-    <spring-cloud.version>2020.0.2</spring-cloud.version>
+    <spring.version>5.3.9</spring.version>
+    <spring-boot.version>2.5.4</spring-boot.version>
+    <spring-cloud.version>2020.0.3</spring-cloud.version>
   </properties>
 
   <dependencyManagement>
@@ -80,7 +80,7 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
-      <version>1.6.6</version>
+      <version>1.7.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>

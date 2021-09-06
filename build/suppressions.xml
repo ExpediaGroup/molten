@@ -8,4 +8,5 @@
   <suppress checks="IllegalInstantiation" files="com.hotels.molten.http.client.HttpException"/>
   <suppress checks="FinalClass" files="com.hotels.molten.cache.ReactiveReloadingCache"/>
   <suppress checks="UnnecessaryParentheses" files="com.hotels.molten.trace.AbstractTracer"/>
+  <suppress checks="ParameterNumber" files="com.hotels.molten.cache.resilience.ResilientReactiveCache"/>
 </suppressions>

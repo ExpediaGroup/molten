@@ -6,12 +6,12 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-platform</artifactId>
-    <version>1.2.2-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT</version>
     <relativePath>../molten-platform/pom.xml</relativePath>
   </parent>
 
   <artifactId>molten-root</artifactId>
-  <version>1.2.2-SNAPSHOT</version>
+  <version>1.2.4-SNAPSHOT</version>
   <name>Molten - root</name>
   <description>A reactive toolbox for integration</description>
   <packaging>pom</packaging>
@@ -20,7 +20,7 @@
     <checkstyle.suppressions.location>build/suppressions.xml</checkstyle.suppressions.location>
     <skip.integration.tests>false</skip.integration.tests>
     <!-- versions -->
-    <testcontainers.version>1.15.3</testcontainers.version>
+    <testcontainers.version>1.16.0</testcontainers.version>
     <vertx.version>3.9.4</vertx.version>
   </properties>
 

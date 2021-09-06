@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Constructor of `FanOutRequestCollapser.Builder` become private, please use the static factory methods to start building one.
 
+## [1.2.3]
+- Only dependency version updates.
+
+## [1.2.2]
+### Added
+- Added `ResilientReactiveCacheBuilder#withPutTimeout` to set a different timeout only for put operations.
+
 ## [1.2.1]
 ### Fixed
 - Fixed `FanOutRequestCollapser` not being thread safe when accepting requests from different threads.

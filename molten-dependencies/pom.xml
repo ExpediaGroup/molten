@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.expediagroup.molten</groupId>
     <artifactId>molten-platform</artifactId>
-    <version>1.2.2-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT</version>
     <relativePath>../molten-platform/pom.xml</relativePath>
   </parent>
 
@@ -17,19 +17,19 @@
 
   <properties>
     <caffeine.version>2.8.6</caffeine.version>
-    <jackson.version>2.12.3</jackson.version>
+    <jackson.version>2.12.5</jackson.version>
     <guava.version>30.1.1-jre</guava.version>
-    <lettuce-core.version>6.1.1.RELEASE</lettuce-core.version>
+    <lettuce-core.version>6.1.4.RELEASE</lettuce-core.version>
     <logback.version>1.2.3</logback.version>
     <lombok.version>1.18.20</lombok.version>
-    <micrometer.version>1.6.6</micrometer.version>
+    <micrometer.version>1.7.3</micrometer.version>
     <zipkin-brave.version>5.13.3</zipkin-brave.version>
     <zipkin-reporter.version>2.16.3</zipkin-reporter.version>
     <kryo.version>4.0.2</kryo.version>
     <kryo-serializers.version>0.45</kryo-serializers.version>
     <jsr305.version>3.0.2</jsr305.version>
     <netty.version>4.1.59.Final</netty.version>
-    <reactor-netty.version>1.0.6</reactor-netty.version>
+    <reactor-netty.version>1.0.10</reactor-netty.version>
     <protobuf.version>3.0.0</protobuf.version>
     <retrofit.version>2.9.0</retrofit.version>
     <okhttp.version>4.9.1</okhttp.version>
