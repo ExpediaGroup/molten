@@ -30,12 +30,14 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
+import lombok.extern.slf4j.Slf4j;
 
 import com.hotels.molten.core.metrics.MetricId;
 
 /**
  * A Caffeine cache statistics counter which reports to dropwizard metrics.
  */
+@Slf4j
 public class CaffeineCacheStatsInstrumenter implements StatsCounter {
     private final Counter hitCount;
     private final Counter missCount;
@@ -47,6 +49,8 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
     private final TumblingWindowHitRatioMetrics hitRatioMetrics = new TumblingWindowHitRatioMetrics();
     private final MeterRegistry meterRegistry;
     private final MetricId metricId;
+    private volatile boolean registered;
+    private volatile boolean reportedUnregistered;
 
     public CaffeineCacheStatsInstrumenter(MeterRegistry meterRegistry, String metricsQualifier) {
         this.meterRegistry = requireNonNull(meterRegistry);
@@ -64,14 +68,26 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
         metricId.extendWith("hit_ratio", "hit-ratio").toGauge(hitRatioMetrics, TumblingWindowHitRatioMetrics::hitRatio).register(meterRegistry);
     }
 
+    /**
+     * Registers the related {@link Cache} to report its size as well.
+     *
+     * @param cache the cache to register size gauge for
+     */
+    public void registerCache(Cache<?, ?> cache) {
+        metricId.extendWith("size").toGauge(cache, Cache::estimatedSize).register(meterRegistry);
+        registered = true;
+    }
+
     @Override
     public void recordHits(int count) {
+        warnIfUnregistered();
         hitCount.increment(count);
         hitRatioMetrics.registerHit(count);
     }
 
     @Override
     public void recordMisses(int count) {
+        warnIfUnregistered();
         missCount.increment(count);
         hitRatioMetrics.registerMiss(count);
     }
@@ -88,13 +104,21 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
         totalLoadTime.add(loadTime);
     }
 
+    /**
+     * Deprecated variant of {@link #recordEviction(int, RemovalCause)}.
+     *
+     * @deprecated to keep this instrumenter compatible with the 2.x.x caffeine versions.
+     */
     @Deprecated
-    @Override
     public void recordEviction() {
     }
 
+    /**
+     * Deprecated variant of {@link #recordEviction(int, RemovalCause)}.
+     *
+     * @deprecated to keep this instrumenter compatible with the 2.x.x caffeine versions.
+     */
     @Deprecated
-    @Override
     public void recordEviction(int weight) {
         evictionCount.increment();
         totalEvictedWeight.add(weight);
@@ -109,16 +133,14 @@ public class CaffeineCacheStatsInstrumenter implements StatsCounter {
     @Nonnull
     @Override
     public CacheStats snapshot() {
-        return new CacheStats(Double.valueOf(hitCount.count()).longValue(), Double.valueOf(missCount.count()).longValue(), loadSuccess.count(), loadFailure.count(),
+        return CacheStats.of(Double.valueOf(hitCount.count()).longValue(), Double.valueOf(missCount.count()).longValue(), loadSuccess.count(), loadFailure.count(),
             totalLoadTime.longValue(), Double.valueOf(evictionCount.count()).longValue(), totalEvictedWeight.longValue());
     }
 
-    /**
-     * Registers the related {@link Cache} to report its size as well.
-     *
-     * @param cache the cache to register size gauge for
-     */
-    public void registerCache(Cache cache) {
-        metricId.extendWith("size").toGauge(cache, Cache::estimatedSize).register(meterRegistry);
+    private void warnIfUnregistered() {
+        if (!registered && !reportedUnregistered) {
+            LOG.warn("Unregistered cache found with metricsQualifier={}. Estimated size metrics won't be available!", metricId.getHierarchicalName());
+            reportedUnregistered = true;
+        }
     }
 }
