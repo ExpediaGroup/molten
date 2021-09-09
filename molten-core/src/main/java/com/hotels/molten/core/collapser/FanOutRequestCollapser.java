@@ -18,14 +18,15 @@ package com.hotels.molten.core.collapser;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.time.Duration;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadConfig;
@@ -60,8 +61,8 @@ import com.hotels.molten.core.metrics.MetricId;
  * <li>Waits for a full chunk maximum for a given time. See {@link Builder#withMaximumWaitTime(Duration)}.</li>
  * <li>Propagates returned values to respective caller by matching value with its context. See {@link Builder#withContextValueMatcher(BiFunction)}.</li>
  * <li>Propagates result on a given {@link Scheduler}. See {@link Builder#withScheduler(Scheduler)}.</li>
- * <li>Bulk provider error is propagated to each caller taking part in that call.</li>
- * <li>Matching error is logged but ignored. Respective call will get empty result.</li>
+ * <li>Bulk provider error is propagated to each caller taking part in that call {@link #collapseCallsOver(Function)}  in lazy mode},
+ * or to each not yet answered caller in {@link #collapseCallsEagerlyOver(Function)}  in eager mode}.</li>
  * <li>Non-matched contexts will get empty result.</li>
  * </ul>
  * <p>
@@ -113,14 +114,15 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
                 List<CONTEXT> contexts = toContexts(contextsWithSubjects);
                 LOG.debug("Executing batch with contexts={}, groupId={}", contexts, groupId);
                 updateMetrics(contextsWithSubjects);
+                final List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjectsToDrain = new LinkedList<>(contextsWithSubjects);
                 return Mono.just(contexts)
-                    .flatMap(builder.bulkProvider)
+                    .flatMapMany(builder.bulkProvider)
                     .subscribeOn(builder.batchScheduler)
+                    .flatMap(value -> bindValueToContext(contextsWithSubjectsToDrain, value, groupId))
+                    .concatWith(bindEmptyToRemaining(contextsWithSubjectsToDrain))
                     .transform(BulkheadOperator.of(bulkhead))
-                    .defaultIfEmpty(List.of())
                     .doOnError(e -> LOG.error("Error while delegating call for contexts={}, groupId={}", contexts, groupId, e))
-                    .flatMapMany(values -> Flux.fromIterable(contextsWithSubjects).flatMap(context -> bindValueToContext(context, values, groupId)))
-                    .onErrorResume(throwable -> Flux.fromIterable(contextsWithSubjects).map(context -> ContextWithValue.error(context, throwable)));
+                    .onErrorResume(throwable -> bindErrorToRemaining(contextsWithSubjectsToDrain, throwable));
             }, Integer.MAX_VALUE)
             .publishOn(builder.emitScheduler)
             .doOnNext(this::logEmission)
@@ -145,6 +147,33 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
                 return contextWithSubject.subject;
             })
             .transform(MoltenCore.propagateContext());
+    }
+
+    /**
+     * Creates a {@link FanOutRequestCollapser} builder over a bulk provider, emitting all the bulk results in one piece.<br>
+     * If you would rather emmit bulk results in several pieces, {@link #collapseCallsEagerlyOver} should be used instead.
+     *
+     * @param <C>          the context type
+     * @param <V>          the VALUE type
+     * @param bulkProvider the bulk provider to delegate calls to
+     * @return the builder
+     */
+    public static <C, V> Builder<C, V> collapseCallsOver(Function<List<C>, Mono<List<V>>> bulkProvider) {
+        return new Builder<>(requireNonNull(bulkProvider).andThen(listMono -> listMono.flatMapMany(Flux::fromIterable)));
+    }
+
+    /**
+     * Creates a {@link FanOutRequestCollapser} builder over a bulk provider, possibly emitting the bulk results in several pieces.
+     * The eagerly emitted results are eagerly sent to the respective callers by the fan-out request collapser.<br>
+     * If you would rather emmit bulk results in one piece, {@link #collapseCallsOver} should be used instead.
+     *
+     * @param <C>          the context type
+     * @param <V>          the VALUE type
+     * @param bulkProvider the bulk provider to delegate calls to
+     * @return the builder
+     */
+    public static <C, V> Builder<C, V> collapseCallsEagerlyOver(Function<List<C>, Flux<V>> bulkProvider) {
+        return new Builder<>(bulkProvider);
     }
 
     /**
@@ -198,29 +227,37 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         }
     }
 
-    /**
-     * Creates a {@link FanOutRequestCollapser} builder over a bulk provider.
-     *
-     * @param <C>          the context type
-     * @param <V>          the VALUE type
-     * @param bulkProvider the bulk provider to delegate calls to
-     * @return the builder
-     */
-    public static <C, V> Builder<C, V> collapseCallsOver(Function<List<C>, Mono<List<V>>> bulkProvider) {
-        return new Builder<>(bulkProvider);
-    }
-
     private List<CONTEXT> toContexts(List<ContextWithSubject<CONTEXT, VALUE>> contextWithSubjects) {
-        return contextWithSubjects.stream().map(cs -> cs.context).collect(Collectors.toList());
+        return contextWithSubjects.stream().map(ContextWithSubject::getContext).collect(toUnmodifiableList());
     }
 
-    private Mono<ContextWithValue<CONTEXT, VALUE>> bindValueToContext(ContextWithSubject<CONTEXT, VALUE> contextWithSubject, List<VALUE> values, String groupId) {
-        return Flux.fromIterable(values)
-            .filter(value -> matchContextByValue(contextWithSubject.context, value, groupId))
-            .next()
-            .map(value -> ContextWithValue.value(contextWithSubject, value))
-            .onErrorResume(e -> Mono.just(ContextWithValue.error(contextWithSubject, e)))
-            .defaultIfEmpty(ContextWithValue.empty(contextWithSubject));
+    private Mono<ContextWithValue<CONTEXT, VALUE>> bindValueToContext(List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjects, VALUE value, String groupId) {
+        synchronized (contextsWithSubjects) {
+            return Mono.justOrEmpty(getFirstMatch(contextsWithSubjects, value, groupId))
+                .map(contextWithSubject -> ContextWithValue.value(contextWithSubject, value));
+        }
+    }
+
+    private Optional<ContextWithSubject<CONTEXT, VALUE>> getFirstMatch(List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjects, VALUE value, String groupId) {
+        return contextsWithSubjects.stream()
+            .filter(contextWithSubject -> matchContextByValue(contextWithSubject.context, value, groupId))
+            .findFirst()
+            .map(firstMatch -> {
+                contextsWithSubjects.remove(firstMatch);
+                return firstMatch;
+            });
+    }
+
+    private Flux<ContextWithValue<CONTEXT, VALUE>> bindEmptyToRemaining(List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjects) {
+        synchronized (contextsWithSubjects) {
+            return Flux.fromIterable(contextsWithSubjects).map(ContextWithValue::empty);
+        }
+    }
+
+    private Flux<ContextWithValue<CONTEXT, VALUE>> bindErrorToRemaining(List<ContextWithSubject<CONTEXT, VALUE>> contextsWithSubjects, Throwable throwable) {
+        synchronized (contextsWithSubjects) {
+            return Flux.fromIterable(contextsWithSubjects).map(contextWithSubject -> ContextWithValue.error(contextWithSubject, throwable));
+        }
     }
 
     private boolean matchContextByValue(CONTEXT context, VALUE value, String groupId) {
@@ -295,7 +332,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
      * @param <V> the VALUE type
      */
     public static final class Builder<C, V> {
-        private final Function<List<C>, Mono<List<V>>> bulkProvider;
+        private final Function<List<C>, Flux<V>> bulkProvider;
         private int maxConcurrency = Runtime.getRuntime().availableProcessors();
         private BiFunction<C, V, Boolean> contextValueMatcher;
         private Scheduler scheduler = Schedulers.parallel();
@@ -308,7 +345,7 @@ public final class FanOutRequestCollapser<CONTEXT, VALUE> implements Function<CO
         private MetricId metricId;
         private String groupId = "unknown";
 
-        public Builder(Function<List<C>, Mono<List<V>>> bulkProvider) {
+        private Builder(Function<List<C>, Flux<V>> bulkProvider) {
             this.bulkProvider = requireNonNull(bulkProvider);
         }
 
