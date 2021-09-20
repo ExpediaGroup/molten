@@ -19,7 +19,7 @@
     <!-- dependencies -->
     <resilience4j.version>1.7.1</resilience4j.version>
     <reactor-core.version>3.4.9</reactor-core.version>
-    <reactor-addons.version>3.4.4</reactor-addons.version>
+    <reactor-addons.version>3.4.5</reactor-addons.version>
   </properties>
 
   <dependencyManagement>
