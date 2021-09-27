@@ -59,7 +59,7 @@
     <hamcrest.version>2.0.0.0</hamcrest.version>
     <mockito.version>3.12.4</mockito.version>
     <mockito-testng.version>0.4.13</mockito-testng.version>
-    <byte-buddy.version>1.11.15</byte-buddy.version>
+    <byte-buddy.version>1.11.18</byte-buddy.version>
     <janino.version>3.1.6</janino.version>
     <junit.jupiter.version>5.7.2</junit.jupiter.version>
     <junit.platform.version>1.7.2</junit.platform.version>
