@@ -25,7 +25,7 @@
     <micrometer.version>1.7.3</micrometer.version>
     <zipkin-brave.version>5.13.3</zipkin-brave.version>
     <zipkin-reporter.version>2.16.3</zipkin-reporter.version>
-    <kryo.version>4.0.2</kryo.version>
+    <kryo.version>5.2.1</kryo.version>
     <kryo-serializers.version>0.45</kryo-serializers.version>
     <jsr305.version>3.0.2</jsr305.version>
     <netty.version>4.1.59.Final</netty.version>
