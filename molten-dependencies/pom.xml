@@ -29,7 +29,7 @@
     <kryo-serializers.version>0.45</kryo-serializers.version>
     <jsr305.version>3.0.2</jsr305.version>
     <netty.version>4.1.59.Final</netty.version>
-    <reactor-netty.version>1.0.10</reactor-netty.version>
+    <reactor-netty.version>1.0.14</reactor-netty.version>
     <protobuf.version>3.0.0</protobuf.version>
     <retrofit.version>2.9.0</retrofit.version>
     <okhttp.version>4.9.1</okhttp.version>
