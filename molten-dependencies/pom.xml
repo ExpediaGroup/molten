@@ -19,7 +19,7 @@
     <caffeine.version>2.8.6</caffeine.version>
     <jackson.version>2.12.5</jackson.version>
     <guava.version>30.1.1-jre</guava.version>
-    <lettuce-core.version>6.1.4.RELEASE</lettuce-core.version>
+    <lettuce-core.version>6.1.6.RELEASE</lettuce-core.version>
     <logback.version>1.2.3</logback.version>
     <lombok.version>1.18.20</lombok.version>
     <micrometer.version>1.7.3</micrometer.version>
