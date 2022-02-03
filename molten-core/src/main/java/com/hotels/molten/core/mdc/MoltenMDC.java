@@ -19,6 +19,7 @@ package com.hotels.molten.core.mdc;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Map;
+import java.util.Queue;
 import java.util.function.Function;
 
 import lombok.extern.slf4j.Slf4j;
@@ -43,35 +44,28 @@ public final class MoltenMDC {
     }
 
     /**
-     * Initializes MDC propagation in Reactor with explicit propagation.
-     * See {@code initialize(false)} for more information.
+     * Initializes MDC propagation in Reactor.
+     *
+     * Ensures MDC is propagated when switching schedulers or when queueing and retrieving tasks in Reactor.
      */
+    @SuppressWarnings("unchecked")
     public static void initialize() {
-        initialize(false);
+        uninitialize();
+        LOG.info("Integrating MDC with Molten");
+        Schedulers.onScheduleHook(HOOK_KEY, MDCCopyingAction::new);
+        Hooks.addQueueWrapper(HOOK_KEY, q -> new MdcContextPropagatingQueue((Queue<Object>) q));
+        MoltenCore.registerContextPropagator(HOOK_KEY, MoltenMDC.propagate()::apply);
     }
 
     /**
      * Initializes MDC propagation in Reactor.
-     * Ensures MDC is propagated when switching scheduler threads or at specific thread switching scenarios.
-     * <p>
-     * Depending on {@code onEachOperator} there are two different behaviours.
-     * <br>
-     * When it is set to {@code true} the MDC values at creation time will be maintained throughout the flow.
-     * Changes in the MDC won't be reflected downstream.
-     * <br>
-     * When it is set to {@code false} the MDC value changes will be propagated at flow execution time where explicitly done with {@link MoltenCore#propagateContext()}.
      *
-     * @param onEachOperator whether to decorate all operator (at creation time) to propagate MDC or use explicit context propagation.
+     * @param unused unused parameter
+     * @deprecated use {@link #initialize()}
      */
-    public static void initialize(boolean onEachOperator) {
-        uninitialize();
-        LOG.info("Integrating MDC with Molten onEachOperator={}", onEachOperator);
-        Schedulers.onScheduleHook(HOOK_KEY, MDCCopyingAction::new);
-        if (onEachOperator) {
-            Hooks.onEachOperator(HOOK_KEY, propagate());
-        } else {
-            MoltenCore.registerContextPropagator(HOOK_KEY, MoltenMDC.propagate()::apply);
-        }
+    @Deprecated
+    public static void initialize(boolean unused) {
+        initialize();
     }
 
     /**
@@ -79,7 +73,7 @@ public final class MoltenMDC {
      */
     public static void uninitialize() {
         MoltenCore.resetContextPropagator(HOOK_KEY);
-        Hooks.resetOnEachOperator(HOOK_KEY);
+        Hooks.removeQueueWrapper(HOOK_KEY);
         Schedulers.resetOnScheduleHook(HOOK_KEY);
     }
 

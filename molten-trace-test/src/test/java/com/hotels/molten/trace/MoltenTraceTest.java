@@ -27,7 +27,6 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import brave.Tracing;
 import lombok.SneakyThrows;
@@ -39,8 +38,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -89,14 +86,8 @@ public class MoltenTraceTest {
         TracingTestSupport.cleanUp();
     }
 
-    static Stream<Boolean> onEachOperatorEnabled() {
-        return Stream.of(true, false);
-    }
-
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_support_nesting(boolean onEachOperatorEnabled) {
-        MoltenTrace.initialize(onEachOperatorEnabled);
+    @Test
+    void should_support_nesting() {
         try (TraceSpan outer = Tracer.span("outer").start()) {
             StepVerifier.create(
                 Mono.just("data")
@@ -109,10 +100,8 @@ public class MoltenTraceTest {
     }
 
     @SneakyThrows
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_support_fully_reactive_nesting(boolean onEachOperatorEnabled) {
-        MoltenTrace.initialize(onEachOperatorEnabled);
+    @Test
+    void should_support_fully_reactive_nesting() {
         CountDownLatch latch = new CountDownLatch(1);
         StepVerifier.create(
             Mono.just("data")
@@ -146,10 +135,8 @@ public class MoltenTraceTest {
             });
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_when_switching_schedulers(boolean onEachOperatorEnabled) {
-        MoltenTrace.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_when_switching_schedulers() {
         try (TraceSpan outer = Tracer.span("outer").start()) {
             StepVerifier.create(
                 Mono.just("data")
@@ -163,10 +150,8 @@ public class MoltenTraceTest {
         assertThat(capturedSpans(), contains(spanWithName("inner"), rootSpanWithName("outer")));
     }
 
-    @ParameterizedTest
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_when_switching_schedulers_for_subscribe(boolean onEachOperatorEnabled) {
-        MoltenTrace.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_when_switching_schedulers_for_subscribe() {
         try (Tracer.TraceSpan outer = Tracer.span("outer").start()) {
             StepVerifier.create(
                 Mono.just("data")
@@ -180,11 +165,9 @@ public class MoltenTraceTest {
         assertThat(capturedSpans(), contains(spanWithName("inner"), rootSpanWithName("outer")));
     }
 
-    @ParameterizedTest
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-    @MethodSource("onEachOperatorEnabled")
-    void should_propagate_trace_context_in_indirect_flow(boolean onEachOperatorEnabled) {
-        MoltenTrace.initialize(onEachOperatorEnabled);
+    @Test
+    void should_propagate_trace_context_in_indirect_flow() {
         try (Tracer.TraceSpan outer = Tracer.span("outer").start()) {
             var outerSpan = Optional.ofNullable(Tracing.currentTracer()).map(brave.Tracer::currentSpan).orElse(null);
             LOG.debug("outer span={}", outerSpan);

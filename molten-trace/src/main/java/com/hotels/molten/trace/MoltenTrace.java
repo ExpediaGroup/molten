@@ -18,6 +18,7 @@ package com.hotels.molten.trace;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Queue;
 import java.util.function.Function;
 
 import brave.Tracing;
@@ -38,41 +39,41 @@ public final class MoltenTrace {
         //utility class
     }
 
+
     /**
      * Initializes tracing in Reactor.
-     * Ensures tracing context is propagated when switching scheduler threads.
+     *
+     * Ensures tracing context is propagated when switching scheduler threads or when queueing and retrieving tasks in Reactor.
      */
+    @SuppressWarnings("unchecked")
     public static void initialize() {
-        initialize(false);
+        uninitialize();
+        LOG.info("Integrating tracing with Molten");
+        var currentTracing = Tracing.current();
+        requireNonNull(currentTracing, "Tracing must be already initialized");
+        Schedulers.onScheduleHook(HOOK_KEY, runnable -> new TraceContextPropagatingRunnable(runnable, currentTracing.currentTraceContext()));
+        Hooks.addQueueWrapper(HOOK_KEY, q -> new TraceContextPropagatorQueue((Queue<Object>) q, currentTracing.currentTraceContext()));
+        MoltenCore.registerContextPropagator(HOOK_KEY, MoltenTrace.propagate()::apply);
     }
 
     /**
      * Initializes tracing in Reactor.
-     * Ensures tracing context is propagated when switching scheduler threads.
      *
-     * @param onEachOperator whether to also decorate all operator to propagate trace context or not.
-     *                       Enabling this is not recommended for performance considerations.
-     *                       When disabled explicitly propagate context using {@link MoltenCore#propagateContext()} where necessary.
+     * @param unused unused parameter
+     * @deprecated use {@link #initialize()}
      */
-    public static void initialize(boolean onEachOperator) {
-        uninitialize();
-        LOG.info("Integrating tracing with Molten onEachOperator={}", onEachOperator);
-        var currentTracing = Tracing.current();
-        requireNonNull(currentTracing, "Tracing must be already initialized");
-        Schedulers.onScheduleHook(HOOK_KEY, runnable -> new TraceContextPropagatingRunnable(runnable, currentTracing.currentTraceContext()));
-        if (onEachOperator) {
-            Hooks.onEachOperator(HOOK_KEY, propagate());
-        } else {
-            MoltenCore.registerContextPropagator(HOOK_KEY, MoltenTrace.propagate()::apply);
-        }
+    @Deprecated
+    public static void initialize(boolean unused) {
+        initialize();
     }
+
 
     /**
      * Reset all Molten Trace - Reactor integration.
      */
     public static void uninitialize() {
         MoltenCore.resetContextPropagator(HOOK_KEY);
-        Hooks.resetOnEachOperator(HOOK_KEY);
+        Hooks.removeQueueWrapper(HOOK_KEY);
         Schedulers.resetOnScheduleHook(HOOK_KEY);
     }
 
