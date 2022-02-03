@@ -77,7 +77,6 @@ public final class MoltenCore {
     public static void uninitialize() {
         if (INITIALIZED.get()) {
             CONTEXT_PROPAGATORS.clear();
-            Hooks.resetOnEachOperator();
             Hooks.removeQueueWrappers();
             Schedulers.resetOnScheduleHooks();
             INITIALIZED.set(false);
