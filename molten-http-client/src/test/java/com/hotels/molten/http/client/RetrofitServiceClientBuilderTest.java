@@ -676,7 +676,7 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
         List<Span> capturedSpans = capturedSpans();
         assertThat(capturedSpans)
             .extracting(Span::name)
-            .contains("get /header/:name", "get", "outer");
+            .contains("get", "outer");
 
         var rootSpan = assertThat(capturedSpans)
             .filteredOn("name", "outer")
@@ -690,14 +690,6 @@ public class RetrofitServiceClientBuilderTest extends AbstractTracingTest {
         clientSpan.extracting(Span::traceId).isEqualTo(expectedTraceId);
         clientSpan.extracting(Span::kind).isEqualTo(Span.Kind.CLIENT);
         clientSpan.extracting(Span::parentId).isEqualTo(expectedSpanId);
-
-        var serverSpan = assertThat(capturedSpans)
-            .filteredOn("name", "get /header/:name")
-            .first();
-        serverSpan.extracting(Span::traceId).isEqualTo(expectedTraceId);
-        serverSpan.extracting(Span::kind).isEqualTo(Span.Kind.SERVER);
-        //TODO: check if this is expected or it should rather be child of get
-        serverSpan.extracting(Span::parentId).isEqualTo(expectedSpanId);
     }
 
     @Test(dataProvider = "common")
