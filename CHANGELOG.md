@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deprecated `com.hotels.molten.trace.MoltenTrace.initialize(boolean)` in favour of `com.hotels.molten.trace.MoltenTrace.initialize()`.
 
 ## [1.2.3]
-- Only dependency version updates.
+### Changed
+- Dependency version updates.
 
 ## [1.2.2]
 ### Added
