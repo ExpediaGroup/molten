@@ -25,8 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import brave.http.HttpTracing;
-import brave.vertx.web.VertxWebTracing;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
@@ -78,10 +76,6 @@ public class StubJsonServiceServer {
         shutDown();
         Vertx vertx = Vertx.vertx();
         Router router = Router.router(vertx);
-        if (HttpTracing.current() != null) {
-            var routingContextHandler = VertxWebTracing.create(HttpTracing.current()).routingContextHandler();
-            router.route().order(-2).handler(routingContextHandler).failureHandler(routingContextHandler);
-        }
         router.route().handler(LoggerHandler.create(LoggerFormat.DEFAULT));
         router.route().handler(BodyHandler.create().setBodyLimit(1024 * 1024));
         // return just a Response with the id parameter as text either as json or xml via separate routes
