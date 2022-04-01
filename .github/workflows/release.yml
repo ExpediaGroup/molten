@@ -8,7 +8,7 @@ jobs:
     name: Publish RELEASE
     steps:
       - name: Checkout project
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Java SDK
         uses: actions/setup-java@v2
         with:
